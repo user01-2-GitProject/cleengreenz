@@ -166,7 +166,7 @@
      in step with pet/make-frames.py, which draws the sheet. */
   .pet-body, .pet-inner { width: 100%; height: 100%; }
   .pet-wrap.face-left .pet-body { transform: scaleX(-1); }
-  .pet-inner { animation: pet-bob 1.8s steps(2, end) infinite; }
+  .pet-inner { animation: pet-bob 1.8s ease-in-out infinite; }
   .pet-wrap.walking .pet-inner { animation: none; }
   .pet-wrap.blowing .pet-inner { animation: pet-shake .1s steps(2, end) infinite; }
   .pet-sprite {
@@ -824,8 +824,10 @@
       function moveToward(gx, gy, dt, speed) {
         var dx = gx - p.x, dy = gy - p.y, d = Math.sqrt(dx * dx + dy * dy);
         if (Math.abs(dx) > 2) p.face = dx > 0 ? 1 : -1;
-        if (d < 4) { p.x = gx; p.y = gy; return true; }
-        var step = Math.min(d, speed * dt);
+        if (d < 2) { p.x = gx; p.y = gy; return true; }
+        // Ease out as Chris nears the goal, so arrivals settle instead of snapping to a halt.
+        var eased = Math.max(speed * Math.min(1, d / 70), speed * 0.16);
+        var step = Math.min(d, eased * dt);
         p.x += dx / d * step; p.y += dy / d * step;
         return false;
       }
@@ -934,7 +936,7 @@
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
           var f = 0, walking = p.state === 'walk' || p.state === 'home';
           if (p.wave > 0) p.wave -= dt;
-          if (walking && !reduceMotion) f = Math.floor(now / 170) % 2 ? 1 : 2;
+          if (walking && !reduceMotion) f = Math.floor(now / 140) % 2 ? 1 : 2;
           else if (p.state === 'clear' && p.t > 0.4) f = 3;
           else if (p.wave > 0) f = 4;
           else if (!reduceMotion && now % 4300 < 150) f = 5;
