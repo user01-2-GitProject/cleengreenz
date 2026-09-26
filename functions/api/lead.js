@@ -22,6 +22,10 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+export function sanitizePhone(phone) {
+  return String(phone || '').replace(/[^0-9+() -]/g, '');
+}
+
 async function emailChris(env, lead) {
   if (!env.RESEND_API_KEY) return false;
   const rows = [
@@ -31,10 +35,11 @@ async function emailChris(env, lead) {
     ['Service', lead.service],
     ['Notes', lead.notes],
   ].filter(([, v]) => v);
+  const safePhone = sanitizePhone(lead.phone);
   const text = ['New estimate request from cleengreenz.com', '', ...rows.map(([k, v]) => `${k}: ${v}`)].join('\n');
   const html = `<p>New estimate request from cleengreenz.com</p><table>${rows
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0"><b>${k}</b></td><td>${escapeHtml(v).replace(/\n/g, '<br>')}</td></tr>`)
-    .join('')}</table><p><a href="tel:${encodeURIComponent(lead.phone)}">Call ${escapeHtml(lead.name)}</a></p>`;
+    .join('')}</table><p><a href="tel:${encodeURIComponent(safePhone)}">Call ${escapeHtml(lead.name)}</a></p>`;
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
