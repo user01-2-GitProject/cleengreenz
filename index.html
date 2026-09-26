@@ -174,15 +174,16 @@
   .pet-sprite { display: block; width: 192px; height: 200px;
     background: url("media/pet-chris-poses.png") 0 0 / 960px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
-  .pet-wrap.walking .pet-inner { animation: pet-walk .34s ease-in-out infinite alternate; }
+  /* Walking is driven from JS: pose and --bob follow distance travelled, so feet never slide. */
+  .pet-wrap.walking .pet-inner { animation: none; transform: translateY(var(--bob, 0px)); }
   .pet-wrap.reacting .pet-inner { animation: pet-wave .62s cubic-bezier(.2,.8,.2,1) both; }
   .pet-wrap.cheering .pet-inner { animation: pet-cheer .72s cubic-bezier(.2,.8,.2,1) both; }
   .pet-wrap.clearing .pet-inner { animation: pet-work .2s ease-in-out infinite alternate; }
   .pet-wrap.doze .pet-inner { animation: pet-doze 3.4s ease-in-out infinite; }
-  .pet-wrap.dragging .pet-inner { animation: none; transform: rotate(var(--drag-tilt, 0deg)) scale(1.04); }
+  /* --drag-tilt and --drag-scale are eased in JS, so picking up and letting go never snaps. */
+  .pet-wrap.grabbed .pet-inner { animation: none; transform: translateY(var(--bob, 0px)) rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1)); }
   .pet-wrap.dragging .pet-shadow, .pet-wrap.cheering .pet-shadow { transform: scale(.65); opacity: .45; }
   @keyframes pet-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.008,.992); } }
-  @keyframes pet-walk { from { transform: translateY(0) rotate(-2.5deg) scale(1.02,.98); } to { transform: translateY(-5px) rotate(2.5deg) scale(.99,1.01); } }
   @keyframes pet-wave { 0% { transform: rotate(0) scale(1); } 28% { transform: translateY(-9px) rotate(-7deg) scale(1.06,.96); } 56% { transform: translateY(0) rotate(4deg) scale(.97,1.04); } 78% { transform: translateY(-3px) rotate(-2deg); } 100% { transform: none; } }
   @keyframes pet-cheer { 0%,100% { transform: none; } 35% { transform: translateY(-20px) rotate(-6deg) scale(1.04); } 65% { transform: translateY(-7px) rotate(5deg) scale(.98,1.02); } }
   @keyframes pet-work { from { transform: rotate(-1deg) translateX(-1px); } to { transform: rotate(1deg) translateX(1px); } }
@@ -806,7 +807,9 @@
       var PET_W = W < 700 ? 68 : 84, PET_H = W < 700 ? 160 : 198;
       var wrap = null, pet = null, bubble = null, sprite = null, displayedFrame = -1;
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
-        dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0 };
+        dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0 };
+      // One walk pose per STRIDE px travelled, so the cadence follows Chris's real speed.
+      var STRIDE = 44, BOB = 3, wasWalking = false, lastBob = 0, grabOn = false;
       var pointer = null, reactionTimer = null, idleAt = performance.now(), nextFidget = idleAt + rnd(6500, 11000);
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
@@ -848,7 +851,6 @@
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
           p.state = 'drag'; p.t = 0; p.speed = 0;
-          wrap.style.setProperty('--drag-tilt', Math.max(-9, Math.min(9, p.vx / 45)) + 'deg');
           bubble.classList.remove('is-visible');
         });
         function release(e) {
@@ -947,6 +949,7 @@
         p.speed += (target - p.speed) * Math.min(1, dt * 6);
         var step = Math.min(d, p.speed * dt);
         p.x += dx / d * step; p.y += dy / d * step;
+        p.stride += step;
         return false;
       }
       function petGoal(r) {
@@ -1067,17 +1070,38 @@
               nextFidget = now + rnd(5000, 8000);
             }
           }
-          wrap.classList.toggle('walking', p.state === 'walk' || p.state === 'home');
+          var walking = p.state === 'walk' || p.state === 'home';
+          if (walking && !wasWalking) p.stride = 0;
+          wasWalking = walking;
+          // Ease the pick-up tilt/scale in and out instead of snapping when Chris is grabbed or let go.
+          var grabbing = p.state === 'drag' || p.state === 'toss';
+          p.grab += ((grabbing ? 1 : 0) - p.grab) * (1 - Math.exp(-dt * 16));
+          if (p.state === 'drag') p.vx *= Math.exp(-dt * 9);
+          if (p.grab > .001 || grabOn) {
+            grabOn = p.grab > .001;
+            wrap.style.setProperty('--drag-tilt', (Math.max(-9, Math.min(9, p.vx / 45)) * p.grab).toFixed(2) + 'deg');
+            wrap.style.setProperty('--drag-scale', (1 + .04 * p.grab).toFixed(3));
+          }
+          wrap.classList.toggle('walking', walking);
           wrap.classList.toggle('clearing', p.state === 'clear' && p.t > 0.4);
           wrap.classList.toggle('doze', p.state === 'doze');
           wrap.classList.toggle('dragging', p.state === 'drag');
+          wrap.classList.toggle('grabbed', p.grab > .02);
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
-          wrap.style.transform = 'translate3d(' + p.x.toFixed(2) + 'px,' + p.y.toFixed(2) + 'px,0)';
-          var pose = 0;
-          if (p.state === 'walk' || p.state === 'home') pose = Math.floor(now / 155) % 2 ? 1 : 2;
+          // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
+          wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
+          var pose = 0, bob = 0;
+          if (walking && p.speed > 24) {
+            // Stride phase: stride/STRIDE = steps taken. Odd/even steps alternate the two walk
+            // poses, and the body dips on the wide contact pose and rises on the passing pose.
+            var cyc = p.stride / STRIDE;
+            pose = Math.floor(cyc) % 2 ? 2 : 1;
+            if (!reduceMotion) bob = Math.round(BOB * Math.min(1, p.speed / 140) * (.5 - .5 * Math.cos(Math.PI * (cyc - .5))));
+          }
           else if (p.state === 'clear' && p.t > .4) pose = 3;
           else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = 4;
+          if (bob !== lastBob) { wrap.style.setProperty('--bob', -bob + 'px'); lastBob = bob; }
           if (pose !== displayedFrame) {
             sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
             displayedFrame = pose;
