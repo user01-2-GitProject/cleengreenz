@@ -145,6 +145,7 @@
     .badge span { font-size: 1.5rem; }
   }
 
+  /* ===== LEAVES + PET CHRIS: styles start ===== */
   /* Falling leaves (drawn by script across the whole viewport) */
   .hero .wrap { position: relative; z-index: 1; }
   .leaf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
@@ -189,6 +190,8 @@
   .pet-wrap.bubble-left .pet-bubble::after { left: auto; right: 26px; }
   .pet-bubble a { color: var(--pumpkin-2); }
   .pet-bubble button { font: inherit; color: var(--pumpkin-2); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+
+  /* ===== LEAVES + PET CHRIS: styles end ===== */
 
   /* Wavy grass dividers */
   .grass { display: block; width: 100%; height: 70px; margin-bottom: -1px; }
@@ -724,6 +727,7 @@
       }
     });
 
+    // ===== LEAVES + PET CHRIS: script start =====
     // Falling leaves that pile up on buttons, and pet Chris who clears them.
     (function () {
       var hidePet = false;
@@ -973,6 +977,7 @@
       }
       requestAnimationFrame(frame);
     })();
+    // ===== LEAVES + PET CHRIS: script end =====
   })();
 </script>
 </body>
