@@ -161,10 +161,14 @@
   }
   .pet:active { cursor: grabbing; }
   .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+  /* --air/--shadow-s/--shadow-o are set from JS while Chris is held or thrown, so the shadow
+     stays on the ground and shrinks as he rises. */
   .pet-shadow { position: absolute; left: 12%; right: 12%; bottom: -2px; height: 10px;
     border-radius: 50%; background: rgba(35, 42, 22, .22); filter: blur(3px);
-    transform: scale(1); transition: transform .3s ease, opacity .3s ease; }
-  .pet-body { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 91%; }
+    transform: translateY(var(--air, 0px)) scale(var(--shadow-s, 1)); opacity: var(--shadow-o, 1); }
+  /* Turning around squeezes through zero width, like a quick about-face, instead of a hard flip. */
+  .pet-body { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 91%;
+    transition: scale .15s cubic-bezier(.45, 0, .25, 1); }
   .pet-wrap.face-left .pet-body { scale: -1 1; }
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
   /* Five connected limb poses: idle, two opposite strides, blower, wave.
@@ -174,19 +178,45 @@
   .pet-sprite { display: block; width: 192px; height: 200px;
     background: url("media/pet-chris-poses.png") 0 0 / 960px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
-  /* Walking is driven from JS: pose and --bob follow distance travelled, so feet never slide. */
-  .pet-wrap.walking .pet-inner { animation: none; transform: translateY(var(--bob, 0px)); }
-  .pet-wrap.reacting .pet-inner { animation: pet-wave .62s cubic-bezier(.2,.8,.2,1) both; }
-  .pet-wrap.cheering .pet-inner { animation: pet-cheer .72s cubic-bezier(.2,.8,.2,1) both; }
-  .pet-wrap.clearing .pet-inner { animation: pet-work .2s ease-in-out infinite alternate; }
+  /* Walking is driven from JS: pose, --bob and --lean follow distance and speed, so feet never
+     slide and Chris leans into a start and rocks back on a stop. */
+  .pet-wrap.walking .pet-inner { animation: none; transform: translateY(var(--bob, 0px)) rotate(var(--lean, 0deg)); }
+  /* Held or thrown: hangs from the spot he was grabbed and swings (angle is a spring in JS). */
+  .pet-wrap.grabbed .pet-inner { animation: none; transform-origin: var(--grab-origin, 50% 20%);
+    transform: rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1)); }
+  .pet-wrap.reacting .pet-inner { animation: pet-wave .66s both; }
+  .pet-wrap.cheering .pet-inner { animation: pet-cheer .76s both; }
+  .pet-wrap.windup .pet-inner { animation: pet-windup .3s ease-out both; }
+  .pet-wrap.clearing .pet-inner { animation: pet-kick .26s cubic-bezier(.2, .9, .3, 1) both, pet-work .09s ease-in-out .26s infinite alternate; }
+  .pet-wrap.landing .pet-inner { animation: pet-land .36s both; transform-origin: 50% 91%; }
   .pet-wrap.doze .pet-inner { animation: pet-doze 3.4s ease-in-out infinite; }
-  /* --drag-tilt and --drag-scale are eased in JS, so picking up and letting go never snaps. */
-  .pet-wrap.grabbed .pet-inner { animation: none; transform: translateY(var(--bob, 0px)) rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1)); }
-  .pet-wrap.dragging .pet-shadow, .pet-wrap.cheering .pet-shadow { transform: scale(.65); opacity: .45; }
+  .pet-wrap.cheering .pet-shadow { animation: pet-shadow-cheer .76s both; }
   @keyframes pet-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.008,.992); } }
-  @keyframes pet-wave { 0% { transform: rotate(0) scale(1); } 28% { transform: translateY(-9px) rotate(-7deg) scale(1.06,.96); } 56% { transform: translateY(0) rotate(4deg) scale(.97,1.04); } 78% { transform: translateY(-3px) rotate(-2deg); } 100% { transform: none; } }
-  @keyframes pet-cheer { 0%,100% { transform: none; } 35% { transform: translateY(-20px) rotate(-6deg) scale(1.04); } 65% { transform: translateY(-7px) rotate(5deg) scale(.98,1.02); } }
-  @keyframes pet-work { from { transform: rotate(-1deg) translateX(-1px); } to { transform: rotate(1deg) translateX(1px); } }
+  /* Small crouch first, then the jump, a soft landing and a settle: anticipation and follow-through. */
+  @keyframes pet-wave {
+    0% { transform: none; animation-timing-function: ease-out; }
+    16% { transform: translateY(2px) scale(1.04,.94); animation-timing-function: cubic-bezier(.2,.8,.3,1); }
+    40% { transform: translateY(-9px) rotate(-6deg) scale(.97,1.05); animation-timing-function: ease-in; }
+    64% { transform: translateY(0) rotate(3deg) scale(1.03,.97); animation-timing-function: ease-out; }
+    82% { transform: translateY(-1px) rotate(-1deg); animation-timing-function: ease-in-out; }
+    100% { transform: none; } }
+  @keyframes pet-cheer {
+    0% { transform: none; animation-timing-function: ease-out; }
+    14% { transform: translateY(3px) scale(1.06,.9); animation-timing-function: cubic-bezier(.15,.8,.3,1); }
+    40% { transform: translateY(-20px) rotate(-5deg) scale(.96,1.06); animation-timing-function: ease-in; }
+    62% { transform: translateY(0) rotate(3deg) scale(1.08,.9); animation-timing-function: ease-out; }
+    80% { transform: translateY(-4px) rotate(-2deg) scale(.99,1.01); animation-timing-function: ease-in-out; }
+    100% { transform: none; } }
+  @keyframes pet-shadow-cheer { 0%,100% { transform: scale(1); opacity: 1; } 40% { transform: scale(.65); opacity: .45; } 62% { transform: scale(1.05); opacity: 1; } }
+  /* Blower: lean back, kick forward as it fires, then a fine constant shudder. */
+  @keyframes pet-windup { from { transform: none; } to { transform: rotate(-3.5deg) scale(1.03,.95); } }
+  @keyframes pet-kick { 0% { transform: rotate(-3.5deg) scale(1.03,.95); } 40% { transform: rotate(3deg) translateX(2px) scale(.98,1.03); } 100% { transform: none; } }
+  @keyframes pet-work { from { transform: translateX(-.6px) rotate(-.4deg); } to { transform: translateX(.6px) rotate(.4deg); } }
+  @keyframes pet-land {
+    0% { transform: scale(1.14,.84); animation-timing-function: ease-out; }
+    38% { transform: scale(.97,1.04); animation-timing-function: ease-in-out; }
+    68% { transform: scale(1.02,.99); }
+    100% { transform: none; } }
   @keyframes pet-doze { 0%,100% { transform: rotate(-3deg) translateY(2px) scale(1,.99); } 50% { transform: rotate(-3deg) translateY(4px) scale(1.01,.98); } }
   .pet-particle { position: absolute; left: 55%; top: 18%; z-index: 2; pointer-events: none;
     color: var(--forest); font: 800 16px/1 "Fredoka", sans-serif;
@@ -194,7 +224,8 @@
   .pet-particle.leaf-bit { top: 60%; color: var(--pumpkin); }
   @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
     20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
-  @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } }
+  /* The sheet is drawn at .81 on phones; nearest-neighbour at a fractional scale makes pixels uneven. */
+  @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
   .pet-bubble {
     position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
     pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
@@ -209,8 +240,10 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .pet-bubble, .pet-bubble.is-visible { transition: opacity .01s linear; transform: none; }
-    .pet-inner, .pet-wrap.walking .pet-inner, .pet-wrap.reacting .pet-inner,
-    .pet-wrap.cheering .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.doze .pet-inner { animation: none; }
+    .pet-body { transition: none; }
+    .pet-inner, .pet-wrap.walking .pet-inner, .pet-wrap.reacting .pet-inner, .pet-wrap.cheering .pet-inner,
+    .pet-wrap.windup .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.landing .pet-inner,
+    .pet-wrap.doze .pet-inner, .pet-wrap.cheering .pet-shadow { animation: none; }
     .pet-particle { display: none; }
   }
   .pet-bubble::after {
@@ -807,9 +840,13 @@
       var PET_W = W < 700 ? 68 : 84, PET_H = W < 700 ? 160 : 198;
       var wrap = null, pet = null, bubble = null, sprite = null, displayedFrame = -1;
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
-        dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0 };
+        dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0,
+        acc: 0, lean: 0, tilt: 0, tiltV: 0, mvx: 0, bounces: 0 };
       // One walk pose per STRIDE px travelled, so the cadence follows Chris's real speed.
-      var STRIDE = 44, BOB = 3, wasWalking = false, lastBob = 0, grabOn = false;
+      var STRIDE = 44, BOB = 3, wasWalking = false, lastBob = 0, lastLean = 0, grabOn = false, shadowOn = false;
+      // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and the speed
+      // below which the stride poses give way to standing (feet planted, no sliding legs).
+      var ACCEL = 620, DECEL = 760, WALK_MIN = 55, GRAVITY = 2400;
       var pointer = null, reactionTimer = null, idleAt = performance.now(), nextFidget = idleAt + rnd(6500, 11000);
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
@@ -837,6 +874,10 @@
           pointer = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false,
             offsetX: e.clientX - p.x, offsetY: e.clientY - p.y, last: performance.now() };
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY;
+          // He hangs from wherever he was picked up. The body is mirrored when facing left, so
+          // the pivot's x is measured in that mirrored space.
+          wrap.style.setProperty('--grab-origin',
+            (p.face < 0 ? PET_W - pointer.offsetX : pointer.offsetX).toFixed(0) + 'px ' + pointer.offsetY.toFixed(0) + 'px');
           pet.setPointerCapture(e.pointerId);
           if (p.state === 'doze') wake();
         });
@@ -856,8 +897,7 @@
         function release(e) {
           if (!pointer || e.pointerId !== pointer.id) return;
           if (pointer.moved) {
-            p.state = reduceMotion ? 'home' : 'toss'; p.t = 0;
-            p.vx *= .36; p.vy *= .36;
+            drop(p.vx * .5, p.vy * .5);
             say('Wheee! Back to work.', 1700);
           } else {
             react('reacting', 650);
@@ -868,7 +908,7 @@
         }
         pet.addEventListener('pointerup', release);
         pet.addEventListener('pointercancel', function (e) {
-          if (pointer && e.pointerId === pointer.id) { pointer = null; p.state = 'home'; }
+          if (pointer && e.pointerId === pointer.id) { pointer = null; drop(0, 0); }
         });
         pet.addEventListener('click', function (e) {
           // Keyboard activation has no preceding pointer event.
@@ -895,10 +935,17 @@
           if (wrap && p.state === 'idle') { say('Hi neighbor! Tap me anytime.', 4500); react('reacting', 650); }
         }, 2500);
       }
+      // Let go of Chris: he falls with gravity (one small hop), squashes on landing, then walks
+      // home along the ground instead of gliding home through the air.
+      function drop(vx, vy) {
+        p.t = 0; p.bounces = 0;
+        if (reduceMotion) { p.y = homeY(); p.state = 'home'; return; }
+        p.vx = vx; p.vy = vy; p.state = 'toss';
+      }
       function react(cls, duration) {
         if (!wrap || reduceMotion) return;
         clearTimeout(reactionTimer);
-        wrap.classList.remove('reacting', 'cheering');
+        wrap.classList.remove('reacting', 'cheering', 'landing');
         void wrap.offsetWidth;
         wrap.classList.add(cls);
         reactionTimer = setTimeout(function () { if (wrap) wrap.classList.remove(cls); }, duration);
@@ -937,17 +984,18 @@
         if (ms) bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
-      function moveToward(gx, gy, dt, speed) {
+      function moveToward(gx, gy, dt, vmax) {
         var dx = gx - p.x, dy = gy - p.y, d = Math.sqrt(dx * dx + dy * dy);
         if (Math.abs(dx) > 2) p.face = dx > 0 ? 1 : -1;
-        if (d < 2) { p.x = gx; p.y = gy; p.speed = 0; return true; }
-        // Smoothly chase a distance-based target speed: this eases in from a
-        // standstill (p.speed starts/settles near 0) and eases out approaching
-        // the goal (target shrinks under 70px out), instead of constant speed
-        // with an abrupt stop.
-        var target = Math.max(speed * Math.min(1, d / 70), speed * 0.16);
-        p.speed += (target - p.speed) * Math.min(1, dt * 6);
-        var step = Math.min(d, p.speed * dt);
+        if (d < 1.5) { p.x = gx; p.y = gy; p.speed = 0; p.acc = 0; return true; }
+        // Constant-acceleration motion: speed ramps up at ACCEL and is never allowed to exceed
+        // the speed he can still brake from in the distance left (v = sqrt(2*a*d)). That gives a
+        // real ease-in and ease-out, and he arrives slow enough that the last step is invisible.
+        var want = Math.min(vmax, Math.sqrt(2 * DECEL * d));
+        var dv = want - p.speed, lim = (dv > 0 ? ACCEL : DECEL * 1.5) * dt, before = p.speed;
+        p.speed += Math.max(-lim, Math.min(lim, dv));
+        p.acc = dt > 0 ? (p.speed - before) / dt : 0;
+        var step = Math.min(d, Math.max(p.speed, 30) * dt);
         p.x += dx / d * step; p.y += dy / d * step;
         p.stride += step;
         return false;
@@ -1015,7 +1063,7 @@
 
         // Pet
         if (wrap) {
-          var hy = homeY();
+          var hy = homeY(), prevX = p.x;
           p.t += dt;
           if (p.state === 'idle') {
             p.x = 4; p.y = hy; p.face = 1;
@@ -1048,9 +1096,10 @@
           } else if (p.state === 'clear') {
             var cr = rects.get(p.target);
             if (cr) { var cg = petGoal(cr); p.x = cg.x; p.y = cg.y; }
-            if (p.t > 0.6 && p.t < 1.25 && Math.random() < dt * 12) particle('✦', 'leaf-bit');
-            if (p.t > 0.85 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
-            if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
+            // 0-.3s wind-up (lean back), then the blower fires with a kick.
+            if (p.t > 0.5 && p.t < 1.15 && Math.random() < dt * 12) particle('✦', 'leaf-bit');
+            if (p.t > 0.75 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
+            if (p.t > 1.5) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
           } else if (p.state === 'wait') {
             var wr = rects.get(p.target);
             if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
@@ -1059,11 +1108,27 @@
             var follow = 1 - Math.exp(-dt * 24);
             p.x += (p.dragX - p.x) * follow;
             p.y += (p.dragY - p.y) * follow;
+            // Holding still means no throw: the release velocity dies away.
+            p.vx *= Math.exp(-dt * 9); p.vy *= Math.exp(-dt * 9);
           } else if (p.state === 'toss') {
+            p.vy += GRAVITY * dt;
+            p.x += p.vx * dt; p.y += p.vy * dt;
+            p.vx *= Math.exp(-dt * 1.2);
+            if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx) * .4; }
+            else if (p.x > W - PET_W) { p.x = W - PET_W; p.vx = -Math.abs(p.vx) * .4; }
+            if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy) * .3; }
+            if (p.y >= hy) {
+              var impact = p.vy;
+              p.y = hy; p.tilt = 0; p.tiltV = 0;
+              if (impact > 380 && p.bounces < 1) { p.vy = -impact * .28; p.bounces++; react('landing', 380); }
+              else { p.vy = 0; p.state = 'recover'; p.t = 0; if (impact > 120) react('landing', 380); }
+            }
+          } else if (p.state === 'recover') {
+            // A beat to find his feet (and slide to a stop) before he walks home.
             p.x = Math.max(0, Math.min(W - PET_W, p.x + p.vx * dt));
-            p.y = Math.max(0, Math.min(hy, p.y + p.vy * dt));
-            p.vx *= Math.exp(-dt * 8); p.vy *= Math.exp(-dt * 8);
-            if (p.t > .45) { p.state = 'home'; p.t = 0; }
+            p.vx *= Math.exp(-dt * 14);
+            p.y = hy;
+            if (p.t > .2) { p.state = 'home'; p.t = 0; }
           } else if (p.state === 'home') {
             if (moveToward(4, hy, dt, 380)) {
               p.state = 'idle'; p.cooldown = 5; p.face = 1;
@@ -1073,33 +1138,54 @@
           var walking = p.state === 'walk' || p.state === 'home';
           if (walking && !wasWalking) p.stride = 0;
           wasWalking = walking;
-          // Ease the pick-up tilt/scale in and out instead of snapping when Chris is grabbed or let go.
+          // While held or thrown he is a pendulum hanging from the grab point: the angle is an
+          // underdamped spring chasing "trailing behind the motion", so he swings and settles.
           var grabbing = p.state === 'drag' || p.state === 'toss';
           p.grab += ((grabbing ? 1 : 0) - p.grab) * (1 - Math.exp(-dt * 16));
-          if (p.state === 'drag') p.vx *= Math.exp(-dt * 9);
+          p.mvx += (dt > 0 ? (p.x - prevX) / dt - p.mvx : 0) * (1 - Math.exp(-dt * 22));
+          var tiltTarget = grabbing ? Math.max(-16, Math.min(16, p.mvx / 40)) * p.face : 0;
+          p.tiltV += (-170 * (p.tilt - tiltTarget) - 13 * p.tiltV) * dt;
+          p.tilt += p.tiltV * dt;
           if (p.grab > .001 || grabOn) {
             grabOn = p.grab > .001;
-            wrap.style.setProperty('--drag-tilt', (Math.max(-9, Math.min(9, p.vx / 45)) * p.grab).toFixed(2) + 'deg');
+            wrap.style.setProperty('--drag-tilt', (p.tilt * p.grab).toFixed(2) + 'deg');
             wrap.style.setProperty('--drag-scale', (1 + .04 * p.grab).toFixed(3));
           }
-          wrap.classList.toggle('walking', walking);
-          wrap.classList.toggle('clearing', p.state === 'clear' && p.t > 0.4);
+          // The shadow stays on the ground and shrinks as he rises.
+          if (grabbing) {
+            var air = Math.max(0, hy - p.y), sh = Math.max(.35, 1 - air / 420);
+            wrap.style.setProperty('--air', air.toFixed(1) + 'px');
+            wrap.style.setProperty('--shadow-s', sh.toFixed(2));
+            wrap.style.setProperty('--shadow-o', (.25 + .75 * sh).toFixed(2));
+            shadowOn = true;
+          } else if (shadowOn) {
+            wrap.style.removeProperty('--air'); wrap.style.removeProperty('--shadow-s'); wrap.style.removeProperty('--shadow-o');
+            shadowOn = false;
+          }
+          // Lean into a start, rock back when braking. Decays after he stops so the class can drop.
+          var leanTarget = walking && !reduceMotion
+            ? 1.5 * Math.min(1, p.speed / 260) + 2 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
+          p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
+          if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
+          wrap.classList.toggle('walking', walking || Math.abs(p.lean) > .04);
+          wrap.classList.toggle('windup', p.state === 'clear' && p.t < 0.3);
+          wrap.classList.toggle('clearing', p.state === 'clear' && p.t >= 0.3);
           wrap.classList.toggle('doze', p.state === 'doze');
-          wrap.classList.toggle('dragging', p.state === 'drag');
           wrap.classList.toggle('grabbed', p.grab > .02);
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
           var pose = 0, bob = 0;
-          if (walking && p.speed > 24) {
+          if (walking && p.speed > WALK_MIN) {
             // Stride phase: stride/STRIDE = steps taken. Odd/even steps alternate the two walk
             // poses, and the body dips on the wide contact pose and rises on the passing pose.
             var cyc = p.stride / STRIDE;
             pose = Math.floor(cyc) % 2 ? 2 : 1;
             if (!reduceMotion) bob = Math.round(BOB * Math.min(1, p.speed / 140) * (.5 - .5 * Math.cos(Math.PI * (cyc - .5))));
           }
-          else if (p.state === 'clear' && p.t > .4) pose = 3;
+          else if (p.state === 'drag' || p.state === 'toss') pose = 4;
+          else if (p.state === 'clear' && p.t >= .3) pose = 3;
           else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = 4;
           if (bob !== lastBob) { wrap.style.setProperty('--bob', -bob + 'px'); lastBob = bob; }
           if (pose !== displayedFrame) {
