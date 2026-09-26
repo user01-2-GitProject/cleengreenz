@@ -159,10 +159,11 @@
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
-  /* 8-bit sprite sheet: media/pet-chris.png, eleven 52x50 frames in one row, drawn at 2x.
-     Frames: 0 idle, 1-2 walk, 3 leaf blower, 4 cap doff, 5 blink, and 6-10 for
-     pet/pet-extras.js (6 look left, 7 look right, 8 cheer, 9 stretch, 10 doze).
-     The sheet is 572x50, so the whole row is 1144x100 on screen. Keep this width
+  /* 8-bit sprite sheet: media/pet-chris.png, twelve 52x50 frames in one row, drawn at 2x.
+     Frames: 0 idle, 1-2 walk (contact/passing), 3 leaf blower, 4 cap doff, 5 blink,
+     6-10 for pet/pet-extras.js (6 look left, 7 look right, 8 cheer, 9 stretch, 10 doze),
+     11 walk (opposite contact). Walking cycles 1,2,11,2 for a real gait.
+     The sheet is 624x50, so the whole row is 1248x100 on screen. Keep this width
      in step with pet/make-frames.py, which draws the sheet. */
   .pet-body, .pet-inner { width: 100%; height: 100%; }
   .pet-wrap.face-left .pet-body { transform: scaleX(-1); }
@@ -170,7 +171,7 @@
   .pet-wrap.walking .pet-inner { animation: none; }
   .pet-wrap.blowing .pet-inner { animation: pet-shake .1s steps(2, end) infinite; }
   .pet-sprite {
-    width: 104px; height: 100px; background: url("media/pet-chris.png") 0 0 / 1144px 100px no-repeat;
+    width: 104px; height: 100px; background: url("media/pet-chris.png") 0 0 / 1248px 100px no-repeat;
     image-rendering: pixelated; image-rendering: crisp-edges;
   }
   @keyframes pet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
@@ -180,6 +181,15 @@
     pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
     font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
     box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
+    opacity: 0; visibility: hidden; transform: translateY(4px) scale(.96);
+    transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
+  }
+  .pet-bubble.is-visible {
+    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
+    transition: opacity .16s ease, transform .16s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pet-bubble, .pet-bubble.is-visible { transition: opacity .01s linear; transform: none; }
   }
   .pet-bubble::after {
     content: ""; position: absolute; top: 100%; left: 26px; border: 8px solid transparent; border-top-color: var(--paper);
@@ -771,8 +781,10 @@
 
       // Pet
       var PET_W = 104, PET_H = 100, FRAME_W = 104;
+      // Contact, passing, opposite contact, passing - a real walk cycle instead of a 2-frame flip.
+      var WALK_CYCLE = [1, 2, 11, 2];
       var wrap = null, pet = null, bubble = null;
-      var p = { x: 16, y: H, state: 'idle', t: 0, cooldown: 3, target: null, face: 1, wave: 0 };
+      var p = { x: 16, y: H, state: 'idle', t: 0, cooldown: 3, target: null, face: 1, wave: 0, speed: 0 };
       var sprite = null;
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
@@ -786,7 +798,7 @@
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
         wrap.innerHTML =
-          '<div class="pet-bubble" role="status" hidden></div>' +
+          '<div class="pet-bubble" role="status"></div>' +
           '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
           '<div class="pet-body"><div class="pet-inner"><div class="pet-sprite"></div></div></div></button>';
         document.body.appendChild(wrap);
@@ -800,7 +812,7 @@
           p.wave = 1.2;
         });
         bubble.addEventListener('click', function (e) {
-          if (e.target.closest('[data-pet-go]')) { bubble.hidden = true; }
+          if (e.target.closest('[data-pet-go]')) { bubble.classList.remove('is-visible'); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
             wrap.remove();
@@ -816,18 +828,22 @@
       function say(html, ms) {
         if (!bubble) return;
         bubble.innerHTML = html;
-        bubble.hidden = false;
+        bubble.classList.add('is-visible');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(function () { bubble.hidden = true; }, ms);
+        if (ms) bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, speed) {
         var dx = gx - p.x, dy = gy - p.y, d = Math.sqrt(dx * dx + dy * dy);
         if (Math.abs(dx) > 2) p.face = dx > 0 ? 1 : -1;
-        if (d < 2) { p.x = gx; p.y = gy; return true; }
-        // Ease out as Chris nears the goal, so arrivals settle instead of snapping to a halt.
-        var eased = Math.max(speed * Math.min(1, d / 70), speed * 0.16);
-        var step = Math.min(d, eased * dt);
+        if (d < 2) { p.x = gx; p.y = gy; p.speed = 0; return true; }
+        // Smoothly chase a distance-based target speed: this eases in from a
+        // standstill (p.speed starts/settles near 0) and eases out approaching
+        // the goal (target shrinks under 70px out), instead of constant speed
+        // with an abrupt stop.
+        var target = Math.max(speed * Math.min(1, d / 70), speed * 0.16);
+        p.speed += (target - p.speed) * Math.min(1, dt * 6);
+        var step = Math.min(d, p.speed * dt);
         p.x += dx / d * step; p.y += dy / d * step;
         return false;
       }
@@ -936,7 +952,7 @@
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
           var f = 0, walking = p.state === 'walk' || p.state === 'home';
           if (p.wave > 0) p.wave -= dt;
-          if (walking && !reduceMotion) f = Math.floor(now / 140) % 2 ? 1 : 2;
+          if (walking && !reduceMotion) f = WALK_CYCLE[Math.floor(now / 110) % WALK_CYCLE.length];
           else if (p.state === 'clear' && p.t > 0.4) f = 3;
           else if (p.wave > 0) f = 4;
           else if (!reduceMotion && now % 4300 < 150) f = 5;
