@@ -778,10 +778,14 @@
       try { hidePet = localStorage.getItem('cg-hide-pet') === '1'; } catch (e) {}
 
       var W = window.innerWidth, H = window.innerHeight;
+      var rectsDirty = true;
+      function updateRects() { rectsDirty = true; }
       window.addEventListener('resize', function () {
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
+        updateRects();
       });
+      window.addEventListener('scroll', updateRects, { passive: true });
       var mobileBar = document.querySelector('.mobile-bar');
       var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
       var piles = new Map();
@@ -1033,10 +1037,14 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
-        catchers.forEach(function (el) {
-          var r = el.getBoundingClientRect();
-          rects.set(el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
-        });
+        // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
+        if (rectsDirty) {
+          catchers.forEach(function (el) {
+            var r = el.getBoundingClientRect();
+            rects.set(el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+          });
+          rectsDirty = false;
+        }
 
         // Leaves
         for (var i = 0; i < leaves.length; i++) {
