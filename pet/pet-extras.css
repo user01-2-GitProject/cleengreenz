@@ -1,8 +1,8 @@
 /* Pet Chris extras: idle fidgets, dozing and a lead cheer.
-   Layers on top of the pet in index.html; pet-extras.js picks the frames.
-   media/pet-chris.png now has 11 frames (the 6 originals, then 6 look left,
-   7 look right, 8 cheer, 9 stretch, 10 doze), so the sheet is 11 x 104px. */
-.pet-sprite { background-size: 1144px 100px; }
+   Layers on top of the pet in index.html; pet-extras.js picks the frames
+   (6 look left, 7 look right, 8 cheer, 9 stretch, 10 doze). The sprite sheet's
+   size lives with the rest of the pet's CSS in index.html, so a stale copy of
+   this file can't leave the sheet drawn at the wrong width. */
 
 .pet-wrap.x-hop .pet-sprite { animation: px-hop .5s steps(4, end); }
 .pet-wrap.x-cheer .pet-sprite { animation: px-hop .5s steps(4, end) 2; }

@@ -159,15 +159,18 @@
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
-  /* 8-bit sprite sheet: media/pet-chris.png, six 52x50 frames in one row, drawn at 2x.
-     Frames: 0 idle, 1-2 walk, 3 leaf blower, 4 cap tip, 5 blink. */
+  /* 8-bit sprite sheet: media/pet-chris.png, eleven 52x50 frames in one row, drawn at 2x.
+     Frames: 0 idle, 1-2 walk, 3 leaf blower, 4 cap doff, 5 blink, and 6-10 for
+     pet/pet-extras.js (6 look left, 7 look right, 8 cheer, 9 stretch, 10 doze).
+     The sheet is 572x50, so the whole row is 1144x100 on screen. Keep this width
+     in step with pet/make-frames.py, which draws the sheet. */
   .pet-body, .pet-inner { width: 100%; height: 100%; }
   .pet-wrap.face-left .pet-body { transform: scaleX(-1); }
   .pet-inner { animation: pet-bob 1.8s steps(2, end) infinite; }
   .pet-wrap.walking .pet-inner { animation: none; }
   .pet-wrap.blowing .pet-inner { animation: pet-shake .1s steps(2, end) infinite; }
   .pet-sprite {
-    width: 104px; height: 100px; background: url("media/pet-chris.png") 0 0 / 624px 100px no-repeat;
+    width: 104px; height: 100px; background: url("media/pet-chris.png") 0 0 / 1144px 100px no-repeat;
     image-rendering: pixelated; image-rendering: crisp-edges;
   }
   @keyframes pet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
