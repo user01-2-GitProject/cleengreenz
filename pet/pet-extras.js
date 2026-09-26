@@ -138,14 +138,15 @@
 
   // Celebrate new leads coming in.
   document.addEventListener('cg:lead', function (e) {
+    var type = e.detail && e.detail.lead_type;
+    if (type !== 'form' && type !== 'call' && type !== 'email') return;
     if (!setup()) return;
     if (sleeping) unsleep();
-    var type = e.detail && e.detail.lead_type;
     if (type === 'form') {
       play([[F.cheer, 1600, 'x-cheer']]);
       confetti();
       setTimeout(function () { say('Woohoo! Chris will call you soon.', 4000); }, 50);
-    } else {
+    } else if (type === 'call' || type === 'email') {
       play([[F.cheer, 900, 'x-hop']]);
       setTimeout(function () { say('Talk soon!', 2500); }, 50);
     }
