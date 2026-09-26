@@ -176,7 +176,7 @@
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses.png") 0 0 / 960px 200px no-repeat;
+    background: url("media/pet-chris-poses-v2.png") 0 0 / 2112px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
   /* Walking is driven from JS: pose, --bob and --lean follow distance and speed, so feet never
      slide and Chris leans into a start and rocks back on a stop. */
@@ -186,7 +186,7 @@
     transform: rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1)); }
   .pet-wrap.reacting .pet-inner { animation: pet-wave .66s both; }
   .pet-wrap.cheering .pet-inner { animation: pet-cheer .76s both; }
-  .pet-wrap.windup .pet-inner { animation: pet-windup .3s ease-out both; }
+  .pet-wrap.windup .pet-inner { animation: pet-windup .26s ease-out both; }
   .pet-wrap.clearing .pet-inner { animation: pet-kick .26s cubic-bezier(.2, .9, .3, 1) both, pet-work .09s ease-in-out .26s infinite alternate; }
   .pet-wrap.landing .pet-inner { animation: pet-land .36s both; transform-origin: 50% 91%; }
   .pet-wrap.doze .pet-inner { animation: pet-doze 3.4s ease-in-out infinite; }
@@ -208,8 +208,9 @@
     80% { transform: translateY(-4px) rotate(-2deg) scale(.99,1.01); animation-timing-function: ease-in-out; }
     100% { transform: none; } }
   @keyframes pet-shadow-cheer { 0%,100% { transform: scale(1); opacity: 1; } 40% { transform: scale(.65); opacity: .45; } 62% { transform: scale(1.05); opacity: 1; } }
-  /* Blower: lean back, kick forward as it fires, then a fine constant shudder. */
-  @keyframes pet-windup { from { transform: none; } to { transform: rotate(-3.5deg) scale(1.03,.95); } }
+  /* Blower: the pickup pose supplies the reach; this is just a small settle, then a kick as it fires,
+     then a fine constant shudder. */
+  @keyframes pet-windup { from { transform: none; } to { transform: rotate(-2deg) scale(1.02,.97); } }
   @keyframes pet-kick { 0% { transform: rotate(-3.5deg) scale(1.03,.95); } 40% { transform: rotate(3deg) translateX(2px) scale(.98,1.03); } 100% { transform: none; } }
   @keyframes pet-work { from { transform: translateX(-.6px) rotate(-.4deg); } to { transform: translateX(.6px) rotate(.4deg); } }
   @keyframes pet-land {
@@ -842,8 +843,15 @@
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0,
         acc: 0, lean: 0, tilt: 0, tiltV: 0, mvx: 0, bounces: 0 };
-      // One walk pose per STRIDE px travelled, so the cadence follows Chris's real speed.
-      var STRIDE = 44, BOB = 3, wasWalking = false, lastBob = 0, lastLean = 0, grabOn = false, shadowOn = false;
+      // One gait cycle is two steps. STRIDE is the measured step length of the walk art (boots are
+      // ~54px apart at contact A and ~71px at contact B), so the planted foot stays put on the ground.
+      var STRIDE = 62, BOB = 3, wasWalking = false, lastBob = 0, lastLean = 0, grabOn = false, shadowOn = false;
+      // Pose index into media/pet-chris-poses-v2.png. The order is set in pet/build-sheet.py.
+      var POSE = { idle: 0, push: 1, contactA: 2, passA: 3, contactB: 4, passB: 5, notice: 6,
+        pickup: 7, level: 8, lower: 9, wave: 10 };
+      // [end of phase, pose]: both-feet-down contact poses hold longer than the passing poses.
+      var GAIT = [[.286, POSE.contactA], [.5, POSE.passA], [.786, POSE.contactB], [1, POSE.passB]];
+      var lastWalkPose = -1, lastWalkAt = 0;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and the speed
       // below which the stride poses give way to standing (feet planted, no sliding legs).
       var ACCEL = 620, DECEL = 760, WALK_MIN = 55, GRAVITY = 2400;
@@ -957,6 +965,8 @@
         el.textContent = text;
         el.setAttribute('aria-hidden', 'true');
         el.style.left = cls === 'leaf-bit' ? (p.face > 0 ? '132px' : '-40px') : rnd(30, 75) + '%';
+        // The nozzle sits lower in the "lower" blower pose (tip at y=139 vs 115 when level).
+        if (cls === 'leaf-bit') el.style.top = (displayedFrame === POSE.lower ? 131 : 107) + 'px';
         el.style.setProperty('--dx', (cls === 'leaf-bit' ? p.face * rnd(30, 75) : rnd(-45, 45)) + 'px');
         el.style.setProperty('--dy', (cls === 'leaf-bit' ? rnd(-15, 15) : rnd(-65, -30)) + 'px');
         wrap.appendChild(el);
@@ -1077,12 +1087,15 @@
             if (p.cooldown <= 0 && !reduceMotion) {
               for (var k = 0; k < catchers.length; k++) {
                 if (piles.get(catchers[k]).length >= 3 && visible(rects.get(catchers[k]))) {
-                  p.target = catchers[k]; p.state = 'walk'; p.t = 0;
+                  p.target = catchers[k]; p.state = 'notice'; p.t = 0;
                   wake();
                   break;
                 }
               }
             }
+          } else if (p.state === 'notice') {
+            // A beat to spot the pile (looking toward it), then he sets off.
+            if (p.t > .15) { p.state = 'walk'; p.t = 0; }
           } else if (p.state === 'walk') {
             var tr = rects.get(p.target);
             if (!visible(tr)) { p.state = 'home'; }
@@ -1096,10 +1109,12 @@
           } else if (p.state === 'clear') {
             var cr = rects.get(p.target);
             if (cr) { var cg = petGoal(cr); p.x = cg.x; p.y = cg.y; }
-            // 0-.3s wind-up (lean back), then the blower fires with a kick.
-            if (p.t > 0.5 && p.t < 1.15 && Math.random() < dt * 12) particle('✦', 'leaf-bit');
-            if (p.t > 0.75 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
-            if (p.t > 1.5) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
+            // Timeline: 0-.1 finish the last step, .1-.26 pick up the blower, .26-.37 level it and
+            // kick, then it runs (nozzle wobbles level/lower) until the scatter at .85-1.15, when it
+            // holds low; back to level for the last beat. Leaf bits leave from the nozzle.
+            if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 12) particle('✦', 'leaf-bit');
+            if (p.t > 0.85 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
+            if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
           } else if (p.state === 'wait') {
             var wr = rects.get(p.target);
             if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
@@ -1164,29 +1179,48 @@
           }
           // Lean into a start, rock back when braking. Decays after he stops so the class can drop.
           var leanTarget = walking && !reduceMotion
-            ? 1.5 * Math.min(1, p.speed / 260) + 2 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
+            ? 1 * Math.min(1, p.speed / 260) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
           p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
           if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
           wrap.classList.toggle('walking', walking || Math.abs(p.lean) > .04);
-          wrap.classList.toggle('windup', p.state === 'clear' && p.t < 0.3);
-          wrap.classList.toggle('clearing', p.state === 'clear' && p.t >= 0.3);
+          wrap.classList.toggle('windup', p.state === 'clear' && p.t < 0.26);
+          wrap.classList.toggle('clearing', p.state === 'clear' && p.t >= 0.26);
           wrap.classList.toggle('doze', p.state === 'doze');
           wrap.classList.toggle('grabbed', p.grab > .02);
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
-          var pose = 0, bob = 0;
-          if (walking && p.speed > WALK_MIN) {
-            // Stride phase: stride/STRIDE = steps taken. Odd/even steps alternate the two walk
-            // poses, and the body dips on the wide contact pose and rises on the passing pose.
-            var cyc = p.stride / STRIDE;
-            pose = Math.floor(cyc) % 2 ? 2 : 1;
-            if (!reduceMotion) bob = Math.round(BOB * Math.min(1, p.speed / 140) * (.5 - .5 * Math.cos(Math.PI * (cyc - .5))));
+          var pose = POSE.idle, bob = 0, settle = -1;
+          var walkFast = walking && p.speed > WALK_MIN;
+          if (walkFast) {
+            // Four-phase gait driven by distance travelled: contact, passing, opposite contact,
+            // opposite passing. The body dips on the contact poses and rises through the passing
+            // ones, two bounces per cycle. (The art itself has no vertical bob.)
+            var ph = (p.stride / (2 * STRIDE)) % 1, gi = 0;
+            while (gi < GAIT.length - 1 && ph >= GAIT[gi][0]) gi++;
+            pose = GAIT[gi][1]; lastWalkPose = pose; lastWalkAt = now;
+            if (!reduceMotion) bob = Math.round(BOB * Math.min(1, p.speed / 140) * (.5 + .5 * Math.cos(4 * Math.PI * (ph - .39))));
+          } else if (lastWalkPose === POSE.contactA || lastWalkPose === POSE.contactB) {
+            // Stopped on a contact pose: finish the step through the passing pose, not a foot snap.
+            if (now - lastWalkAt < 110) settle = lastWalkPose + 1; else lastWalkPose = -1;
+          } else lastWalkPose = -1;
+          if (walkFast) { /* pose chosen above */ }
+          else if (walking && p.acc >= 0) pose = POSE.push;   // pushing off from a standstill (not braking)
+          else if (p.state === 'drag' || p.state === 'toss') pose = POSE.wave;
+          else if (p.state === 'notice') pose = POSE.notice;
+          else if (p.state === 'clear') {
+            var ct = p.t;
+            if (ct < .1) pose = settle >= 0 ? settle : POSE.idle;
+            else if (ct < .26) pose = POSE.pickup;
+            else if (ct < .37) pose = POSE.level;
+            else if (ct < .85) pose = Math.floor((ct - .37) / .12) % 2 ? POSE.lower : POSE.level;
+            else if (ct < 1.15) pose = POSE.lower;
+            else pose = POSE.level;
           }
-          else if (p.state === 'drag' || p.state === 'toss') pose = 4;
-          else if (p.state === 'clear' && p.t >= .3) pose = 3;
-          else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = 4;
+          else if (p.state === 'wait' && p.t < .11) pose = POSE.level;
+          else if (settle >= 0) pose = settle;
+          else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = POSE.wave;
           if (bob !== lastBob) { wrap.style.setProperty('--bob', -bob + 'px'); lastBob = bob; }
           if (pose !== displayedFrame) {
             sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
