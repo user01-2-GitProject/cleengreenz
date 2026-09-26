@@ -69,6 +69,7 @@
   }
   .btn:hover { transform: translateY(-2px) rotate(-1deg); }
   .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
   .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 3px solid var(--gold); outline-offset: 3px;
   }
@@ -368,6 +369,7 @@
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   label { font-weight: 700; font-size: .95rem; }
   label .opt { font-weight: 400; color: var(--bark-soft); }
+  label .req { color: var(--pumpkin-2); margin-left: 2px; }
   input, select, textarea {
     font: inherit; font-size: 1rem; color: var(--bark); background: var(--cream); border: 2px solid var(--cream-2);
     border-radius: 14px; padding: 12px 14px; width: 100%;
@@ -655,10 +657,10 @@
           <h3>Request a free estimate</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
-            <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required></div>
-            <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required></div>
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true"></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true"></div>
           </div>
-          <div class="field"><label for="f-address">Street address</label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles"></div>
+          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"></div>
           <div class="field">
             <label for="f-service">What do you need?</label>
             <select id="f-service" name="service">
@@ -707,7 +709,7 @@
         <ul>
           <li><a href="tel:+12693628286" data-lead="call" data-lead-location="footer">(269) 362-8286</a></li>
           <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="footer">chris@cleengreenz.com</a></li>
-          <li><a href="https://www.instagram.com/cglawncare_niles/" target="_blank" rel="noopener noreferrer">Instagram @cglawncare_niles</a></li>
+          <li><a href="https://www.instagram.com/cglawncare_niles/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @cglawncare_niles (opens in a new tab)">Instagram @cglawncare_niles</a></li>
           <li>Niles, Michigan 49120</li>
         </ul>
       </div>
