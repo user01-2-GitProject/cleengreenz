@@ -145,15 +145,50 @@
     .badge span { font-size: 1.5rem; }
   }
 
-  /* Falling leaves */
-  .leaves { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-  .leaves svg { position: absolute; top: -40px; width: 26px; height: 26px; opacity: .85; animation: fall linear infinite; }
+  /* Falling leaves (drawn by script across the whole viewport) */
   .hero .wrap { position: relative; z-index: 1; }
-  @keyframes fall {
-    0% { transform: translate3d(0, -40px, 0) rotate(0deg); }
-    50% { transform: translate3d(40px, 50vh, 0) rotate(180deg); }
-    100% { transform: translate3d(-20px, 105vh, 0) rotate(360deg); }
+  .leaf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
+  .leaf { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  .leaf svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+
+  /* Pet Chris */
+  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; }
+  .pet {
+    pointer-events: auto; display: block; width: 64px; height: 85px; padding: 0; border: 0; background: none;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
+  .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; border-radius: 12px; }
+  .pet svg { width: 100%; height: 100%; overflow: visible; }
+  .pet-body { transition: transform .15s ease; }
+  .pet-wrap.face-left .pet-body { transform: translateX(56px) scaleX(-1); }
+  .pet-inner { animation: pet-bob 1.8s ease-in-out infinite; }
+  .pet-wrap.walking .pet-inner { animation: pet-bob .36s ease-in-out infinite; }
+  .pet .leg { transform-box: fill-box; transform-origin: 50% 0; }
+  .pet-wrap.walking .leg-l { animation: pet-step .36s ease-in-out infinite alternate; }
+  .pet-wrap.walking .leg-r { animation: pet-step .36s ease-in-out infinite alternate-reverse; }
+  .pet .eyes { transform-box: fill-box; transform-origin: center; animation: pet-blink 4.5s infinite; }
+  .pet .air { opacity: 0; }
+  .pet-wrap.blowing .blower { animation: pet-shake .07s linear infinite; }
+  .pet-wrap.blowing .air { animation: pet-air .3s linear infinite; }
+  .pet:hover .pet-inner { animation-duration: .5s; }
+  @keyframes pet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  @keyframes pet-step { from { transform: rotate(-22deg); } to { transform: rotate(22deg); } }
+  @keyframes pet-blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+  @keyframes pet-shake { 0% { transform: translate(0, 0); } 50% { transform: translate(.8px, -.6px); } 100% { transform: translate(-.6px, .5px); } }
+  @keyframes pet-air { from { opacity: .9; transform: translateX(0); } to { opacity: 0; transform: translateX(8px); } }
+  .pet-bubble {
+    position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
+    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
+    font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
+    box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
+  }
+  .pet-bubble::after {
+    content: ""; position: absolute; top: 100%; left: 26px; border: 8px solid transparent; border-top-color: var(--paper);
+  }
+  .pet-wrap.bubble-left .pet-bubble { left: auto; right: -6px; }
+  .pet-wrap.bubble-left .pet-bubble::after { left: auto; right: 26px; }
+  .pet-bubble a { color: var(--pumpkin-2); }
+  .pet-bubble button { font: inherit; color: var(--pumpkin-2); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 
   /* Wavy grass dividers */
   .grass { display: block; width: 100%; height: 70px; margin-bottom: -1px; }
@@ -314,7 +349,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .leaves { display: none; }
     .reveal { opacity: 1; transform: none; transition: none; }
     .btn:hover, .service:hover { transform: none; }
   }
@@ -346,7 +380,6 @@
 
   <!-- Hero -->
   <section class="hero" id="top">
-    <div class="leaves" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div>
         <div class="eyebrow">Niles, MI · Since 2009</div>
@@ -691,25 +724,255 @@
       }
     });
 
-    // A few falling leaves in the hero.
-    if (!reduceMotion) {
-      var box = document.querySelector('.leaves');
-      var colors = ['#e2702a', '#f2b134', '#b8431e', '#c95b18', '#d99a2b'];
-      var leaf = '<path d="M12 2c4 3 7 7 7 11a7 7 0 0 1-14 0c0-4 3-8 7-11Z"/><path d="M12 6v16" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/>';
-      var count = window.innerWidth < 700 ? 6 : 12;
-      for (var i = 0; i < count; i++) {
-        var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        s.setAttribute('viewBox', '0 0 24 24');
-        s.setAttribute('fill', colors[i % colors.length]);
-        s.innerHTML = leaf;
-        s.style.left = (Math.random() * 100) + '%';
-        s.style.animationDuration = (9 + Math.random() * 9) + 's';
-        s.style.animationDelay = (-Math.random() * 18) + 's';
-        var size = 16 + Math.random() * 16;
-        s.style.width = s.style.height = size + 'px';
-        box.appendChild(s);
+    // Falling leaves that pile up on buttons, and pet Chris who clears them.
+    (function () {
+      var hidePet = false;
+      try { hidePet = localStorage.getItem('cg-hide-pet') === '1'; } catch (e) {}
+
+      var W = window.innerWidth, H = window.innerHeight;
+      window.addEventListener('resize', function () { W = window.innerWidth; H = window.innerHeight; });
+      var mobileBar = document.querySelector('.mobile-bar');
+      var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
+      var piles = new Map();
+      catchers.forEach(function (el) { piles.set(el, []); });
+      var rects = new Map();
+      var MAX_PILE = 7;
+      function rnd(a, b) { return a + Math.random() * (b - a); }
+
+      // Leaves
+      var leaves = [];
+      var layer = null;
+      if (!reduceMotion) {
+        layer = document.createElement('div');
+        layer.className = 'leaf-layer';
+        layer.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(layer);
+        var colors = ['#e2702a', '#f2b134', '#b8431e', '#c95b18', '#d99a2b', '#a8551f'];
+        var shape = '<svg viewBox="0 0 24 24"><path d="M12 2c4 3 7 7 7 11a7 7 0 0 1-14 0c0-4 3-8 7-11Z"/><path d="M12 6v16" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/></svg>';
+        var count = W < 700 ? 16 : 30;
+        for (var i = 0; i < count; i++) {
+          var el = document.createElement('div');
+          el.className = 'leaf';
+          el.innerHTML = shape;
+          el.style.color = colors[i % colors.length];
+          var size = rnd(14, 28);
+          el.style.width = el.style.height = size + 'px';
+          layer.appendChild(el);
+          var l = { el: el, size: size };
+          resetLeaf(l, true);
+          leaves.push(l);
+        }
       }
-    }
+      function resetLeaf(l, anywhere) {
+        l.state = 'fall';
+        l.bx = rnd(0, W);
+        l.y = anywhere ? rnd(-H * 0.3, H) : rnd(-120, -30);
+        l.vy = rnd(38, 80);
+        l.phase = rnd(0, 6.28);
+        l.sway = rnd(12, 34);
+        l.rot = rnd(0, 360);
+        l.spin = rnd(-90, 90);
+        l.sticky = Math.random() < 0.6;
+        l.opacity = 1;
+        l.el.style.opacity = 1;
+        l.host = null;
+      }
+      function blowPile(host, dir) {
+        var pile = piles.get(host);
+        pile.forEach(function (l) {
+          l.state = 'blown';
+          l.x = rects.get(host).left + l.ox - l.size / 2;
+          l.y = rects.get(host).top - l.size * 0.75 - l.lift;
+          l.vx = dir * rnd(140, 360);
+          l.vy = -rnd(90, 240);
+          l.spin = rnd(-540, 540);
+        });
+        piles.set(host, []);
+      }
+
+      // Pet
+      var PET_W = 64, PET_H = 85;
+      var wrap = null, pet = null, bubble = null;
+      var p = { x: 16, y: H, state: 'idle', t: 0, cooldown: 3, target: null, face: 1 };
+      var lines = [
+        'Hi neighbor! I keep the leaves off the buttons around here.',
+        'Snow removal starts at $30 a visit. Just saying.',
+        'Want a free estimate? <a href="#estimate" data-pet-go>Let\'s do it</a>',
+        'Fall is the best time to seed. Your lawn will thank you in spring.',
+        'Getting tired of me? <button type="button" data-pet-hide>Hide me</button>'
+      ];
+      var lineIndex = 0, bubbleTimer = null;
+      if (!hidePet) {
+        wrap = document.createElement('div');
+        wrap.className = 'pet-wrap';
+        wrap.innerHTML =
+          '<div class="pet-bubble" role="status" hidden></div>' +
+          '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
+          '<svg viewBox="0 0 56 74" aria-hidden="true">' +
+            '<ellipse cx="28" cy="71" rx="16" ry="3" fill="rgba(59,47,36,.22)"/>' +
+            '<g class="pet-body"><g class="pet-inner">' +
+              '<g class="leg leg-l"><rect x="20" y="52" width="7" height="14" rx="3" fill="#c9a878"/><ellipse cx="23" cy="67" rx="5.5" ry="3" fill="#5a3b22"/></g>' +
+              '<g class="leg leg-r"><rect x="29" y="52" width="7" height="14" rx="3" fill="#b8966a"/><ellipse cx="33" cy="67" rx="5.5" ry="3" fill="#5a3b22"/></g>' +
+              '<rect x="13" y="38" width="6" height="12" rx="3" fill="#339640"/><circle cx="16" cy="51" r="3" fill="#f2c6a0"/>' +
+              '<rect x="17" y="36" width="22" height="20" rx="7" fill="#3aa64a"/>' +
+              '<text x="28" y="50" font-family="Fredoka, Nunito, sans-serif" font-weight="700" font-size="8" fill="#fff" text-anchor="middle">CG</text>' +
+              '<g class="blower"><rect x="33" y="42" width="12" height="7" rx="3" fill="#e2702a"/><rect x="44" y="44" width="10" height="3" rx="1.5" fill="#3b2f24"/><circle cx="36" cy="45.5" r="2.6" fill="#f2c6a0"/></g>' +
+              '<g class="air" stroke="#8fb58a" stroke-width="1.4" fill="none" stroke-linecap="round"><path d="M56 42q4 2 8 0"/><path d="M57 45.5q5 2 10 0"/><path d="M56 49q4 2 8 0"/></g>' +
+              '<circle cx="28" cy="22" r="13" fill="#f2c6a0"/>' +
+              '<path d="M15 21q0 17 13 17t13-17q-3 6-7 6h-12q-4 0-7-6z" fill="#6b3f22"/>' +
+              '<path d="M24 30q4 2.6 8 0" stroke="#f2c6a0" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+              '<g class="eyes"><ellipse cx="23.5" cy="21" rx="1.6" ry="2" fill="#2a1d14"/><ellipse cx="32.5" cy="21" rx="1.6" ry="2" fill="#2a1d14"/></g>' +
+              '<path d="M15 18q0-13 13-13t13 13z" fill="#2f9a41"/>' +
+              '<path d="M30 16h15q2 0 2 2t-2 1h-15z" fill="#23803a"/>' +
+              '<text x="27" y="15" font-family="Fredoka, Nunito, sans-serif" font-weight="700" font-size="6.5" fill="#fff" text-anchor="middle">CG</text>' +
+            '</g></g>' +
+          '</svg></button>';
+        document.body.appendChild(wrap);
+        pet = wrap.querySelector('.pet');
+        bubble = wrap.querySelector('.pet-bubble');
+        p.y = homeY();
+        pet.addEventListener('click', function () {
+          say(lines[lineIndex % lines.length], 6000);
+          lineIndex++;
+        });
+        bubble.addEventListener('click', function (e) {
+          if (e.target.closest('[data-pet-go]')) { bubble.hidden = true; }
+          if (e.target.closest('[data-pet-hide]')) {
+            try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
+            wrap.remove();
+            wrap = null;
+          }
+        });
+        setTimeout(function () { if (p.state === 'idle') say('Hi neighbor! Tap me anytime.', 4500); }, 2500);
+      }
+      function homeY() {
+        var barH = mobileBar && mobileBar.offsetParent !== null ? mobileBar.offsetHeight : 0;
+        return H - PET_H - 12 - barH;
+      }
+      function say(html, ms) {
+        if (!bubble) return;
+        bubble.innerHTML = html;
+        bubble.hidden = false;
+        clearTimeout(bubbleTimer);
+        if (ms) bubbleTimer = setTimeout(function () { bubble.hidden = true; }, ms);
+      }
+      function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
+      function moveToward(gx, gy, dt, speed) {
+        var dx = gx - p.x, dy = gy - p.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (Math.abs(dx) > 2) p.face = dx > 0 ? 1 : -1;
+        if (d < 4) { p.x = gx; p.y = gy; return true; }
+        var step = Math.min(d, speed * dt);
+        p.x += dx / d * step; p.y += dy / d * step;
+        return false;
+      }
+      function petGoal(r) {
+        var gx = r.left - PET_W + 14, face = 1;
+        if (gx < 8) { gx = r.right - 14; face = -1; }
+        return { x: Math.min(Math.max(gx, 8), W - PET_W - 8), y: r.bottom - PET_H + 4, face: face };
+      }
+
+      var last = performance.now();
+      function frame(now) {
+        var dt = Math.min((now - last) / 1000, 0.05);
+        last = now;
+        catchers.forEach(function (el) {
+          var r = el.getBoundingClientRect();
+          rects.set(el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+        });
+
+        // Leaves
+        for (var i = 0; i < leaves.length; i++) {
+          var l = leaves[i], x, y;
+          if (l.state === 'fall') {
+            l.phase += dt * 1.4;
+            l.y += l.vy * dt;
+            l.rot += l.spin * dt;
+            x = l.bx + Math.sin(l.phase) * l.sway;
+            y = l.y;
+            if (l.sticky && y > 0) {
+              var cx = x + l.size / 2, bottom = y + l.size * 0.8;
+              for (var j = 0; j < catchers.length; j++) {
+                var c = catchers[j], r = rects.get(c), pile = piles.get(c);
+                if (!r || pile.length >= MAX_PILE) continue;
+                if (bottom >= r.top && bottom <= r.top + 10 && cx > r.left + 10 && cx < r.right - 10) {
+                  l.state = 'land';
+                  l.host = c;
+                  l.ox = cx - r.left;
+                  l.lift = pile.length * 2.5 + rnd(0, 2);
+                  l.rot = rnd(-50, 50);
+                  pile.push(l);
+                  break;
+                }
+              }
+            }
+            if (y > H + 40) resetLeaf(l, false);
+          }
+          if (l.state === 'land') {
+            var hr = rects.get(l.host);
+            if (!hr) { l.el.style.opacity = 0; continue; }
+            l.el.style.opacity = 1;
+            x = hr.left + l.ox - l.size / 2;
+            y = hr.top - l.size * 0.75 - l.lift;
+          }
+          if (l.state === 'blown') {
+            l.vy += 260 * dt;
+            l.x += l.vx * dt; l.y += l.vy * dt;
+            l.rot += l.spin * dt;
+            l.opacity -= dt * 0.7;
+            l.el.style.opacity = Math.max(l.opacity, 0);
+            x = l.x; y = l.y;
+            if (l.opacity <= 0 || y > H + 40 || x < -60 || x > W + 60) { resetLeaf(l, false); continue; }
+          }
+          l.el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) rotate(' + l.rot.toFixed(0) + 'deg)';
+        }
+
+        // Pet
+        if (wrap) {
+          var hy = homeY();
+          p.t += dt;
+          if (p.state === 'idle') {
+            p.x = 16; p.y = hy; p.face = 1;
+            p.cooldown -= dt;
+            if (p.cooldown <= 0 && !reduceMotion) {
+              for (var k = 0; k < catchers.length; k++) {
+                if (piles.get(catchers[k]).length >= 3 && visible(rects.get(catchers[k]))) {
+                  p.target = catchers[k]; p.state = 'walk'; p.t = 0;
+                  break;
+                }
+              }
+            }
+          } else if (p.state === 'walk') {
+            var tr = rects.get(p.target);
+            if (!visible(tr)) { p.state = 'home'; }
+            else {
+              var g = petGoal(tr);
+              if (moveToward(g.x, g.y, dt, 260)) {
+                p.face = g.face; p.state = 'clear'; p.t = 0;
+                say(['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'][Math.floor(Math.random() * 3)], 2200);
+              }
+            }
+          } else if (p.state === 'clear') {
+            var cr = rects.get(p.target);
+            if (cr) { var cg = petGoal(cr); p.x = cg.x; p.y = cg.y; }
+            if (p.t > 0.7 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
+            if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
+          } else if (p.state === 'wait') {
+            var wr = rects.get(p.target);
+            if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
+            if (p.t > 1.4) p.state = 'home';
+          } else if (p.state === 'home') {
+            if (moveToward(16, hy, dt, 260)) { p.state = 'idle'; p.cooldown = 5; p.face = 1; }
+          }
+          wrap.classList.toggle('walking', p.state === 'walk' || p.state === 'home');
+          wrap.classList.toggle('blowing', p.state === 'clear' && p.t > 0.4);
+          wrap.classList.toggle('face-left', p.face < 0);
+          wrap.classList.toggle('bubble-left', p.x > W / 2);
+          wrap.style.transform = 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0)';
+        }
+        if (leaves.length || wrap) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
   })();
 </script>
 </body>
