@@ -153,7 +153,7 @@
   .leaf svg { display: block; width: 100%; height: 100%; fill: currentColor; }
 
   /* Pet Chris */
-  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; --pet-w: 84px; --pet-h: 198px; }
+  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
   .pet {
     pointer-events: auto; display: block; position: relative; width: var(--pet-w); height: var(--pet-h);
     padding: 0; border: 0; background: none; cursor: grab; touch-action: none;
@@ -167,8 +167,13 @@
   .pet-body { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 91%; }
   .pet-wrap.face-left .pet-body { scale: -1 1; }
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
-  .pet-sprite { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;
-    pointer-events: none; -webkit-user-drag: none; }
+  /* Five connected limb poses: idle, two opposite strides, blower, wave.
+     The art is larger than the hit area so the blower can extend past Chris. */
+  .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
+    transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
+  .pet-sprite { display: block; width: 192px; height: 200px;
+    background: url("media/pet-chris-poses.png") 0 0 / 960px 200px no-repeat;
+    image-rendering: pixelated; pointer-events: none; }
   .pet-wrap.walking .pet-inner { animation: pet-walk .34s ease-in-out infinite alternate; }
   .pet-wrap.reacting .pet-inner { animation: pet-wave .62s cubic-bezier(.2,.8,.2,1) both; }
   .pet-wrap.cheering .pet-inner { animation: pet-cheer .72s cubic-bezier(.2,.8,.2,1) both; }
@@ -188,7 +193,7 @@
   .pet-particle.leaf-bit { top: 60%; color: var(--pumpkin); }
   @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
     20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
-  @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; } }
+  @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } }
   .pet-bubble {
     position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
     pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
@@ -799,7 +804,7 @@
 
       // Pet
       var PET_W = W < 700 ? 68 : 84, PET_H = W < 700 ? 160 : 198;
-      var wrap = null, pet = null, bubble = null;
+      var wrap = null, pet = null, bubble = null, sprite = null, displayedFrame = -1;
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0 };
       var pointer = null, reactionTimer = null, idleAt = performance.now(), nextFidget = idleAt + rnd(6500, 11000);
@@ -818,10 +823,11 @@
           '<div class="pet-bubble" role="status"></div>' +
           '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
-          '<span class="pet-body"><span class="pet-inner"><img class="pet-sprite" src="media/pet-chris-v2.png" alt="" draggable="false"></span></span></button>';
+          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
+        sprite = wrap.querySelector('.pet-sprite');
         p.y = homeY();
         pet.addEventListener('pointerdown', function (e) {
           if (pointer) return;
@@ -881,7 +887,7 @@
           wake(); react('cheering', 800);
           if (e.detail.lead_type === 'form') say('Woohoo! Chris will call you soon.', 4000);
           else say('Talk soon!', 2500);
-          for (var i = 0; i < 10; i++) particle('✦', 'leaf-bit');
+          for (var i = 0; i < 10; i++) particle('✦');
         });
         setTimeout(function () {
           if (wrap && p.state === 'idle') { say('Hi neighbor! Tap me anytime.', 4500); react('reacting', 650); }
@@ -901,9 +907,9 @@
         el.className = 'pet-particle' + (cls ? ' ' + cls : '');
         el.textContent = text;
         el.setAttribute('aria-hidden', 'true');
-        el.style.left = rnd(30, 75) + '%';
-        el.style.setProperty('--dx', rnd(-45, 45) + 'px');
-        el.style.setProperty('--dy', rnd(-65, -30) + 'px');
+        el.style.left = cls === 'leaf-bit' ? (p.face > 0 ? '132px' : '-40px') : rnd(30, 75) + '%';
+        el.style.setProperty('--dx', (cls === 'leaf-bit' ? p.face * rnd(30, 75) : rnd(-45, 45)) + 'px');
+        el.style.setProperty('--dy', (cls === 'leaf-bit' ? rnd(-15, 15) : rnd(-65, -30)) + 'px');
         wrap.appendChild(el);
         el.addEventListener('animationend', function () { el.remove(); }, { once: true });
         setTimeout(function () { el.remove(); }, 1300);
@@ -1068,6 +1074,14 @@
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           wrap.style.transform = 'translate3d(' + p.x.toFixed(2) + 'px,' + p.y.toFixed(2) + 'px,0)';
+          var pose = 0;
+          if (p.state === 'walk' || p.state === 'home') pose = Math.floor(now / 155) % 2 ? 1 : 2;
+          else if (p.state === 'clear' && p.t > .4) pose = 3;
+          else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = 4;
+          if (pose !== displayedFrame) {
+            sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
+            displayedFrame = pose;
+          }
         }
         if (leaves.length || wrap) requestAnimationFrame(frame);
       }
