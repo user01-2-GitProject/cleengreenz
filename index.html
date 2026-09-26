@@ -167,26 +167,28 @@
   .pet-body { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 91%; }
   .pet-wrap.face-left .pet-body { scale: -1 1; }
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
-  /* Five connected limb poses: idle, two opposite strides, blower, wave.
+  /* Six connected poses: idle, two rightward walk frames, blower, wave, blink.
      The art is larger than the hit area so the blower can extend past Chris. */
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses.png") 0 0 / 960px 200px no-repeat;
+    background: url("media/pet-chris-poses.png") 0 0 / 1152px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
   .pet-wrap.walking .pet-inner { animation: pet-walk .34s ease-in-out infinite alternate; }
   .pet-wrap.reacting .pet-inner { animation: pet-wave .62s cubic-bezier(.2,.8,.2,1) both; }
   .pet-wrap.cheering .pet-inner { animation: pet-cheer .72s cubic-bezier(.2,.8,.2,1) both; }
   .pet-wrap.clearing .pet-inner { animation: pet-work .2s ease-in-out infinite alternate; }
   .pet-wrap.doze .pet-inner { animation: pet-doze 3.4s ease-in-out infinite; }
+  .pet-wrap.idle-shift .pet-inner { animation: pet-shift .95s ease-in-out both; }
   .pet-wrap.dragging .pet-inner { animation: none; transform: rotate(var(--drag-tilt, 0deg)) scale(1.04); }
   .pet-wrap.dragging .pet-shadow, .pet-wrap.cheering .pet-shadow { transform: scale(.65); opacity: .45; }
-  @keyframes pet-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.008,.992); } }
+  @keyframes pet-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.006,1.003); } }
+  @keyframes pet-shift { 0%,100% { transform: none; } 45% { transform: rotate(1.6deg) translateX(2px); } }
   @keyframes pet-walk { from { transform: translateY(0) rotate(-2.5deg) scale(1.02,.98); } to { transform: translateY(-5px) rotate(2.5deg) scale(.99,1.01); } }
   @keyframes pet-wave { 0% { transform: rotate(0) scale(1); } 28% { transform: translateY(-9px) rotate(-7deg) scale(1.06,.96); } 56% { transform: translateY(0) rotate(4deg) scale(.97,1.04); } 78% { transform: translateY(-3px) rotate(-2deg); } 100% { transform: none; } }
   @keyframes pet-cheer { 0%,100% { transform: none; } 35% { transform: translateY(-20px) rotate(-6deg) scale(1.04); } 65% { transform: translateY(-7px) rotate(5deg) scale(.98,1.02); } }
   @keyframes pet-work { from { transform: rotate(-1deg) translateX(-1px); } to { transform: rotate(1deg) translateX(1px); } }
-  @keyframes pet-doze { 0%,100% { transform: rotate(-3deg) translateY(2px) scale(1,.99); } 50% { transform: rotate(-3deg) translateY(4px) scale(1.01,.98); } }
+  @keyframes pet-doze { 0%,100% { transform: rotate(-1.5deg) scale(1); } 50% { transform: rotate(-1.5deg) scale(1.008,.995); } }
   .pet-particle { position: absolute; left: 55%; top: 18%; z-index: 2; pointer-events: none;
     color: var(--forest); font: 800 16px/1 "Fredoka", sans-serif;
     animation: pet-float 1.1s ease-out forwards; }
@@ -209,7 +211,8 @@
   @media (prefers-reduced-motion: reduce) {
     .pet-bubble, .pet-bubble.is-visible { transition: opacity .01s linear; transform: none; }
     .pet-inner, .pet-wrap.walking .pet-inner, .pet-wrap.reacting .pet-inner,
-    .pet-wrap.cheering .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.doze .pet-inner { animation: none; }
+    .pet-wrap.cheering .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.doze .pet-inner,
+    .pet-wrap.idle-shift .pet-inner { animation: none; }
     .pet-particle { display: none; }
   }
   .pet-bubble::after {
@@ -748,7 +751,7 @@
       var piles = new Map();
       catchers.forEach(function (el) { piles.set(el, []); });
       var rects = new Map();
-      var MAX_PILE = 7;
+      var MAX_PILE = 12, CLEAR_AT = 6;
       function rnd(a, b) { return a + Math.random() * (b - a); }
 
       // Leaves
@@ -761,7 +764,7 @@
         document.body.appendChild(layer);
         var colors = ['#e2702a', '#f2b134', '#b8431e', '#c95b18', '#d99a2b', '#a8551f'];
         var shape = '<svg viewBox="0 0 24 24"><path d="M12 2c4 3 7 7 7 11a7 7 0 0 1-14 0c0-4 3-8 7-11Z"/><path d="M12 6v16" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/></svg>';
-        var count = W < 700 ? 16 : 30;
+        var count = W < 700 ? 20 : 36;
         for (var i = 0; i < count; i++) {
           var el = document.createElement('div');
           el.className = 'leaf';
@@ -779,12 +782,12 @@
         l.state = 'fall';
         l.bx = rnd(0, W);
         l.y = anywhere ? rnd(-H * 0.3, H) : rnd(-120, -30);
-        l.vy = rnd(38, 80);
+        l.vy = rnd(48, 88);
         l.phase = rnd(0, 6.28);
         l.sway = rnd(12, 34);
         l.rot = rnd(0, 360);
         l.spin = rnd(-90, 90);
-        l.sticky = Math.random() < 0.6;
+        l.sticky = Math.random() < 0.82;
         l.opacity = 1;
         l.el.style.opacity = 1;
         l.host = null;
@@ -807,7 +810,8 @@
       var wrap = null, pet = null, bubble = null, sprite = null, displayedFrame = -1;
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0 };
-      var pointer = null, reactionTimer = null, idleAt = performance.now(), nextFidget = idleAt + rnd(6500, 11000);
+      var pointer = null, reactionTimer = null, idleAt = performance.now();
+      var nextFidget = idleAt + rnd(11000, 18000), nextBlink = idleAt + rnd(2800, 5800), blinkUntil = 0;
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
         'Snow removal starts at $30 a visit. Just saying.',
@@ -896,7 +900,7 @@
       function react(cls, duration) {
         if (!wrap || reduceMotion) return;
         clearTimeout(reactionTimer);
-        wrap.classList.remove('reacting', 'cheering');
+        wrap.classList.remove('reacting', 'cheering', 'idle-shift');
         void wrap.offsetWidth;
         wrap.classList.add(cls);
         reactionTimer = setTimeout(function () { if (wrap) wrap.classList.remove(cls); }, duration);
@@ -917,7 +921,7 @@
       function wake() {
         idleAt = performance.now();
         if (p.state !== 'doze') return;
-        p.state = 'idle'; nextFidget = idleAt + rnd(5000, 9000);
+        p.state = 'idle'; nextFidget = idleAt + rnd(10000, 16000);
         react('reacting', 650);
       }
       ['pointerdown', 'keydown', 'scroll'].forEach(function (name) {
@@ -954,6 +958,14 @@
         if (gx < 8) { gx = r.right - 30; face = -1; }
         return { x: Math.min(Math.max(gx, 0), W - PET_W), y: r.bottom - PET_H + 2, face: face };
       }
+      function readyPile() {
+        var chosen = null, biggest = CLEAR_AT - 1;
+        catchers.forEach(function (el) {
+          var count = piles.get(el).length;
+          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
+        });
+        return chosen;
+      }
 
       var last = performance.now();
       function frame(now) {
@@ -978,11 +990,13 @@
               for (var j = 0; j < catchers.length; j++) {
                 var c = catchers[j], r = rects.get(c), pile = piles.get(c);
                 if (!r || pile.length >= MAX_PILE) continue;
-                if (bottom >= r.top && bottom <= r.top + 10 && cx > r.left + 10 && cx < r.right - 10) {
+                if (bottom >= r.top && bottom <= r.top + 10 && cx > r.left - 18 && cx < r.right + 18) {
                   l.state = 'land';
                   l.host = c;
-                  l.ox = cx - r.left;
-                  l.lift = pile.length * 2.5 + rnd(0, 2);
+                  // Gather toward the middle and stack in a low mound, not a flat row.
+                  l.ox = Math.max(12, Math.min(r.width - 12,
+                    r.width / 2 + (cx - r.left - r.width / 2) * .62));
+                  l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
                   l.rot = rnd(-50, 50);
                   pile.push(l);
                   break;
@@ -1017,20 +1031,27 @@
           if (p.state === 'idle') {
             p.x = 4; p.y = hy; p.face = 1;
             p.cooldown -= dt;
-            if (!reduceMotion && !document.hidden && now > nextFidget && !bubble.classList.contains('is-visible')) {
-              if (Math.random() < .48) react('reacting', 650);
-              else particle('♪');
-              nextFidget = now + rnd(7000, 13000);
+            if (!reduceMotion && !document.hidden && now > nextBlink) {
+              blinkUntil = now + 105;
+              nextBlink = now + rnd(3200, 7200);
             }
-            if (now - idleAt > 32000) { p.state = 'doze'; p.t = 0; }
+            if (!reduceMotion && !document.hidden && now > nextFidget && !bubble.classList.contains('is-visible')) {
+              react(Math.random() < .22 ? 'reacting' : 'idle-shift', 950);
+              nextFidget = now + rnd(11000, 19000);
+            }
+            if (now - idleAt > 45000) { p.state = 'doze'; p.t = 0; }
             if (p.cooldown <= 0 && !reduceMotion) {
-              for (var k = 0; k < catchers.length; k++) {
-                if (piles.get(catchers[k]).length >= 3 && visible(rects.get(catchers[k]))) {
-                  p.target = catchers[k]; p.state = 'walk'; p.t = 0;
-                  wake();
-                  break;
-                }
+              var ready = readyPile();
+              if (ready) {
+                p.target = ready; p.state = 'walk'; p.t = 0;
+                idleAt = now;
               }
+            }
+          } else if (p.state === 'doze') {
+            // A full pile wakes Chris even when the visitor has not touched the page.
+            var fullPile = readyPile();
+            if (fullPile && !reduceMotion) {
+              p.target = fullPile; p.state = 'walk'; p.t = 0; idleAt = now;
             }
           } else if (p.state === 'walk') {
             var tr = rects.get(p.target);
@@ -1064,7 +1085,8 @@
           } else if (p.state === 'home') {
             if (moveToward(4, hy, dt, 380)) {
               p.state = 'idle'; p.cooldown = 5; p.face = 1;
-              nextFidget = now + rnd(5000, 8000);
+              nextFidget = now + rnd(10000, 16000);
+              nextBlink = now + rnd(2600, 5200);
             }
           }
           wrap.classList.toggle('walking', p.state === 'walk' || p.state === 'home');
@@ -1078,6 +1100,7 @@
           if (p.state === 'walk' || p.state === 'home') pose = Math.floor(now / 155) % 2 ? 1 : 2;
           else if (p.state === 'clear' && p.t > .4) pose = 3;
           else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = 4;
+          else if (p.state === 'idle' && now < blinkUntil && !reduceMotion) pose = 5;
           if (pose !== displayedFrame) {
             sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
             displayedFrame = pose;
