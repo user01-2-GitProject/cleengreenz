@@ -153,29 +153,48 @@
   .leaf svg { display: block; width: 100%; height: 100%; fill: currentColor; }
 
   /* Pet Chris */
-  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; }
+  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
   .pet {
-    pointer-events: auto; display: block; width: 104px; height: 100px; padding: 0; border: 0; background: none;
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    pointer-events: auto; display: block; position: relative; width: var(--pet-w); height: var(--pet-h);
+    padding: 0; border: 0; background: none; cursor: grab; touch-action: none;
+    -webkit-tap-highlight-color: transparent; user-select: none;
   }
+  .pet:active { cursor: grabbing; }
   .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
-  /* 8-bit sprite sheet: media/pet-chris.png, twelve 52x50 frames in one row, drawn at 2x.
-     Frames: 0 idle, 1-2 walk (contact/passing), 3 leaf blower, 4 cap doff, 5 blink,
-     6-10 for pet/pet-extras.js (6 look left, 7 look right, 8 cheer, 9 stretch, 10 doze),
-     11 walk (opposite contact). Walking cycles 1,2,11,2 for a real gait.
-     The sheet is 624x50, so the whole row is 1248x100 on screen. Keep this width
-     in step with pet/make-frames.py, which draws the sheet. */
-  .pet-body, .pet-inner { width: 100%; height: 100%; }
-  .pet-wrap.face-left .pet-body { transform: scaleX(-1); }
-  .pet-inner { animation: pet-bob 1.8s ease-in-out infinite; }
-  .pet-wrap.walking .pet-inner { animation: none; }
-  .pet-wrap.blowing .pet-inner { animation: pet-shake .1s steps(2, end) infinite; }
-  .pet-sprite {
-    width: 104px; height: 100px; background: url("media/pet-chris.png") 0 0 / 1248px 100px no-repeat;
-    image-rendering: pixelated; image-rendering: crisp-edges;
-  }
-  @keyframes pet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-  @keyframes pet-shake { 0% { transform: translate(0, 0); } 100% { transform: translate(2px, 0); } }
+  .pet-shadow { position: absolute; left: 12%; right: 12%; bottom: -2px; height: 10px;
+    border-radius: 50%; background: rgba(35, 42, 22, .22); filter: blur(3px);
+    transform: scale(1); transition: transform .3s ease, opacity .3s ease; }
+  .pet-body { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 91%; }
+  .pet-wrap.face-left .pet-body { scale: -1 1; }
+  .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
+  /* Five connected limb poses: idle, two opposite strides, blower, wave.
+     The art is larger than the hit area so the blower can extend past Chris. */
+  .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
+    transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
+  .pet-sprite { display: block; width: 192px; height: 200px;
+    background: url("media/pet-chris-poses.png") 0 0 / 960px 200px no-repeat;
+    image-rendering: pixelated; pointer-events: none; }
+  /* Walking is driven from JS: pose and --bob follow distance travelled, so feet never slide. */
+  .pet-wrap.walking .pet-inner { animation: none; transform: translateY(var(--bob, 0px)); }
+  .pet-wrap.reacting .pet-inner { animation: pet-wave .62s cubic-bezier(.2,.8,.2,1) both; }
+  .pet-wrap.cheering .pet-inner { animation: pet-cheer .72s cubic-bezier(.2,.8,.2,1) both; }
+  .pet-wrap.clearing .pet-inner { animation: pet-work .2s ease-in-out infinite alternate; }
+  .pet-wrap.doze .pet-inner { animation: pet-doze 3.4s ease-in-out infinite; }
+  /* --drag-tilt and --drag-scale are eased in JS, so picking up and letting go never snaps. */
+  .pet-wrap.grabbed .pet-inner { animation: none; transform: translateY(var(--bob, 0px)) rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1)); }
+  .pet-wrap.dragging .pet-shadow, .pet-wrap.cheering .pet-shadow { transform: scale(.65); opacity: .45; }
+  @keyframes pet-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.008,.992); } }
+  @keyframes pet-wave { 0% { transform: rotate(0) scale(1); } 28% { transform: translateY(-9px) rotate(-7deg) scale(1.06,.96); } 56% { transform: translateY(0) rotate(4deg) scale(.97,1.04); } 78% { transform: translateY(-3px) rotate(-2deg); } 100% { transform: none; } }
+  @keyframes pet-cheer { 0%,100% { transform: none; } 35% { transform: translateY(-20px) rotate(-6deg) scale(1.04); } 65% { transform: translateY(-7px) rotate(5deg) scale(.98,1.02); } }
+  @keyframes pet-work { from { transform: rotate(-1deg) translateX(-1px); } to { transform: rotate(1deg) translateX(1px); } }
+  @keyframes pet-doze { 0%,100% { transform: rotate(-3deg) translateY(2px) scale(1,.99); } 50% { transform: rotate(-3deg) translateY(4px) scale(1.01,.98); } }
+  .pet-particle { position: absolute; left: 55%; top: 18%; z-index: 2; pointer-events: none;
+    color: var(--forest); font: 800 16px/1 "Fredoka", sans-serif;
+    animation: pet-float 1.1s ease-out forwards; }
+  .pet-particle.leaf-bit { top: 60%; color: var(--pumpkin); }
+  @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
+    20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
+  @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } }
   .pet-bubble {
     position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
     pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
@@ -190,6 +209,9 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .pet-bubble, .pet-bubble.is-visible { transition: opacity .01s linear; transform: none; }
+    .pet-inner, .pet-wrap.walking .pet-inner, .pet-wrap.reacting .pet-inner,
+    .pet-wrap.cheering .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.doze .pet-inner { animation: none; }
+    .pet-particle { display: none; }
   }
   .pet-bubble::after {
     content: ""; position: absolute; top: 100%; left: 26px; border: 8px solid transparent; border-top-color: var(--paper);
@@ -364,7 +386,6 @@
     .btn:hover, .service:hover { transform: none; }
   }
 </style>
-<link rel="stylesheet" href="pet/pet-extras.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -719,7 +740,10 @@
       try { hidePet = localStorage.getItem('cg-hide-pet') === '1'; } catch (e) {}
 
       var W = window.innerWidth, H = window.innerHeight;
-      window.addEventListener('resize', function () { W = window.innerWidth; H = window.innerHeight; });
+      window.addEventListener('resize', function () {
+        W = window.innerWidth; H = window.innerHeight;
+        PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
+      });
       var mobileBar = document.querySelector('.mobile-bar');
       var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
       var piles = new Map();
@@ -780,12 +804,13 @@
       }
 
       // Pet
-      var PET_W = 104, PET_H = 100, FRAME_W = 104;
-      // Contact, passing, opposite contact, passing - a real walk cycle instead of a 2-frame flip.
-      var WALK_CYCLE = [1, 2, 11, 2];
-      var wrap = null, pet = null, bubble = null;
-      var p = { x: 16, y: H, state: 'idle', t: 0, cooldown: 3, target: null, face: 1, wave: 0, speed: 0 };
-      var sprite = null;
+      var PET_W = W < 700 ? 68 : 84, PET_H = W < 700 ? 160 : 198;
+      var wrap = null, pet = null, bubble = null, sprite = null, displayedFrame = -1;
+      var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
+        dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0 };
+      // One walk pose per STRIDE px travelled, so the cadence follows Chris's real speed.
+      var STRIDE = 44, BOB = 3, wasWalking = false, lastBob = 0, grabOn = false;
+      var pointer = null, reactionTimer = null, idleAt = performance.now(), nextFidget = idleAt + rnd(6500, 11000);
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
         'Snow removal starts at $30 a visit. Just saying.',
@@ -800,16 +825,56 @@
         wrap.innerHTML =
           '<div class="pet-bubble" role="status"></div>' +
           '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
-          '<div class="pet-body"><div class="pet-inner"><div class="pet-sprite"></div></div></div></button>';
+          '<span class="pet-shadow" aria-hidden="true"></span>' +
+          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
         sprite = wrap.querySelector('.pet-sprite');
         p.y = homeY();
-        pet.addEventListener('click', function () {
-          say(lines[lineIndex % lines.length], 6000);
-          lineIndex++;
-          p.wave = 1.2;
+        pet.addEventListener('pointerdown', function (e) {
+          if (pointer) return;
+          pointer = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false,
+            offsetX: e.clientX - p.x, offsetY: e.clientY - p.y, last: performance.now() };
+          p.lastPointerX = e.clientX; p.lastPointerY = e.clientY;
+          pet.setPointerCapture(e.pointerId);
+          if (p.state === 'doze') wake();
+        });
+        pet.addEventListener('pointermove', function (e) {
+          if (!pointer || e.pointerId !== pointer.id) return;
+          if (Math.hypot(e.clientX - pointer.x, e.clientY - pointer.y) > 8) pointer.moved = true;
+          if (!pointer.moved) return;
+          var now = performance.now(), elapsed = Math.max(16, now - pointer.last) / 1000;
+          p.dragX = Math.max(0, Math.min(W - PET_W, e.clientX - pointer.offsetX));
+          p.dragY = Math.max(0, Math.min(homeY(), e.clientY - pointer.offsetY));
+          p.vx = Math.max(-500, Math.min(500, (e.clientX - p.lastPointerX) / elapsed));
+          p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
+          p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
+          p.state = 'drag'; p.t = 0; p.speed = 0;
+          bubble.classList.remove('is-visible');
+        });
+        function release(e) {
+          if (!pointer || e.pointerId !== pointer.id) return;
+          if (pointer.moved) {
+            p.state = reduceMotion ? 'home' : 'toss'; p.t = 0;
+            p.vx *= .36; p.vy *= .36;
+            say('Wheee! Back to work.', 1700);
+          } else {
+            react('reacting', 650);
+            say(lines[lineIndex++ % lines.length], 6000);
+          }
+          pointer = null;
+          idleAt = performance.now();
+        }
+        pet.addEventListener('pointerup', release);
+        pet.addEventListener('pointercancel', function (e) {
+          if (pointer && e.pointerId === pointer.id) { pointer = null; p.state = 'home'; }
+        });
+        pet.addEventListener('click', function (e) {
+          // Keyboard activation has no preceding pointer event.
+          if (e.detail !== 0) return;
+          react('reacting', 650);
+          say(lines[lineIndex++ % lines.length], 6000);
         });
         bubble.addEventListener('click', function (e) {
           if (e.target.closest('[data-pet-go]')) { bubble.classList.remove('is-visible'); }
@@ -819,8 +884,47 @@
             wrap = null;
           }
         });
-        setTimeout(function () { if (p.state === 'idle') { say('Hi neighbor! Tap me anytime.', 4500); p.wave = 1.6; } }, 2500);
+        document.addEventListener('cg:lead', function (e) {
+          if (!wrap || !e.detail || !/^(form|call|email)$/.test(e.detail.lead_type)) return;
+          wake(); react('cheering', 800);
+          if (e.detail.lead_type === 'form') say('Woohoo! Chris will call you soon.', 4000);
+          else say('Talk soon!', 2500);
+          for (var i = 0; i < 10; i++) particle('✦');
+        });
+        setTimeout(function () {
+          if (wrap && p.state === 'idle') { say('Hi neighbor! Tap me anytime.', 4500); react('reacting', 650); }
+        }, 2500);
       }
+      function react(cls, duration) {
+        if (!wrap || reduceMotion) return;
+        clearTimeout(reactionTimer);
+        wrap.classList.remove('reacting', 'cheering');
+        void wrap.offsetWidth;
+        wrap.classList.add(cls);
+        reactionTimer = setTimeout(function () { if (wrap) wrap.classList.remove(cls); }, duration);
+      }
+      function particle(text, cls) {
+        if (!wrap || reduceMotion || document.hidden) return;
+        var el = document.createElement('span');
+        el.className = 'pet-particle' + (cls ? ' ' + cls : '');
+        el.textContent = text;
+        el.setAttribute('aria-hidden', 'true');
+        el.style.left = cls === 'leaf-bit' ? (p.face > 0 ? '132px' : '-40px') : rnd(30, 75) + '%';
+        el.style.setProperty('--dx', (cls === 'leaf-bit' ? p.face * rnd(30, 75) : rnd(-45, 45)) + 'px');
+        el.style.setProperty('--dy', (cls === 'leaf-bit' ? rnd(-15, 15) : rnd(-65, -30)) + 'px');
+        wrap.appendChild(el);
+        el.addEventListener('animationend', function () { el.remove(); }, { once: true });
+        setTimeout(function () { el.remove(); }, 1300);
+      }
+      function wake() {
+        idleAt = performance.now();
+        if (p.state !== 'doze') return;
+        p.state = 'idle'; nextFidget = idleAt + rnd(5000, 9000);
+        react('reacting', 650);
+      }
+      ['pointerdown', 'keydown', 'scroll'].forEach(function (name) {
+        window.addEventListener(name, function () { wake(); idleAt = performance.now(); }, { passive: true });
+      });
       function homeY() {
         var barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
         return H - PET_H - 12 - barH;
@@ -845,6 +949,7 @@
         p.speed += (target - p.speed) * Math.min(1, dt * 6);
         var step = Math.min(d, p.speed * dt);
         p.x += dx / d * step; p.y += dy / d * step;
+        p.stride += step;
         return false;
       }
       function petGoal(r) {
@@ -915,10 +1020,17 @@
           if (p.state === 'idle') {
             p.x = 4; p.y = hy; p.face = 1;
             p.cooldown -= dt;
+            if (!reduceMotion && !document.hidden && now > nextFidget && !bubble.classList.contains('is-visible')) {
+              if (Math.random() < .48) react('reacting', 650);
+              else particle('♪');
+              nextFidget = now + rnd(7000, 13000);
+            }
+            if (now - idleAt > 32000) { p.state = 'doze'; p.t = 0; }
             if (p.cooldown <= 0 && !reduceMotion) {
               for (var k = 0; k < catchers.length; k++) {
                 if (piles.get(catchers[k]).length >= 3 && visible(rects.get(catchers[k]))) {
                   p.target = catchers[k]; p.state = 'walk'; p.t = 0;
+                  wake();
                   break;
                 }
               }
@@ -936,29 +1048,64 @@
           } else if (p.state === 'clear') {
             var cr = rects.get(p.target);
             if (cr) { var cg = petGoal(cr); p.x = cg.x; p.y = cg.y; }
-            if (p.t > 0.7 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
+            if (p.t > 0.6 && p.t < 1.25 && Math.random() < dt * 12) particle('✦', 'leaf-bit');
+            if (p.t > 0.85 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
             if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
           } else if (p.state === 'wait') {
             var wr = rects.get(p.target);
             if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
             if (p.t > 1.4) p.state = 'home';
+          } else if (p.state === 'drag') {
+            var follow = 1 - Math.exp(-dt * 24);
+            p.x += (p.dragX - p.x) * follow;
+            p.y += (p.dragY - p.y) * follow;
+          } else if (p.state === 'toss') {
+            p.x = Math.max(0, Math.min(W - PET_W, p.x + p.vx * dt));
+            p.y = Math.max(0, Math.min(hy, p.y + p.vy * dt));
+            p.vx *= Math.exp(-dt * 8); p.vy *= Math.exp(-dt * 8);
+            if (p.t > .45) { p.state = 'home'; p.t = 0; }
           } else if (p.state === 'home') {
-            if (moveToward(4, hy, dt, 260)) { p.state = 'idle'; p.cooldown = 5; p.face = 1; }
+            if (moveToward(4, hy, dt, 380)) {
+              p.state = 'idle'; p.cooldown = 5; p.face = 1;
+              nextFidget = now + rnd(5000, 8000);
+            }
           }
-          wrap.classList.toggle('walking', p.state === 'walk' || p.state === 'home');
-          wrap.classList.toggle('blowing', p.state === 'clear' && p.t > 0.4);
+          var walking = p.state === 'walk' || p.state === 'home';
+          if (walking && !wasWalking) p.stride = 0;
+          wasWalking = walking;
+          // Ease the pick-up tilt/scale in and out instead of snapping when Chris is grabbed or let go.
+          var grabbing = p.state === 'drag' || p.state === 'toss';
+          p.grab += ((grabbing ? 1 : 0) - p.grab) * (1 - Math.exp(-dt * 16));
+          if (p.state === 'drag') p.vx *= Math.exp(-dt * 9);
+          if (p.grab > .001 || grabOn) {
+            grabOn = p.grab > .001;
+            wrap.style.setProperty('--drag-tilt', (Math.max(-9, Math.min(9, p.vx / 45)) * p.grab).toFixed(2) + 'deg');
+            wrap.style.setProperty('--drag-scale', (1 + .04 * p.grab).toFixed(3));
+          }
+          wrap.classList.toggle('walking', walking);
+          wrap.classList.toggle('clearing', p.state === 'clear' && p.t > 0.4);
+          wrap.classList.toggle('doze', p.state === 'doze');
+          wrap.classList.toggle('dragging', p.state === 'drag');
+          wrap.classList.toggle('grabbed', p.grab > .02);
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
+          // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
-          var f = 0, walking = p.state === 'walk' || p.state === 'home';
-          if (p.wave > 0) p.wave -= dt;
-          if (walking && !reduceMotion) f = WALK_CYCLE[Math.floor(now / 110) % WALK_CYCLE.length];
-          else if (p.state === 'clear' && p.t > 0.4) f = 3;
-          else if (p.wave > 0) f = 4;
-          else if (!reduceMotion && now % 4300 < 150) f = 5;
-          // pet/pet-extras.js can ask for a frame (fidgets, dozing, cheering) while Chris is at home.
-          if (wrap.dataset.frame && !walking && p.state !== 'clear' && p.wave <= 0) f = +wrap.dataset.frame;
-          sprite.style.backgroundPosition = (-f * FRAME_W) + 'px 0';
+          var pose = 0, bob = 0;
+          if (walking && p.speed > 24) {
+            // Stride phase: stride/STRIDE = steps taken. Odd/even steps alternate the two walk
+            // poses, and the body dips on the wide contact pose and rises on the passing pose.
+            var cyc = p.stride / STRIDE;
+            pose = Math.floor(cyc) % 2 ? 2 : 1;
+            if (!reduceMotion) bob = Math.round(BOB * Math.min(1, p.speed / 140) * (.5 - .5 * Math.cos(Math.PI * (cyc - .5))));
+          }
+          else if (p.state === 'clear' && p.t > .4) pose = 3;
+          else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = 4;
+          if (bob !== lastBob) { wrap.style.setProperty('--bob', -bob + 'px'); lastBob = bob; }
+          if (pose !== displayedFrame) {
+            sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
+            displayedFrame = pose;
+          }
         }
         if (leaves.length || wrap) requestAnimationFrame(frame);
       }
@@ -968,6 +1115,5 @@
   })();
 </script>
 <script src="js/leads.js" defer></script>
-<script src="pet/pet-extras.js" defer></script>
 </body>
 </html>
