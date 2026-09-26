@@ -33,6 +33,15 @@ PALETTE = {
     'O': (226, 112, 42, 255),   # blower orange
     '.': (0, 0, 0, 0),
 }
+T = (0, 0, 0, 0)
+
+
+def slump(f):
+    out = f.copy()
+    out.paste(f.crop((0, 0, FW, 30)), (0, 1))
+    out.paste(T, (0, 0, FW, 1))
+    return out
+
 
 # --- the body, row by row (each row is BOX_W wide) ------------------------
 
