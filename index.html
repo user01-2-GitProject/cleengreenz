@@ -959,6 +959,8 @@
           else if (p.state === 'clear' && p.t > 0.4) f = 3;
           else if (p.wave > 0) f = 4;
           else if (!reduceMotion && now % 4300 < 150) f = 5;
+          // pet/pet-extras.js can ask for a frame (fidgets, dozing, cheering) while Chris is at home.
+          if (wrap.dataset.frame && !walking && p.state !== 'clear' && p.wave <= 0) f = +wrap.dataset.frame;
           sprite.style.backgroundPosition = (-f * FRAME_W) + 'px 0';
         }
         if (leaves.length || wrap) requestAnimationFrame(frame);
