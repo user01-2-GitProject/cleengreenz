@@ -17,5 +17,4 @@ desktop.ini
 
 # Local Cloudflare dev state and secrets
 .dev.vars
-.wrangler/state/
-.wrangler/tmp/
+.wrangler/
