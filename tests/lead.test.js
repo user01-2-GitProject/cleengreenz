@@ -1,6 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { json, onRequestPost } from '../functions/api/lead.js';
+import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+
+test('sanitizePhone helper function', async (t) => {
+  await t.test('preserves valid phone numbers and formatting characters', async () => {
+    assert.equal(sanitizePhone('+1 (269) 362-8286'), '+1 (269) 362-8286');
+    assert.equal(sanitizePhone('269-362-8286'), '269-362-8286');
+  });
+
+  await t.test('strips out unsafe HTML/URL injection characters', async () => {
+    assert.equal(sanitizePhone('269-362-8286" onclick="alert(foo)"'), '269-362-8286 ()');
+    assert.equal(sanitizePhone('javascript:alert("xss")'), '()');
+    assert.equal(sanitizePhone('<script>alert("xss")</script>'), '()');
+  });
+
+  await t.test('handles empty or non-string inputs safely', async () => {
+    assert.equal(sanitizePhone(''), '');
+    assert.equal(sanitizePhone(null), '');
+    assert.equal(sanitizePhone(undefined), '');
+  });
+});
 
 test('json helper function', async (t) => {
   await t.test('returns status 200 by default', async () => {
