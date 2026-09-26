@@ -1,0 +1,40 @@
+/* Pet Chris extras: idle fidgets, dozing and a lead cheer.
+   Layers on top of the pet in index.html; pet-extras.js picks the frames.
+   media/pet-chris.png now has 11 frames (the 6 originals, then 6 look left,
+   7 look right, 8 cheer, 9 stretch, 10 doze), so the sheet is 11 x 104px. */
+.pet-sprite { background-size: 1144px 100px; }
+
+.pet-wrap.x-hop .pet-sprite { animation: px-hop .5s steps(4, end); }
+.pet-wrap.x-cheer .pet-sprite { animation: px-hop .5s steps(4, end) 2; }
+@keyframes px-hop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-14px); }
+  70% { transform: translateY(-6px); }
+}
+
+/* Floating bits: music notes, Zzz's and confetti leaves */
+.px-float {
+  position: absolute; left: 64px; top: 4px; pointer-events: none;
+  font: 700 16px/1 "Courier New", monospace; color: #2f7d3a;
+  text-shadow: 2px 2px 0 rgba(36, 24, 16, .25);
+  animation: px-float 1.8s steps(8, end) forwards;
+}
+.px-float.zz { color: #5b6f8a; left: 70px; top: 18px; animation-duration: 2.6s; }
+@keyframes px-float {
+  0% { opacity: 0; transform: translate(0, 0) scale(.7); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 10px), -40px) scale(1.2); }
+}
+.px-confetti {
+  position: absolute; left: 48px; top: 0; width: 8px; height: 8px; pointer-events: none;
+  animation: px-confetti 1.1s steps(10, end) forwards;
+}
+@keyframes px-confetti {
+  0% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-wrap .pet-sprite { animation: none !important; }
+  .px-float, .px-confetti { display: none; }
+}
