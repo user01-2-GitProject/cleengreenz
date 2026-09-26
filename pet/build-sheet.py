@@ -10,9 +10,16 @@ What it does
   and wave frames are already within ~2.5px of idle and are left exactly as delivered.
 - Pastes all frames into one row, 192x200 each, in the order listed in FRAMES. The order is the pose
   index used by the site script (POSE in index.html); change both together.
+- If pet/walk-frames/ holds a walk cycle (N PNGs, sorted by name, one full cycle, evenly spaced in phase),
+  appends them after the poses, lines them up on the shirt, and rewrites the WALK block in index.html
+  (the gait table, cycle length and foot lock). Check a new cycle first with pet/check-walk.py.
+
+    python3 pet/build-sheet.py [--walk-dir pet/walk-frames] [--cycle 128] [--lock 0.45]
 """
+import argparse
 import glob
 import os
+import re
 
 import numpy as np
 from PIL import Image
@@ -70,10 +77,31 @@ def blink_frame(idle_rgba):
     return blink
 
 
+def walk_block(first, n, cycle, lock):
+    """The WALK block for an n-frame cycle whose frames sit at sheet indices first..first+n-1."""
+    gait = [[round((k + .5) / n, 4), first + k, round(k / n, 4)] for k in range(n)] + [[1, first, 1.0]]
+    text = ("      /* WALK:BEGIN (pet/build-sheet.py rewrites this block when pet/walk-frames/ has a new cycle) */\n"
+            f"      var WALK = {{ cycle: {cycle:g}, bob: 0, bobs: 2, bobPeak: .39, lock: {lock:g}, settle: {{}},\n"
+            f"        gait: {gait} }};\n"
+            f"      WALK.settle[{first}] = {first + 1}; WALK.settle[{first + n // 2}] = {first + n // 2 + 1};\n"
+            "      /* WALK:END */")
+    return text.replace("], [", "], [")
+
+
 def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--walk-dir", default="pet/walk-frames")
+    ap.add_argument("--cycle", type=float, default=128, help="body travel over one full walk cycle, px (2 x step length)")
+    ap.add_argument("--lock", type=float, default=0.45, help="foot lock 0-1: 0 keeps the body smooth, 1 keeps planted feet fixed")
+    ap.add_argument("--no-align", action="store_true", help="do not line the walk frames up on the shirt (for test art)")
+    ap.add_argument("--html", default="index.html")
+    args = ap.parse_args()
+
+    walk_files = sorted(glob.glob(os.path.join(args.walk_dir, "*.png"))) if os.path.isdir(args.walk_dir) else []
     idle_rgb, idle_op = load(FRAMES[0])
     target = shirt_cx(idle_rgb, idle_op)
-    sheet = Image.new("RGBA", (W * (len(FRAMES) + 1), H), (0, 0, 0, 0))
+    total = len(FRAMES) + 1 + len(walk_files)
+    sheet = Image.new("RGBA", (W * total, H), (0, 0, 0, 0))
     idle_rgba = None
     for i, name in enumerate(FRAMES):
         rgb, op = load(name)
@@ -89,8 +117,31 @@ def main():
     n = len(FRAMES)
     sheet.alpha_composite(Image.fromarray(blink_frame(idle_rgba), "RGBA"), (n * W, 0))
     print(f"{n:2d}  {'blink (from idle)':20s}")
+    first = n + 1
+    for j, path in enumerate(walk_files):
+        rgba = np.array(Image.open(path).convert("RGBA"))
+        magenta = (rgba[..., 0] == 255) & (rgba[..., 1] == 0) & (rgba[..., 2] == 255)
+        rgba[magenta] = 0
+        op = rgba[..., 3] > 0
+        assert rgba.shape[1] == W and rgba.shape[0] == H, path
+        dx = 0 if args.no_align else int(round(target - shirt_cx(rgba[..., :3], op)))
+        sheet.alpha_composite(Image.fromarray(shifted(rgba, dx), "RGBA"), ((first + j) * W, 0))
+        print(f"{first + j:2d}  walk {os.path.basename(path):24s} shift {dx:+d}px")
     sheet.save(OUT, optimize=True)
     print("wrote", OUT, sheet.size)
+
+    css = f"/ {W * total}px {H}px no-repeat"
+    with open(args.html, encoding="utf-8") as f:
+        html = f.read()
+    html2 = re.sub(r"/ \d+px 200px no-repeat", css, html, count=1)
+    if walk_files:
+        blk = walk_block(first, len(walk_files), args.cycle, args.lock)
+        html2 = re.sub(r"      /\* WALK:BEGIN.*?/\* WALK:END \*/", lambda m: blk, html2, count=1, flags=re.S)
+        print(f"WALK block rewritten for {len(walk_files)} frames (cycle {args.cycle:g}px, lock {args.lock:g})")
+    if html2 != html:
+        with open(args.html, "w", encoding="utf-8") as f:
+            f.write(html2)
+        print("updated", args.html)
 
 
 if __name__ == "__main__":

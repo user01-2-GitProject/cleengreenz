@@ -174,7 +174,7 @@
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
   /* Twelve poses built by pet/build-sheet.py: idle, a four-phase walk with push-off, notice-the-pile,
      three blower poses, wave, blink. The art is larger than the hit area so the blower can extend past Chris. */
-  .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
+  .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px; translate: var(--walk-x, 0px) 0;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
     background: url("media/pet-chris-poses-v2.png") 0 0 / 2304px 200px no-repeat;
@@ -847,14 +847,24 @@
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0,
         acc: 0, lean: 0, tilt: 0, tiltV: 0, mvx: 0, bounces: 0 };
-      // One gait cycle is two steps. STRIDE is the measured step length of the walk art (boots are
-      // ~54px apart at contact A and ~71px at contact B), so the planted foot stays put on the ground.
-      var STRIDE = 62, BOB = 3, wasWalking = false, lastBob = 0, lastLean = 0, grabOn = false, shadowOn = false;
+      var wasWalking = false, lastWalkX = 0, lastBob = 0, lastLean = 0, grabOn = false, shadowOn = false;
       // Pose index into media/pet-chris-poses-v2.png. The order is set in pet/build-sheet.py.
       var POSE = { idle: 0, push: 1, contactA: 2, passA: 3, contactB: 4, passB: 5, notice: 6,
         pickup: 7, level: 8, lower: 9, wave: 10, blink: 11 };
-      // [end of phase, pose]: both-feet-down contact poses hold longer than the passing poses.
-      var GAIT = [[.286, POSE.contactA], [.5, POSE.passA], [.786, POSE.contactB], [1, POSE.passB]];
+      // The walk cycle is data. `cycle` is how far the body travels in one full cycle (two steps); distance,
+      // not time, picks the frame, so a planted foot stays put if the art is a valid cycle (check any new art
+      // with pet/check-walk.py). `gait` is [end of phase, pose] per frame. `bob` is extra body dip in px for
+      // art with no vertical motion of its own (0 if the art already dips), `bobs` bounces per cycle peaking
+      // at phase `bobPeak`. `settle` maps a pose to the one he finishes the step through when he stops.
+      // `lock` (0-1) trades foot skating for torso wobble: within a frame's hold the sprite slides back by
+      // that fraction of the body's travel from the frame's nominal phase (third gait value), so 0 keeps the
+      // body perfectly smooth and 1 keeps planted feet perfectly fixed. Frames should be centred on their
+      // nominal phase. Current art: two contact and two passing poses; see pet/walk-guide/SPEC.md for what it lacks.
+      /* WALK:BEGIN (pet/build-sheet.py rewrites this block when pet/walk-frames/ has a new cycle) */
+      var WALK = { cycle: 124, bob: 3, bobs: 2, bobPeak: .39, lock: 0, settle: {},
+        gait: [[.286, POSE.contactA, .143], [.5, POSE.passA, .393], [.786, POSE.contactB, .643], [1, POSE.passB, .893]] };
+      WALK.settle[POSE.contactA] = POSE.passA; WALK.settle[POSE.contactB] = POSE.passB;
+      /* WALK:END */
       var lastWalkPose = -1, lastWalkAt = 0;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and the speed
       // below which the stride poses give way to standing (feet planted, no sliding legs).
@@ -1214,19 +1224,21 @@
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
-          var pose = POSE.idle, bob = 0, settle = -1;
+          var pose = POSE.idle, bob = 0, settle = -1, walkX = 0;
           var walkFast = walking && p.speed > WALK_MIN;
           if (walkFast) {
-            // Four-phase gait driven by distance travelled: contact, passing, opposite contact,
-            // opposite passing. The body dips on the contact poses and rises through the passing
-            // ones, two bounces per cycle. (The art itself has no vertical bob.)
-            var ph = (p.stride / (2 * STRIDE)) % 1, gi = 0;
-            while (gi < GAIT.length - 1 && ph >= GAIT[gi][0]) gi++;
-            pose = GAIT[gi][1]; lastWalkPose = pose; lastWalkAt = now;
-            if (!reduceMotion) bob = Math.round(BOB * Math.min(1, p.speed / 140) * (.5 + .5 * Math.cos(4 * Math.PI * (ph - .39))));
-          } else if (lastWalkPose === POSE.contactA || lastWalkPose === POSE.contactB) {
-            // Stopped on a contact pose: finish the step through the passing pose, not a foot snap.
-            if (now - lastWalkAt < 110) settle = lastWalkPose + 1; else lastWalkPose = -1;
+            // Gait driven by distance travelled (see WALK). Phase = distance / cycle length.
+            var ph = (p.stride / WALK.cycle) % 1, gi = 0;
+            while (gi < WALK.gait.length - 1 && ph >= WALK.gait[gi][0]) gi++;
+            pose = WALK.gait[gi][1]; lastWalkPose = pose; lastWalkAt = now;
+            if (WALK.lock && !reduceMotion) {
+              var dph = ph - WALK.gait[gi][2]; if (dph > .5) dph -= 1; else if (dph < -.5) dph += 1;
+              walkX = Math.round(-WALK.lock * dph * WALK.cycle);
+            }
+            if (!reduceMotion && WALK.bob) bob = Math.round(WALK.bob * Math.min(1, p.speed / 140) * (.5 + .5 * Math.cos(2 * Math.PI * WALK.bobs * (ph - WALK.bobPeak))));
+          } else if (WALK.settle[lastWalkPose] !== undefined) {
+            // Stopped mid-step: finish it through the settle pose, not a foot snap.
+            if (now - lastWalkAt < 110) settle = WALK.settle[lastWalkPose]; else lastWalkPose = -1;
           } else lastWalkPose = -1;
           if (walkFast) { /* pose chosen above */ }
           else if (walking && p.acc >= 0) pose = POSE.push;   // pushing off from a standstill (not braking)
@@ -1246,6 +1258,7 @@
           else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = POSE.wave;
           else if (p.state === 'idle' && now < blinkUntil && !reduceMotion) pose = POSE.blink;
           if (bob !== lastBob) { wrap.style.setProperty('--bob', -bob + 'px'); lastBob = bob; }
+          if (walkX !== lastWalkX) { wrap.style.setProperty('--walk-x', walkX + 'px'); lastWalkX = walkX; }
           if (pose !== displayedFrame) {
             sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
             displayedFrame = pose;

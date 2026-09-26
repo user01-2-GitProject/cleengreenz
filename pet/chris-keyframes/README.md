@@ -28,6 +28,11 @@ The sprite sheet `media/pet-chris-poses-v2.png` aggregates all poses into a sing
 ## Sequence Frame Order and Timing
 
 ### 1. Walk Loop
+
+> **Status:** these four frames do not form a walking gait. Measured with `pet/check-walk.py`: the right foot is
+> on the ground in every frame and stays ahead of the body, the left leg does all the lifting, one planted foot
+> jumps 31px between frames, and the two contacts are 54px and 71px wide. A planted foot skates up to 44px.
+> See `pet/walk-guide/PROMPT.md` for what a redraw needs and how to check it.
 Includes both contact poses, both passing poses, and push-off keyframes for a clean, seamless gait without sliding feet.
 
 - **Departure:** `00_idle` → `01_walk_push_off` (100 ms)
