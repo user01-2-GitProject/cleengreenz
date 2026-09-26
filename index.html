@@ -574,12 +574,12 @@
           </div>
           <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span></label><textarea id="f-notes" name="notes" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
-          <p class="form-note">This opens your email app with everything filled in. Prefer to talk? Call or text (269) 362-8286.</p>
+          <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
         <div class="form-done" role="status" aria-live="polite">
-          <h3>Almost there!</h3>
-          <p>Your email app should have opened with your request. Just hit send and Chris will be in touch.</p>
-          <p>Didn't open? Call or text <strong>(269) 362-8286</strong>.</p>
+          <h3>Thanks, got it!</h3>
+          <p>Chris has your request and will be in touch soon.</p>
+          <p>Need him sooner? Call or text <strong>(269) 362-8286</strong>.</p>
           <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="form-fallback">Call Chris instead</a>
         </div>
       </form>
@@ -641,31 +641,7 @@
       if (a) trackLead(a.dataset.lead, a.dataset.leadLocation);
     });
 
-    // Estimate form: validate, record the lead, then open a prefilled email.
-    var form = document.getElementById('estimate-form');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var fields = form.querySelectorAll('[required]');
-      for (var i = 0; i < fields.length; i++) {
-        if (!fields[i].value.trim()) { fields[i].focus(); fields[i].reportValidity && fields[i].reportValidity(); return; }
-      }
-      var d = Object.fromEntries(new FormData(form));
-      trackLead('form', 'estimate', { service: d.service });
-      var body = [
-        'Hi Chris, I would like a free estimate.',
-        '',
-        'Name: ' + d.name,
-        'Phone: ' + d.phone,
-        'Address: ' + d.address,
-        'Service: ' + d.service,
-        d.notes ? 'Notes: ' + d.notes : ''
-      ].join('\n');
-      form.querySelector('.form-fields').style.display = 'none';
-      form.querySelector('.form-done').classList.add('show');
-      window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
-        encodeURIComponent('Estimate request: ' + d.service + ' (' + d.name + ')') +
-        '&body=' + encodeURIComponent(body);
-    });
+    // The estimate form is handled in js/leads.js.
 
     // Reveal sections as they scroll into view.
     var items = document.querySelectorAll('.reveal');
@@ -712,5 +688,6 @@
     }
   })();
 </script>
+<script src="js/leads.js" defer></script>
 </body>
 </html>
