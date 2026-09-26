@@ -61,9 +61,9 @@
   function say(text, ms) {
     if (!bubble) return;
     bubble.textContent = text;
-    bubble.hidden = false;
+    bubble.classList.add('is-visible');
     clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(function () { bubble.hidden = true; }, ms);
+    bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
   }
 
   function float(text, cls, dx) {
@@ -161,7 +161,7 @@
       nextFidget = now + rnd(1200, 3000);
       return;
     }
-    if (sleeping || busy || (bubble && !bubble.hidden)) return;
+    if (sleeping || busy || (bubble && bubble.classList.contains('is-visible'))) return;
     if (now - lastActivity > SLEEP_AFTER) { sleep(); return; }
     if (now > nextFidget && !reduceMotion) {
       fidgets[Math.floor(Math.random() * fidgets.length)]();

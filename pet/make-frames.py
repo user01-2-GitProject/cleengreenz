@@ -256,6 +256,11 @@ for eyes in ('idle', 'shut'):
 # 10 doze: head and torso settle a pixel, eyes shut
 frames.append(build(eyes='shut', drop=1))
 
+# 11 walk, opposite stride: LEGS_STRIDE mirrored left-right, so a
+# 1-2-11-2 sequence reads as a real contact/passing/contact/passing gait
+# instead of two poses flickering back and forth.
+frames.append(build(legs=[r[::-1] for r in LEGS_STRIDE]))
+
 out = sys.argv[1] if len(sys.argv) > 1 else 'media/pet-chris.png'
 sheet = Image.new('RGBA', (FW * len(frames), FH), (0, 0, 0, 0))
 for i, f in enumerate(frames):
