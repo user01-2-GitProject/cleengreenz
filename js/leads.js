@@ -66,12 +66,29 @@
       '&body=' + encodeURIComponent(body);
   }
 
+  form.addEventListener('input', function (e) {
+    if (e.target && e.target.removeAttribute) {
+      e.target.removeAttribute('aria-invalid');
+    }
+  });
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (sending) return;
     var fields = form.querySelectorAll('[required]');
+    var invalidField = null;
     for (var i = 0; i < fields.length; i++) {
-      if (!fields[i].value.trim()) { fields[i].focus(); fields[i].reportValidity && fields[i].reportValidity(); return; }
+      if (!fields[i].value.trim()) {
+        fields[i].setAttribute('aria-invalid', 'true');
+        if (!invalidField) invalidField = fields[i];
+      } else {
+        fields[i].removeAttribute('aria-invalid');
+      }
+    }
+    if (invalidField) {
+      invalidField.focus();
+      invalidField.reportValidity && invalidField.reportValidity();
+      return;
     }
     var d = Object.fromEntries(new FormData(form));
     if (window.trackLead) window.trackLead('form', 'estimate', { service: d.service });
