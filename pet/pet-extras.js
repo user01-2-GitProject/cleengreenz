@@ -80,6 +80,7 @@
   function confetti() {
     if (reduceMotion || !wrap) return;
     var colors = ['#e2702a', '#f2b134', '#4fa83a', '#b8431e', '#7fcf4f'];
+    var fragment = document.createDocumentFragment();
     for (var i = 0; i < 14; i++) {
       var c = document.createElement('span');
       c.className = 'px-confetti';
@@ -88,9 +89,10 @@
       var a = rnd(-2.8, -0.35), d = rnd(40, 80);
       c.style.setProperty('--dx', Math.round(Math.cos(a) * d / 4) * 4 + 'px');
       c.style.setProperty('--dy', Math.round(Math.sin(a) * d / 4) * 4 + 'px');
-      wrap.appendChild(c);
+      fragment.appendChild(c);
       setTimeout(function (el) { el.remove(); }.bind(null, c), 1200);
     }
+    wrap.appendChild(fragment);
   }
 
   var fidgets = [
