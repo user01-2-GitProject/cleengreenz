@@ -155,28 +155,23 @@
   /* Pet Chris */
   .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; }
   .pet {
-    pointer-events: auto; display: block; width: 64px; height: 85px; padding: 0; border: 0; background: none;
+    pointer-events: auto; display: block; width: 104px; height: 100px; padding: 0; border: 0; background: none;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; border-radius: 12px; }
-  .pet svg { width: 100%; height: 100%; overflow: visible; }
-  .pet-body { transition: transform .15s ease; }
-  .pet-wrap.face-left .pet-body { transform: translateX(56px) scaleX(-1); }
-  .pet-inner { animation: pet-bob 1.8s ease-in-out infinite; }
-  .pet-wrap.walking .pet-inner { animation: pet-bob .36s ease-in-out infinite; }
-  .pet .leg { transform-box: fill-box; transform-origin: 50% 0; }
-  .pet-wrap.walking .leg-l { animation: pet-step .36s ease-in-out infinite alternate; }
-  .pet-wrap.walking .leg-r { animation: pet-step .36s ease-in-out infinite alternate-reverse; }
-  .pet .eyes { transform-box: fill-box; transform-origin: center; animation: pet-blink 4.5s infinite; }
-  .pet .air { opacity: 0; }
-  .pet-wrap.blowing .blower { animation: pet-shake .07s linear infinite; }
-  .pet-wrap.blowing .air { animation: pet-air .3s linear infinite; }
-  .pet:hover .pet-inner { animation-duration: .5s; }
+  .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+  /* 8-bit sprite sheet: media/pet-chris.png, six 52x50 frames in one row, drawn at 2x.
+     Frames: 0 idle, 1-2 walk, 3 leaf blower, 4 cap tip, 5 blink. */
+  .pet-body, .pet-inner { width: 100%; height: 100%; }
+  .pet-wrap.face-left .pet-body { transform: scaleX(-1); }
+  .pet-inner { animation: pet-bob 1.8s steps(2, end) infinite; }
+  .pet-wrap.walking .pet-inner { animation: none; }
+  .pet-wrap.blowing .pet-inner { animation: pet-shake .1s steps(2, end) infinite; }
+  .pet-sprite {
+    width: 104px; height: 100px; background: url("media/pet-chris.png") 0 0 / 624px 100px no-repeat;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+  }
   @keyframes pet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-  @keyframes pet-step { from { transform: rotate(-22deg); } to { transform: rotate(22deg); } }
-  @keyframes pet-blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
-  @keyframes pet-shake { 0% { transform: translate(0, 0); } 50% { transform: translate(.8px, -.6px); } 100% { transform: translate(-.6px, .5px); } }
-  @keyframes pet-air { from { opacity: .9; transform: translateX(0); } to { opacity: 0; transform: translateX(8px); } }
+  @keyframes pet-shake { 0% { transform: translate(0, 0); } 100% { transform: translate(2px, 0); } }
   .pet-bubble {
     position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
     pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
@@ -795,9 +790,10 @@
       }
 
       // Pet
-      var PET_W = 64, PET_H = 85;
+      var PET_W = 104, PET_H = 100, FRAME_W = 104;
       var wrap = null, pet = null, bubble = null;
-      var p = { x: 16, y: H, state: 'idle', t: 0, cooldown: 3, target: null, face: 1 };
+      var p = { x: 16, y: H, state: 'idle', t: 0, cooldown: 3, target: null, face: 1, wave: 0 };
+      var sprite = null;
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
         'Snow removal starts at $30 a visit. Just saying.',
@@ -812,32 +808,16 @@
         wrap.innerHTML =
           '<div class="pet-bubble" role="status" hidden></div>' +
           '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
-          '<svg viewBox="0 0 56 74" aria-hidden="true">' +
-            '<ellipse cx="28" cy="71" rx="16" ry="3" fill="rgba(59,47,36,.22)"/>' +
-            '<g class="pet-body"><g class="pet-inner">' +
-              '<g class="leg leg-l"><rect x="20" y="52" width="7" height="14" rx="3" fill="#c9a878"/><ellipse cx="23" cy="67" rx="5.5" ry="3" fill="#5a3b22"/></g>' +
-              '<g class="leg leg-r"><rect x="29" y="52" width="7" height="14" rx="3" fill="#b8966a"/><ellipse cx="33" cy="67" rx="5.5" ry="3" fill="#5a3b22"/></g>' +
-              '<rect x="13" y="38" width="6" height="12" rx="3" fill="#339640"/><circle cx="16" cy="51" r="3" fill="#f2c6a0"/>' +
-              '<rect x="17" y="36" width="22" height="20" rx="7" fill="#3aa64a"/>' +
-              '<text x="28" y="50" font-family="Fredoka, Nunito, sans-serif" font-weight="700" font-size="8" fill="#fff" text-anchor="middle">CG</text>' +
-              '<g class="blower"><rect x="33" y="42" width="12" height="7" rx="3" fill="#e2702a"/><rect x="44" y="44" width="10" height="3" rx="1.5" fill="#3b2f24"/><circle cx="36" cy="45.5" r="2.6" fill="#f2c6a0"/></g>' +
-              '<g class="air" stroke="#8fb58a" stroke-width="1.4" fill="none" stroke-linecap="round"><path d="M56 42q4 2 8 0"/><path d="M57 45.5q5 2 10 0"/><path d="M56 49q4 2 8 0"/></g>' +
-              '<circle cx="28" cy="22" r="13" fill="#f2c6a0"/>' +
-              '<path d="M15 21q0 17 13 17t13-17q-3 6-7 6h-12q-4 0-7-6z" fill="#6b3f22"/>' +
-              '<path d="M24 30q4 2.6 8 0" stroke="#f2c6a0" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
-              '<g class="eyes"><ellipse cx="23.5" cy="21" rx="1.6" ry="2" fill="#2a1d14"/><ellipse cx="32.5" cy="21" rx="1.6" ry="2" fill="#2a1d14"/></g>' +
-              '<path d="M15 18q0-13 13-13t13 13z" fill="#2f9a41"/>' +
-              '<path d="M30 16h15q2 0 2 2t-2 1h-15z" fill="#23803a"/>' +
-              '<text x="27" y="15" font-family="Fredoka, Nunito, sans-serif" font-weight="700" font-size="6.5" fill="#fff" text-anchor="middle">CG</text>' +
-            '</g></g>' +
-          '</svg></button>';
+          '<div class="pet-body"><div class="pet-inner"><div class="pet-sprite"></div></div></div></button>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
+        sprite = wrap.querySelector('.pet-sprite');
         p.y = homeY();
         pet.addEventListener('click', function () {
           say(lines[lineIndex % lines.length], 6000);
           lineIndex++;
+          p.wave = 1.2;
         });
         bubble.addEventListener('click', function (e) {
           if (e.target.closest('[data-pet-go]')) { bubble.hidden = true; }
@@ -847,10 +827,10 @@
             wrap = null;
           }
         });
-        setTimeout(function () { if (p.state === 'idle') say('Hi neighbor! Tap me anytime.', 4500); }, 2500);
+        setTimeout(function () { if (p.state === 'idle') { say('Hi neighbor! Tap me anytime.', 4500); p.wave = 1.6; } }, 2500);
       }
       function homeY() {
-        var barH = mobileBar && mobileBar.offsetParent !== null ? mobileBar.offsetHeight : 0;
+        var barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
         return H - PET_H - 12 - barH;
       }
       function say(html, ms) {
@@ -870,9 +850,9 @@
         return false;
       }
       function petGoal(r) {
-        var gx = r.left - PET_W + 14, face = 1;
-        if (gx < 8) { gx = r.right - 14; face = -1; }
-        return { x: Math.min(Math.max(gx, 8), W - PET_W - 8), y: r.bottom - PET_H + 4, face: face };
+        var gx = r.left - PET_W + 30, face = 1;
+        if (gx < 8) { gx = r.right - 30; face = -1; }
+        return { x: Math.min(Math.max(gx, 0), W - PET_W), y: r.bottom - PET_H + 2, face: face };
       }
 
       var last = performance.now();
@@ -935,7 +915,7 @@
           var hy = homeY();
           p.t += dt;
           if (p.state === 'idle') {
-            p.x = 16; p.y = hy; p.face = 1;
+            p.x = 4; p.y = hy; p.face = 1;
             p.cooldown -= dt;
             if (p.cooldown <= 0 && !reduceMotion) {
               for (var k = 0; k < catchers.length; k++) {
@@ -965,13 +945,20 @@
             if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
             if (p.t > 1.4) p.state = 'home';
           } else if (p.state === 'home') {
-            if (moveToward(16, hy, dt, 260)) { p.state = 'idle'; p.cooldown = 5; p.face = 1; }
+            if (moveToward(4, hy, dt, 260)) { p.state = 'idle'; p.cooldown = 5; p.face = 1; }
           }
           wrap.classList.toggle('walking', p.state === 'walk' || p.state === 'home');
           wrap.classList.toggle('blowing', p.state === 'clear' && p.t > 0.4);
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
-          wrap.style.transform = 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0)';
+          wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
+          var f = 0, walking = p.state === 'walk' || p.state === 'home';
+          if (p.wave > 0) p.wave -= dt;
+          if (walking && !reduceMotion) f = Math.floor(now / 170) % 2 ? 1 : 2;
+          else if (p.state === 'clear' && p.t > 0.4) f = 3;
+          else if (p.wave > 0) f = 4;
+          else if (!reduceMotion && now % 4300 < 150) f = 5;
+          sprite.style.backgroundPosition = (-f * FRAME_W) + 'px 0';
         }
         if (leaves.length || wrap) requestAnimationFrame(frame);
       }
