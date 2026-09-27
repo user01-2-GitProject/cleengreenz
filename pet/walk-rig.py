@@ -55,6 +55,7 @@ BOOT_BOX = (73, 178, 116, 198)
 # Body: everything above this row comes from the passing keyframe unchanged.
 WAIST = 112
 SHIRT_HEM = 104
+HEM_CUT = 105
 PELVIS_BOX = (55, 100, 97, 121)
 OUTLINE = (38, 22, 14, 255)
 # Arms below the sleeves, and the shoulder each one swings from (measured on the keyframe). The
@@ -237,6 +238,24 @@ def fill_holes(frame, top):
     return frame
 
 
+def close_notches(frame, y0, y1, widest=9):
+    """Across the hips, a narrow wedge of background between two bits of cloth (where a thigh
+    swings away from the pelvis) is filled with the cloth to its right, and edged."""
+    lum = frame[..., :3].astype(int).sum(axis=2)
+    for y in range(y0, y1):
+        op = np.where(frame[y, :, 3] > 0)[0]
+        if len(op) < 2:
+            continue
+        gaps = np.where(np.diff(op) > 1)[0]
+        for gi in gaps:
+            a, b = op[gi] + 1, op[gi + 1]
+            # Only between two pieces of pants, and only a narrow gap near the back of the hips.
+            if b - a <= widest and b < W // 2 and lum[y, b] > 200 and lum[y, a - 1] > 60:
+                frame[y, a:b] = frame[y, b]
+                frame[y, a - 1] = OUTLINE if frame[y, a - 2, 3] == 0 else frame[y, a - 1]
+    return frame
+
+
 def outline(layer):
     """Give a cut-out layer a 1px dark edge where it meets transparency (the cut sides had none)."""
     layer = tidy(layer)
@@ -286,6 +305,8 @@ def main():
     src = load_keyframe(SRC)
     leg_mask = poly_mask(LEG_POLY, src.shape)
     leg_mask &= src[..., 3] > 0
+    sr, sg, sb = (src[..., k].astype(int) for k in range(3))
+    leg_mask &= ~((sg > sr + 20) & (sg > sb + 20))   # the shirt hem is not part of the leg
     thigh_src = cut(src, leg_mask & (np.mgrid[0:H, 0:W][0] < KNEE[1] + 7))
     shin_src = cut(src, leg_mask & (np.mgrid[0:H, 0:W][0] >= KNEE[1] - 7))
     bx0, by0, bx1, by1 = BOOT_BOX
@@ -316,6 +337,15 @@ def main():
         body[box] = 0
         arms.append((a, np.array(arm["pivot"], float)))
     body[WAIST:] = 0
+    # One clean hem: the keyframe's shirt hangs in curls over the hips (drawn for its own legs),
+    # which float loose once the legs move. Cut the shirt at HEM_CUT and outline the new edge.
+    r, g, b = (src[..., k].astype(int) for k in range(3))
+    shirt = (g > r + 20) & (g > b + 20) & (body[..., 3] > 0)
+    body[HEM_CUT:][shirt[HEM_CUT:]] = 0
+    below = np.zeros_like(shirt)
+    below[:-1] = body[1:, :, 3] == 0
+    body[HEM_CUT - 1][shirt[HEM_CUT - 1]] = OUTLINE
+    body[shirt & below & (np.mgrid[0:H, 0:W][0] < HEM_CUT)] = OUTLINE
     # The pelvis: the tops of both thighs under the hem, kept as one piece that only bobs. It fills
     # the crotch and the back of the hips when the thighs swing apart.
     pelvis = np.zeros_like(src)
@@ -363,7 +393,7 @@ def main():
             h = hip + (np.array([-5.0, 0]) if i == 1 else 0)
             knee = two_bone(h, ankle, l1, l2)
             layer = np.zeros((H, W, 4), np.uint8)
-            over(layer, affine_sample(boot_src, (H, W), rot_map(ANKLE, ankle, -pitch)))
+            over(layer, affine_sample(boot_src, (H, W), rot_map(ANKLE, ankle, pitch)))
             over(layer, affine_sample(shin_src, (H, W), bone_map(KNEE, ANKLE, knee, ankle)))
             over(layer, affine_sample(far_thigh_src if i else thigh_src, (H, W), bone_map(HIP, KNEE, h, knee)))
             layer = outline(layer)
@@ -399,7 +429,7 @@ def main():
         loose = (g > r + 20) & (g > b + 20) & (frame[..., 3] > 0)
         loose[:SHIRT_HEM + dy + 5] = False
         frame[loose] = 0
-        return fill_holes(tidy(frame), SHIRT_HEM + dy - 2)
+        return close_notches(fill_holes(tidy(frame), SHIRT_HEM + dy - 2), SHIRT_HEM + dy, SHIRT_HEM + dy + 24)
 
     cycle = []
     for f in range(FRAMES):
@@ -420,7 +450,7 @@ def main():
         frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * ph)), dy))
     # Standing still in walking profile, boots side by side: the frame he stops on before idle.
     stand = [(STAND_GAP / 2, 0.0, 0.0, True), (-STAND_GAP / 2, 0.0, 0.0, True)]
-    sdy = int(math.ceil(needed_dy(stand) - .01))
+    sdy = int(math.ceil(needed_dy(stand) - REST_BEND - .01))   # knees straight, not the walk's soft bend
     frames.append((render(stand, sdy, 0.0), sdy))
 
     # Facing left, the page mirrors the sprite, which would put the shirt logo backwards. The
@@ -434,10 +464,21 @@ def main():
     frames = [f for f, _ in frames] + flipped
     sheet = np.concatenate(frames, axis=1)
     poses = np.array(Image.open(IDLE_SHEET).convert("RGBA"))
-    Image.fromarray(np.concatenate([poses, sheet], axis=1), "RGBA").save(OUT, optimize=True)
+    # The same pre-flipped logo for the twelve other poses (idle, blower...), for facing left.
+    poses_left = poses.copy()
+    for k in range(poses.shape[1] // W):
+        f = poses_left[:, k * W:(k + 1) * W]
+        white = (f[..., :3].min(axis=2) > 225) & (f[..., 3] > 0)
+        white[:58] = False
+        white[90:] = False
+        ys, xs = np.where(white)
+        y0, y1, x0, x1 = ys.min() - 1, ys.max() + 2, xs.min() - 1, xs.max() + 2
+        f[y0:y1, x0:x1] = f[y0:y1, x0:x1][:, ::-1].copy()
+    Image.fromarray(np.concatenate([poses, sheet, poses_left], axis=1), "RGBA").save(OUT, optimize=True)
     n = poses.shape[1] // W
     print("wrote", OUT, f"walk right: poses {n}-{n + FRAMES - 1} then stand {n + FRAMES}; "
-          f"logo pre-flipped for walking left: {n + FRAMES + 1}-{n + 2 * FRAMES} then stand {n + 2 * FRAMES + 1}")
+          f"logo pre-flipped for walking left: {n + FRAMES + 1}-{n + 2 * FRAMES} then stand {n + 2 * FRAMES + 1}; "
+          f"poses 0-{n - 1} with the logo pre-flipped: {n + 2 * FRAMES + 2}-{2 * n + 2 * FRAMES + 1}")
     if preview:
         bg = Image.new("RGBA", (sheet.shape[1], H), (226, 236, 214, 255))
         bg.alpha_composite(Image.fromarray(sheet, "RGBA"))

@@ -174,12 +174,13 @@
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
   /* Poses 0-11 built by pet/build-sheet.py (idle, the old walk keyframes, notice-the-pile, three blower
      poses, wave, blink), then from pet/walk-rig.py the 12-frame walk cycle and a standing frame, twice:
-     facing right, and with the shirt logo pre-flipped for walking left (the page mirrors him). The art is larger than
+     facing right, and with the shirt logo pre-flipped for walking left (the page mirrors him); last,
+     poses 0-11 again with the logo pre-flipped, for the other poses facing left. The art is larger than
      the hit area so the blower can extend past Chris. */
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses-v3.png") 0 0 / 7296px 200px no-repeat;
+    background: url("media/pet-chris-poses-v3.png") 0 0 / 9600px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
   /* Walking is driven from JS: the walk frame follows distance walked, so a planted boot stays put,
      and --lean follows speed, so Chris leans into a start and rocks back on a stop. The hip bob is
@@ -862,6 +863,9 @@
       // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together
       // (the frame half a cycle later is the same stance on the other foot).
       var WALK = { first: 12, firstLeft: 25, frames: 12, step: 60 * (W < 700 ? .81 : 1), start: 3, settle: 140 };
+      // Poses 0-11 facing left use the copies from LEFT_POSES on, whose logo reads right mirrored.
+      // They switch over only once the turn-around squeeze has passed zero width (FLIP_AT ms).
+      var LEFT_POSES = 38, FLIP_AT = 75, shownFace = 1, faceAt = -1e9;
       var wasWalking = false, walkEdgeAt = -1e9, lastLean = 0, grabOn = false, shadowOn = false;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and his top speeds
       // (a brisk walk: about three steps a second).
@@ -984,7 +988,7 @@
         el.setAttribute('aria-hidden', 'true');
         el.style.left = cls === 'leaf-bit' ? (p.face > 0 ? '132px' : '-40px') : rnd(30, 75) + '%';
         // The nozzle sits lower in the "lower" blower pose (tip at y=139 vs 115 when level).
-        if (cls === 'leaf-bit') el.style.top = (displayedFrame === POSE.lower ? 131 : 107) + 'px';
+        if (cls === 'leaf-bit') el.style.top = (displayedFrame % LEFT_POSES === POSE.lower ? 131 : 107) + 'px';
         el.style.setProperty('--dx', (cls === 'leaf-bit' ? p.face * rnd(30, 75) : rnd(-45, 45)) + 'px');
         el.style.setProperty('--dy', (cls === 'leaf-bit' ? rnd(-15, 15) : rnd(-65, -30)) + 'px');
         wrap.appendChild(el);
@@ -1010,6 +1014,7 @@
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
         var dx = gx - p.x, dy = gy - p.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (p.hop == null) p.hop = d < WALK.step;
         if (Math.abs(dx) > 2) p.face = dx > 0 ? 1 : -1;
         if (d < 1.5) { p.x = gx; p.y = gy; p.speed = 0; p.acc = 0; return true; }
         // Constant-acceleration motion: speed ramps up at ACCEL and is never allowed to exceed
@@ -1196,7 +1201,7 @@
             }
           }
           var walking = p.state === 'walk' || p.state === 'home' || p.state === 'leave';
-          if (walking && !wasWalking) p.stride = WALK.start / WALK.frames * 2 * WALK.step;
+          if (walking && !wasWalking) { p.stride = WALK.start / WALK.frames * 2 * WALK.step; p.hop = null; }
           if (walking !== wasWalking) walkEdgeAt = now;
           wasWalking = walking;
           // While held or thrown he is a pendulum hanging from the grab point: the angle is an
@@ -1236,10 +1241,15 @@
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
-          var pose = POSE.idle, walkSet = p.face < 0 ? WALK.firstLeft : WALK.first;
-          var settling = now - walkEdgeAt < WALK.settle && !reduceMotion &&
-            (walking ? p.speed < 60 : p.state === 'idle' || p.state === 'clear' || p.state === 'wait');
-          if (settling) pose = walkSet + WALK.frames;   // the standing frame: boots side by side
+          if (p.face !== shownFace && faceAt < 0) faceAt = now;
+          if (faceAt >= 0 && now - faceAt >= FLIP_AT) { shownFace = p.face; faceAt = -1; }
+          if (p.face === shownFace) faceAt = -1;
+          var pose = POSE.idle, walkSet = shownFace < 0 ? WALK.firstLeft : WALK.first;
+          var settling = now - walkEdgeAt < WALK.settle && !reduceMotion && !walking &&
+            (p.state === 'idle' || p.state === 'clear' || p.state === 'wait');
+          // Standing frame (boots side by side): for a beat after he stops, and for a hop shorter
+          // than one step, where a stride would only flicker.
+          if (settling || (walking && p.hop)) pose = walkSet + WALK.frames;
           else if (walking) {
             // Nearest walk frame to the distance walked (frame f is drawn at phase f / frames).
             pose = walkSet + Math.round(p.stride / (2 * WALK.step) * WALK.frames) % WALK.frames;
@@ -1258,6 +1268,7 @@
           else if (p.state === 'wait' && p.t < .11) pose = POSE.level;
           else if (wrap.classList.contains('reacting') || wrap.classList.contains('cheering')) pose = POSE.wave;
           else if (p.state === 'idle' && now < blinkUntil && !reduceMotion) pose = POSE.blink;
+          if (shownFace < 0 && pose < WALK.first) pose += LEFT_POSES;
           if (pose !== displayedFrame) {
             sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
             displayedFrame = pose;
