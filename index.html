@@ -399,6 +399,8 @@
   }
   input:focus, select:focus, textarea:focus { border-color: var(--leaf); outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
+  .field-error { display: none; color: var(--maple); font-size: .85rem; font-weight: 700; margin-top: 2px; }
+  .field-error.show { display: block; }
   textarea { min-height: 96px; resize: vertical; }
   form.estimate .btn { width: 100%; margin-top: 8px; }
   .form-note { font-size: .88rem; color: var(--bark-soft); text-align: center; margin: 14px 0 0; }
@@ -687,10 +689,10 @@
           <h3>Request a free estimate</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
-            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"></div>
-            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"></div>
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err">Please enter your name</span></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err">Please enter your phone number</span></div>
           </div>
-          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"></div>
+          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err">Please enter your street address</span></div>
           <div class="field">
             <label for="f-service">What do you need?</label>
             <select id="f-service" name="service">
