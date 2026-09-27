@@ -173,12 +173,13 @@
   .pet-wrap.face-left .pet-body { scale: -1 1; }
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
   /* Poses 0-11 built by pet/build-sheet.py (idle, the old walk keyframes, notice-the-pile, three blower
-     poses, wave, blink), then a 12-frame walk cycle from pet/walk-rig.py. The art is larger than the
-     hit area so the blower can extend past Chris. */
+     poses, wave, blink), then the 12-frame walk cycle from pet/walk-rig.py twice: facing right, and
+     with the shirt logo pre-flipped for walking left (the page mirrors him). The art is larger than
+     the hit area so the blower can extend past Chris. */
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses-v3.png") 0 0 / 4608px 200px no-repeat;
+    background: url("media/pet-chris-poses-v3.png") 0 0 / 6912px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
   /* Walking is driven from JS: the walk frame follows distance walked, so a planted boot stays put,
      and --lean follows speed, so Chris leans into a start and rocks back on a stop. The hip bob is
@@ -857,11 +858,13 @@
       // Pose index into media/pet-chris-poses-v3.png. The order is set in pet/build-sheet.py and
       // pet/walk-rig.py (the walk frames follow the twelve poses).
       var POSE = { idle: 0, notice: 6, pickup: 7, level: 8, lower: 9, wave: 10, blink: 11 };
-      // The walk: WALK.frames frames per cycle of two steps, from pose WALK.first. A cycle covers
+      // The walk: WALK.frames frames per cycle of two steps, from pose WALK.first (facing right) or
+      // WALK.firstLeft (logo pre-flipped, for when the page mirrors him). A cycle covers
       // 2 * WALK.step px of ground at sprite scale 1 (WALK.step is STEP in pet/walk-rig.py), so
       // picking the frame from distance walked keeps the planted boot on one spot at any speed.
-      // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together.
-      var WALK = { first: 12, frames: 12, step: 50 * (W < 700 ? .81 : 1), start: 3 };
+      // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together
+      // (the frame half a cycle later is the same stance on the other foot).
+      var WALK = { first: 12, firstLeft: 24, frames: 12, step: 60 * (W < 700 ? .81 : 1), start: 3 };
       var wasWalking = false, lastLean = 0, grabOn = false, shadowOn = false;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and his top speeds
       // (a brisk walk: about three steps a second).
@@ -959,7 +962,8 @@
       // home along the ground instead of gliding home through the air.
       function drop(vx, vy) {
         p.t = 0; p.bounces = 0;
-        if (reduceMotion) { p.y = homeY(); p.state = 'home'; return; }
+        // Reduced motion: no walk across the screen, he is simply back home.
+        if (reduceMotion) { p.x = 4; p.y = homeY(); p.state = 'idle'; p.face = 1; p.cooldown = 5; return; }
         p.vx = vx; p.vy = vy; p.state = 'toss';
       }
       function react(cls, duration) {
@@ -1019,7 +1023,12 @@
         p.acc = dt > 0 ? (p.speed - before) / dt : 0;
         var step = Math.min(d, Math.max(p.speed, 30) * dt);
         p.x += dx / d * step; p.y += dy / d * step;
-        p.stride += step;
+        // Land the last step on a boots-together frame so he stops standing, not mid-stride: aim the
+        // stride count at the nearest such frame at the goal and let it run a little long or short.
+        var half = WALK.step, lead = WALK.start / WALK.frames * 2 * WALK.step;
+        var end = lead + Math.round((p.stride + d - lead) / half) * half;
+        var k = Math.max(.8, Math.min(1.25, (end - p.stride) / d));
+        p.stride += step * k;
         return false;
       }
       function petGoal(r) {
@@ -1228,7 +1237,7 @@
           var pose = POSE.idle;
           if (walking) {
             // Nearest walk frame to the distance walked (frame f is drawn at phase f / frames).
-            pose = WALK.first + Math.round(p.stride / (2 * WALK.step) * WALK.frames) % WALK.frames;
+            pose = (p.face < 0 ? WALK.firstLeft : WALK.first) + Math.round(p.stride / (2 * WALK.step) * WALK.frames) % WALK.frames;
           }
           else if (p.state === 'drag' || p.state === 'toss') pose = POSE.wave;
           else if (p.state === 'notice') pose = POSE.notice;

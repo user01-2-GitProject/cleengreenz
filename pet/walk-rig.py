@@ -31,10 +31,16 @@ IDLE_SHEET = "media/pet-chris-poses-v2.png"
 OUT = "media/pet-chris-poses-v3.png"
 W, H = 192, 200
 FRAMES = 12
-STANCE = 0.6
-STEP = 50           # boot-to-boot distance at contact, px
-LIFT = 9            # swing boot peak lift, px
-REST_BEND = 3.0     # knees stay this soft at passing, so the hips bob about this much, not more
+STANCE = 0.58
+STEP = 60           # boot-to-boot distance at contact, px
+LIFT = 10           # swing boot peak lift, px
+REST_BEND = 4.0     # knees stay this soft at passing, so the hips bob about this much, not more
+# The passing keyframe's legs are bent, so it stands 10px shorter than the idle pose. The rig
+# lengthens thigh and shin until his head sits HEAD_DROP px below idle's at passing, so he does not
+# shrink when he sets off.
+HEAD_DROP = 5
+SRC_HEAD = 10       # top row of the cap in the passing keyframe (idle's is 0)
+LOGO_BOX = (70, 65, 93, 81)   # the white "CG" on the shirt, x0 y0 x1 y1 (exclusive), in the keyframe
 GROUND = 197        # lowest sole row in every frame
 
 # --- The source leg, measured on the passing keyframe (pixel coordinates in that frame) ----------
@@ -49,6 +55,7 @@ BOOT_BOX = (73, 178, 116, 198)
 # Body: everything above this row comes from the passing keyframe unchanged.
 WAIST = 112
 SHIRT_HEM = 104
+PELVIS_BOX = (55, 100, 97, 121)
 OUTLINE = (38, 22, 14, 255)
 # Arms below the sleeves, and the shoulder each one swings from (measured on the keyframe). The
 # sleeves stay on the body and are drawn over the top of the arm, so the joint never shows.
@@ -81,13 +88,36 @@ def cut(src, mask):
     return out
 
 
+def scale2x(img):
+    """EPX / Scale2x: doubles pixel art while keeping edges sharp (no new colours)."""
+    h, w = img.shape[:2]
+    pad = np.pad(img, ((1, 1), (1, 1), (0, 0)), mode="edge")
+    P = pad[1:-1, 1:-1]
+    A, B, C, D = pad[:-2, 1:-1], pad[1:-1, 2:], pad[1:-1, :-2], pad[2:, 1:-1]   # up, right, left, down
+
+    def eq(u, v):
+        return np.all(u == v, axis=-1)[..., None]
+    out = np.zeros((2 * h, 2 * w, img.shape[2]), img.dtype)
+    out[0::2, 0::2] = np.where(eq(C, A) & ~eq(C, D) & ~eq(A, B), A, P)
+    out[0::2, 1::2] = np.where(eq(A, B) & ~eq(A, C) & ~eq(B, D), B, P)
+    out[1::2, 0::2] = np.where(eq(D, C) & ~eq(D, B) & ~eq(C, A), C, P)
+    out[1::2, 1::2] = np.where(eq(B, D) & ~eq(B, A) & ~eq(D, C), D, P)
+    return out
+
+
+UP = 4   # sources are Scale2x'd twice before rotating (the RotSprite trick): smoother edges
+
+
 def affine_sample(src, dst_shape, inv):
-    """Nearest-neighbour inverse mapping: dst pixel centre (x, y) -> src (x, y) = inv(x, y)."""
+    """Inverse mapping: dst pixel centre (x, y) -> src (x, y) = inv(x, y), sampled from the 4x
+    Scale2x'd source so rotated edges and outlines stay clean instead of stair-stepping."""
+    big = scale2x(scale2x(src))
     h, w = dst_shape
     ys, xs = np.mgrid[0:h, 0:w]
     sx, sy = inv(xs + 0.5, ys + 0.5)
-    sx = np.floor(sx).astype(int)
-    sy = np.floor(sy).astype(int)
+    sx = np.floor(sx * UP).astype(int)
+    sy = np.floor(sy * UP).astype(int)
+    src = big
     ok = (sx >= 0) & (sx < src.shape[1]) & (sy >= 0) & (sy < src.shape[0])
     out = np.zeros((h, w, 4), np.uint8)
     out[ok] = src[sy[ok], sx[ok]]
@@ -118,14 +148,76 @@ def rot_map(src_pivot, dst_pivot, deg):
     return inv
 
 
+def shift_y(img, dy):
+    out = np.zeros_like(img)
+    if dy > 0:
+        out[dy:] = img[:-dy]
+    elif dy < 0:
+        out[:dy] = img[-dy:]
+    else:
+        out[:] = img
+    return out
+
+
 def over(dst, src):
     a = src[..., 3:4].astype(np.float32) / 255
     dst[..., :3] = (src[..., :3] * a + dst[..., :3] * (1 - a)).astype(np.uint8)
     dst[..., 3] = np.maximum(dst[..., 3], src[..., 3])
 
 
+def neighbours(m):
+    n = np.zeros(m.shape, int)
+    n[1:, :] += m[:-1, :]
+    n[:-1, :] += m[1:, :]
+    n[:, 1:] += m[:, :-1]
+    n[:, :-1] += m[:, 1:]
+    return n
+
+
+def tidy(layer):
+    """Nearest-neighbour rotation leaves one-pixel teeth and pinholes on edges: file them off."""
+    for _ in range(2):
+        m = layer[..., 3] > 0
+        n = neighbours(m)
+        layer[m & (n <= 1)] = 0
+        holes = ~m & (n >= 3)
+        if holes.any():
+            # Fill a pinhole with the pixel above or below it, whichever is opaque.
+            up = np.roll(layer, 1, axis=0)
+            down = np.roll(layer, -1, axis=0)
+            fill = np.where((up[..., 3] > 0)[..., None], up, down)
+            layer[holes] = fill[holes]
+    return layer
+
+
+def fill_holes(frame):
+    """Transparent pockets fully enclosed by the figure (where layers meet) get the colour of the
+    nearest opaque pixel to their right, so no background shows through the body."""
+    empty = frame[..., 3] == 0
+    outside = np.zeros_like(empty)
+    outside[0, :] = empty[0, :]
+    outside[-1, :] = empty[-1, :]
+    outside[:, 0] = empty[:, 0]
+    outside[:, -1] = empty[:, -1]
+    while True:
+        grown = outside.copy()
+        grown[1:, :] |= outside[:-1, :]
+        grown[:-1, :] |= outside[1:, :]
+        grown[:, 1:] |= outside[:, :-1]
+        grown[:, :-1] |= outside[:, 1:]
+        grown &= empty
+        if (grown == outside).all():
+            break
+        outside = grown
+    for y, x in zip(*np.where(empty & ~outside)):
+        xs = np.where(frame[y, x:, 3] > 0)[0]
+        frame[y, x] = frame[y, x + xs[0]] if len(xs) else OUTLINE
+    return frame
+
+
 def outline(layer):
     """Give a cut-out layer a 1px dark edge where it meets transparency (the cut sides had none)."""
+    layer = tidy(layer)
     m = layer[..., 3] > 0
     inner = m.copy()
     inner[1:, :] &= m[:-1, :]
@@ -202,9 +294,30 @@ def main():
         body[box] = 0
         arms.append((a, np.array(arm["pivot"], float)))
     body[WAIST:] = 0
+    # The pelvis: the tops of both thighs under the hem, kept as one piece that only bobs. It fills
+    # the crotch and the back of the hips when the thighs swing apart.
+    pelvis = np.zeros_like(src)
+    x0, y0, x1, y1 = PELVIS_BOX
+    r, g, b = (src[..., k].astype(int) for k in range(3))
+    keep = np.zeros(src.shape[:2], bool)
+    keep[y0:y1, x0:x1] = True
+    keep &= ~((g > r + 20) & (g > b + 20)) & (src[..., 3] > 0)
+    pelvis[keep] = src[keep]
+    pelvis = outline(pelvis)
 
-    l1 = np.hypot(*(KNEE - HIP))
-    l2 = np.hypot(*(ANKLE - KNEE))
+    # Lengthen the legs (drawn lengths l1, l2; the texture stretches along each bone) so the hip
+    # sits where HEAD_DROP puts it at passing.
+    reach = (ANKLE[1] - (HIP[1] + HEAD_DROP - SRC_HEAD)) + REST_BEND
+    scale = reach / .99 / (np.hypot(*(KNEE - HIP)) + np.hypot(*(ANKLE - KNEE)))
+    l1 = np.hypot(*(KNEE - HIP)) * scale
+    l2 = np.hypot(*(ANKLE - KNEE)) * scale
+    print(f"legs lengthened x{scale:.3f}")
+    # The torso's back and front edges lost their outline where the arms were lifted off.
+    edge_fix = outline(body.copy())
+    sides = np.zeros(body.shape[:2], bool)
+    sides[:WAIST - 3, :62] = True
+    sides[:WAIST - 3, 90:] = True
+    body[sides] = edge_fix[sides]
 
     frames = []
     for f in range(FRAMES):
@@ -215,7 +328,6 @@ def main():
             x, lift, pitch = foot_track(fp)
             feet.append((x, lift, pitch, fp < STANCE))
         # Hip height: as high as the planted legs allow, but never fully locked straight.
-        reach = (l1 + l2) * .99
         rest = reach - REST_BEND
         hip_y = ANKLE[1] - rest
         for x, lift, pitch, planted in feet:
@@ -247,7 +359,7 @@ def main():
         # Near arm is furthest back when the near foot strikes (phase 0), forward half a cycle later.
         swing = ARM_SWING * math.cos(2 * math.pi * ph)
         body_shift = np.zeros_like(body)
-        body_shift[dy:] = body[:H - dy] if dy else body
+        body_shift = shift_y(body, dy)
         up = np.array([0, dy], float)
         near_arm = affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing))
         far_arm = affine_sample(arms[1][0], (H, W), rot_map(arms[1][1], arms[1][1] + up, swing))
@@ -255,11 +367,10 @@ def main():
         for a, _ in arms:
             base = np.zeros_like(a)
             base[:96] = a[:96]
-            shifted_base = np.zeros_like(base)
-            shifted_base[dy:] = base[:H - dy] if dy else base
-            over(frame, shifted_base)
+            over(frame, shift_y(base, dy))
         over(frame, far_arm)
         over(frame, layers[1])
+        over(frame, shift_y(pelvis, dy))
         over(frame, body_shift)
         over(frame, layers[0])
         # Shirt hem back over the top of the thigh.
@@ -267,14 +378,30 @@ def main():
         hem[:SHIRT_HEM + dy] = body_shift[:SHIRT_HEM + dy]
         over(frame, hem)
         over(frame, near_arm)
-        frames.append(frame)
+        # No shirt below the hem: where a thigh swung away, the shirt's corner would hang loose.
+        r, g, b = (frame[..., k].astype(int) for k in range(3))
+        loose = (g > r + 20) & (g > b + 20) & (frame[..., 3] > 0)
+        loose[:SHIRT_HEM + dy + 5] = False
+        frame[loose] = 0
+        frame = fill_holes(tidy(frame))
+        frames.append((frame, dy))
 
+    # Facing left, the page mirrors the sprite, which would put the shirt logo backwards. The
+    # second set of walk frames has the logo pre-flipped, so it reads right once mirrored.
+    lx0, ly0, lx1, ly1 = LOGO_BOX
+    flipped = []
+    for frame, dy in frames:
+        fl = frame.copy()
+        fl[ly0 + dy:ly1 + dy, lx0:lx1] = frame[ly0 + dy:ly1 + dy, lx0:lx1][:, ::-1]
+        flipped.append(fl)
+    frames = [f for f, _ in frames] + flipped
     sheet = np.concatenate(frames, axis=1)
     poses = np.array(Image.open(IDLE_SHEET).convert("RGBA"))
     Image.fromarray(np.concatenate([poses, sheet], axis=1), "RGBA").save(OUT, optimize=True)
-    print("wrote", OUT, "walk frames are poses", poses.shape[1] // W, "to", poses.shape[1] // W + FRAMES - 1)
+    n = poses.shape[1] // W
+    print("wrote", OUT, f"walk right: poses {n}-{n + FRAMES - 1}, walk left (logo pre-flipped): {n + FRAMES}-{n + 2 * FRAMES - 1}")
     if preview:
-        bg = Image.new("RGBA", (W * FRAMES, H), (226, 236, 214, 255))
+        bg = Image.new("RGBA", (W * FRAMES * 2, H), (226, 236, 214, 255))
         bg.alpha_composite(Image.fromarray(sheet, "RGBA"))
         bg.save(preview)
 
