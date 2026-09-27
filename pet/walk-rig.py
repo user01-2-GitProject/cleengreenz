@@ -31,14 +31,14 @@ IDLE_SHEET = "media/pet-chris-poses-v2.png"
 OUT = "media/pet-chris-poses-v4.png"
 W, H = 192, 200
 FRAMES = 16
-STANCE = 0.58
+STANCE = 0.55
 STEP = 72           # boot-to-boot distance at contact, px (about 0.4 of his height, a normal step)
 LIFT = 7            # swing boot peak lift, px: the foot passes low, it is not hoisted
-REST_BEND = 7.0     # knees stay this soft at passing, so the hips bob about this much, not more
+REST_BEND = 6.0     # knees stay this soft at passing, so the hips bob about this much, not more
 # The passing keyframe's legs are bent, so it stands 10px shorter than the idle pose. The rig
 # lengthens thigh and shin until his head sits HEAD_DROP px below idle's at passing, so he does not
 # shrink when he sets off.
-HEAD_DROP = 5
+HEAD_DROP = 2
 SRC_HEAD = 10       # top row of the cap in the passing keyframe (idle's is 0)
 LOGO_BOX = (70, 65, 93, 81)   # the white "CG" on the shirt, x0 y0 x1 y1 (exclusive), in the keyframe
 GROUND = 197        # lowest sole row in every frame
@@ -63,7 +63,7 @@ OUTLINE = (38, 22, 14, 255)
 # NEAR_ARM is the one on the same side as the near (cargo-pocket) leg; it swings opposite that leg.
 FAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
 NEAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
-ARM_SWING = 12.0    # degrees each way
+ARM_SWING = 16.0    # degrees each way
 ARM_LAG = 0.06      # arms trail the legs by this much of a cycle, so they swing rather than pump
 STAND_GAP = 14      # px between the boots in the standing frame
 # The cargo pocket is on the outside of the near leg only; the far leg gets it painted out.
@@ -314,7 +314,7 @@ def foot_track(phase):
         u = phase / STANCE
         x = front + (back - front) * u
         # Heel strike: toe comes down over the first bit; toe-off: heel rises over the last bit.
-        pitch = -12 * max(0, 1 - u / .15) + 18 * max(0, (u - .82) / .18)
+        pitch = -12 * max(0, 1 - u / .15) + 22 * max(0, (u - .7) / .3)
         return x, 0.0, pitch
     # Swing: the foot swings from the hip rather than the knee driving up. The heel peels up behind
     # right after toe-off (lift peaks early), the foot passes low, and the leg reaches out nearly
@@ -451,6 +451,11 @@ def main():
         hem[:SHIRT_HEM + dy] = body_shift[:SHIRT_HEM + dy]
         over(frame, hem)
         over(frame, near_arm)
+        # The sleeve goes back over the top of the swinging arm, so no arm edge pokes past it.
+        sleeve = np.zeros_like(body_shift)
+        sy = NEAR_ARM["box"][1] + dy + 2
+        sleeve[:sy, NEAR_ARM["box"][0] - 4:] = body_shift[:sy, NEAR_ARM["box"][0] - 4:]
+        over(frame, sleeve)
         # No shirt below the hem: where a thigh swung away, the shirt's corner would hang loose.
         r, g, b = (frame[..., k].astype(int) for k in range(3))
         loose = (g > r + 20) & (g > b + 20) & (frame[..., 3] > 0)

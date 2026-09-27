@@ -868,8 +868,9 @@
       var LEFT_POSES = 46, FLIP_AT = 75, shownFace = 1, faceAt = -1e9;
       var wasWalking = false, walkEdgeAt = -1e9, lastLean = 0, grabOn = false, shadowOn = false;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and his top speeds
-      // (an easy walk: about two steps a second, 110-120 steps a minute).
-      var ACCEL = 420, DECEL = 520, GRAVITY = 2400, WALK_SPEED = 130, HOME_SPEED = 145;
+      // (an easy walk: about two steps a second, 110-120 steps a minute; scaled with the sprite on
+      // phones so the cadence stays the same).
+      var ACCEL = 420, DECEL = 520, GRAVITY = 2400, WALK_SPEED = 130 * (W < 700 ? .81 : 1), HOME_SPEED = 145 * (W < 700 ? .81 : 1);
       // Coming and going: after STAY_FOR s on stage (p.stay; tapping or dragging him resets it) he
       // finishes what he is doing, goes home and walks off the left edge
       // (OFFSTAGE px past it). Away, he waits at least AWAY_MIN s and comes back for a pile of
