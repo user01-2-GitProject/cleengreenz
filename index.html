@@ -1172,7 +1172,8 @@
             x = l.x; y = l.y;
             if (l.opacity <= 0 || y > H + 40 || x < -60 || x > W + 60) { resetLeaf(l, false); continue; }
           }
-          l.el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) rotate(' + l.rot.toFixed(0) + 'deg)';
+          // Using Math.round avoids expensive float-to-string toFixed() conversions inside the animation frame loop
+          l.el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0) rotate(' + Math.round(l.rot) + 'deg)';
         }
 
         // Pet
