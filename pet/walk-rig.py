@@ -62,7 +62,8 @@ OUTLINE = (38, 22, 14, 255)
 # NEAR_ARM is the one on the same side as the near (cargo-pocket) leg; it swings opposite that leg.
 FAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
 NEAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
-ARM_SWING = 6.0     # degrees each way
+ARM_SWING = 9.0     # degrees each way
+STAND_GAP = 14      # px between the boots in the standing frame
 # The cargo pocket is on the outside of the near leg only; the far leg gets it painted out.
 POCKET_BOX = (63, 116, 80, 142)
 
@@ -190,9 +191,10 @@ def tidy(layer):
     return layer
 
 
-def fill_holes(frame):
-    """Transparent pockets fully enclosed by the figure (where layers meet) get the colour of the
-    nearest opaque pixel to their right, so no background shows through the body."""
+def fill_holes(frame, top):
+    """Transparent pockets fully enclosed by the hips and legs (below row `top`, where the layers
+    meet) get the nearest cloth colour to their right, so no background shows through. Gaps higher
+    up, like between an arm and the torso, are real and stay open."""
     empty = frame[..., 3] == 0
     outside = np.zeros_like(empty)
     outside[0, :] = empty[0, :]
@@ -209,8 +211,28 @@ def fill_holes(frame):
         if (grown == outside).all():
             break
         outside = grown
-    for y, x in zip(*np.where(empty & ~outside)):
-        xs = np.where(frame[y, x:, 3] > 0)[0]
+    holes = empty & ~outside
+    holes[:top] = False
+    # Only small pockets: a big enclosed area (between an arm and a thigh, say) is real background.
+    seen = np.zeros_like(holes)
+    for y0, x0 in zip(*np.where(holes)):
+        if seen[y0, x0]:
+            continue
+        comp, todo = [], [(y0, x0)]
+        seen[y0, x0] = True
+        while todo:
+            y, x = todo.pop()
+            comp.append((y, x))
+            for yy, xx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+                if 0 <= yy < H and 0 <= xx < W and holes[yy, xx] and not seen[yy, xx]:
+                    seen[yy, xx] = True
+                    todo.append((yy, xx))
+        if len(comp) > 30:
+            for y, x in comp:
+                holes[y, x] = False
+    lum = frame[..., :3].astype(int).sum(axis=2)
+    for y, x in zip(*np.where(holes)):
+        xs = np.where((frame[y, x:, 3] > 0) & (lum[y, x:] > 200))[0]
         frame[y, x] = frame[y, x + xs[0]] if len(xs) else OUTLINE
     return frame
 
@@ -319,23 +341,16 @@ def main():
     sides[:WAIST - 3, 90:] = True
     body[sides] = edge_fix[sides]
 
-    frames = []
-    for f in range(FRAMES):
-        ph = f / FRAMES
-        feet = []
-        for off in (0.0, 0.5):   # near foot, far foot
-            fp = (ph + off) % 1
-            x, lift, pitch = foot_track(fp)
-            feet.append((x, lift, pitch, fp < STANCE))
-        # Hip height: as high as the planted legs allow, but never fully locked straight.
-        rest = reach - REST_BEND
-        hip_y = ANKLE[1] - rest
+    def needed_dy(feet):
+        """How far the hips must drop so every planted boot still reaches the ground."""
+        hip_y = ANKLE[1] - (reach - REST_BEND)
         for x, lift, pitch, planted in feet:
             if planted:
                 hip_y = max(hip_y, ANKLE[1] - math.sqrt(max(1, reach ** 2 - x ** 2)))
-        dy = int(round(hip_y - HIP[1]))
-        hip = HIP + np.array([0, dy])
+        return hip_y - HIP[1]
 
+    def render(feet, dy, swing):
+        hip = HIP + np.array([0, dy])
         frame = np.zeros((H, W, 4), np.uint8)
         layers = []
         for i, (x, lift, pitch, planted) in enumerate(feet):
@@ -352,13 +367,14 @@ def main():
             over(layer, affine_sample(shin_src, (H, W), bone_map(KNEE, ANKLE, knee, ankle)))
             over(layer, affine_sample(far_thigh_src if i else thigh_src, (H, W), bone_map(HIP, KNEE, h, knee)))
             layer = outline(layer)
+            # Never through the ground: a pitched boot's heel or toe corner is lifted back onto it.
+            rows = np.where(layer[..., 3].any(axis=1))[0]
+            if len(rows) and rows[-1] > GROUND:
+                layer = shift_y(layer, GROUND - rows[-1])
             if i == 1:  # far leg: a touch darker, like the art's far leg
                 layer[..., :3] = (layer[..., :3] * .82).astype(np.uint8)
             layers.append(layer)
 
-        # Near arm is furthest back when the near foot strikes (phase 0), forward half a cycle later.
-        swing = ARM_SWING * math.cos(2 * math.pi * ph)
-        body_shift = np.zeros_like(body)
         body_shift = shift_y(body, dy)
         up = np.array([0, dy], float)
         near_arm = affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing))
@@ -383,8 +399,29 @@ def main():
         loose = (g > r + 20) & (g > b + 20) & (frame[..., 3] > 0)
         loose[:SHIRT_HEM + dy + 5] = False
         frame[loose] = 0
-        frame = fill_holes(tidy(frame))
-        frames.append((frame, dy))
+        return fill_holes(tidy(frame), SHIRT_HEM + dy - 2)
+
+    cycle = []
+    for f in range(FRAMES):
+        ph = f / FRAMES
+        feet = []
+        for off in (0.0, 0.5):   # near foot, far foot
+            fp = (ph + off) % 1
+            x, lift, pitch = foot_track(fp)
+            feet.append((x, lift, pitch, fp < STANCE))
+        cycle.append((ph, feet, needed_dy(feet)))
+    # The hips bob on a smooth curve (lowest at each contact, two dips a cycle) that is never higher
+    # than the planted legs allow, rather than dropping for one frame at contact.
+    lo, hi = min(c[2] for c in cycle), max(c[2] for c in cycle)
+    frames = []
+    for ph, feet, need in cycle:
+        dy = int(math.ceil(max(need, lo + (hi - lo) * (.5 + .5 * math.cos(4 * math.pi * ph))) - .01))
+        # Near arm is furthest back when the near foot strikes (phase 0), forward half a cycle later.
+        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * ph)), dy))
+    # Standing still in walking profile, boots side by side: the frame he stops on before idle.
+    stand = [(STAND_GAP / 2, 0.0, 0.0, True), (-STAND_GAP / 2, 0.0, 0.0, True)]
+    sdy = int(math.ceil(needed_dy(stand) - .01))
+    frames.append((render(stand, sdy, 0.0), sdy))
 
     # Facing left, the page mirrors the sprite, which would put the shirt logo backwards. The
     # second set of walk frames has the logo pre-flipped, so it reads right once mirrored.
@@ -399,9 +436,10 @@ def main():
     poses = np.array(Image.open(IDLE_SHEET).convert("RGBA"))
     Image.fromarray(np.concatenate([poses, sheet], axis=1), "RGBA").save(OUT, optimize=True)
     n = poses.shape[1] // W
-    print("wrote", OUT, f"walk right: poses {n}-{n + FRAMES - 1}, walk left (logo pre-flipped): {n + FRAMES}-{n + 2 * FRAMES - 1}")
+    print("wrote", OUT, f"walk right: poses {n}-{n + FRAMES - 1} then stand {n + FRAMES}; "
+          f"logo pre-flipped for walking left: {n + FRAMES + 1}-{n + 2 * FRAMES} then stand {n + 2 * FRAMES + 1}")
     if preview:
-        bg = Image.new("RGBA", (W * FRAMES * 2, H), (226, 236, 214, 255))
+        bg = Image.new("RGBA", (sheet.shape[1], H), (226, 236, 214, 255))
         bg.alpha_composite(Image.fromarray(sheet, "RGBA"))
         bg.save(preview)
 
