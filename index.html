@@ -193,14 +193,14 @@
   .pet-wrap.face-left .pet-body { scale: -1 1; }
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
   /* Poses 0-11 built by pet/build-sheet.py (idle, the old walk keyframes, notice-the-pile, three blower
-     poses, wave, blink), then from pet/walk-rig.py the 12-frame walk cycle and a standing frame, twice:
+     poses, wave, blink), then from pet/walk-rig.py the 16-frame walk cycle and a standing frame, twice:
      facing right, and with the shirt logo pre-flipped for walking left (the page mirrors him); last,
      poses 0-11 again with the logo pre-flipped, for the other poses facing left. The art is larger than
      the hit area so the blower can extend past Chris. */
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses-v3.png") 0 0 / 9600px 200px no-repeat;
+    background: url("media/pet-chris-poses-v4.png") 0 0 / 11136px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
   /* Walking is driven from JS: the walk frame follows distance walked, so a planted boot stays put,
      and --lean follows speed, so Chris leans into a start and rocks back on a stop. The hip bob is
@@ -915,7 +915,7 @@
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0,
         acc: 0, lean: 0, tilt: 0, tiltV: 0, mvx: 0, bounces: 0, stay: 0 };
-      // Pose index into media/pet-chris-poses-v3.png. The order is set in pet/build-sheet.py and
+      // Pose index into media/pet-chris-poses-v4.png. The order is set in pet/build-sheet.py and
       // pet/walk-rig.py (the walk frames follow the twelve poses).
       var POSE = { idle: 0, notice: 6, pickup: 7, level: 8, lower: 9, wave: 10, blink: 11 };
       // The walk: WALK.frames frames per cycle of two steps, from pose WALK.first (facing right) or
@@ -925,14 +925,16 @@
       // picking the frame from distance walked keeps the planted boot on one spot at any speed.
       // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together
       // (the frame half a cycle later is the same stance on the other foot).
-      var WALK = { first: 12, firstLeft: 25, frames: 12, step: 60 * (W < 700 ? .81 : 1), start: 3, settle: 140 };
+      var WALK = { first: 12, firstLeft: 29, frames: 16, step: 72 * (W < 700 ? .81 : 1), start: 4, settle: 140 };
       // Poses 0-11 facing left use the copies from LEFT_POSES on, whose logo reads right mirrored.
-      // They switch over only once the turn-around squeeze has passed zero width (FLIP_AT ms).
-      var LEFT_POSES = 38, FLIP_AT = 75, shownFace = 1, faceAt = -1e9;
+      // They switch over only once the turn-around squeeze has passed zero width (FLIP_AT ms; the
+      // 150ms flip eases, so zero width comes a little after halfway).
+      var LEFT_POSES = 46, FLIP_AT = 100, shownFace = 1, faceAt = -1e9;
       var wasWalking = false, walkEdgeAt = -1e9, lastLean = 0, grabOn = false, shadowOn = false;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and his top speeds
-      // (a brisk walk: about three steps a second).
-      var ACCEL = 420, DECEL = 520, GRAVITY = 2400, WALK_SPEED = 150, HOME_SPEED = 170;
+      // (an easy walk: about two steps a second, 110-120 steps a minute; scaled with the sprite on
+      // phones so the cadence stays the same).
+      var ACCEL = 420, DECEL = 520, GRAVITY = 2400, WALK_SPEED = 130 * (W < 700 ? .81 : 1), HOME_SPEED = 145 * (W < 700 ? .81 : 1);
       // Coming and going: after STAY_FOR s on stage (p.stay; tapping or dragging him resets it) he
       // finishes what he is doing, goes home and walks off the left edge
       // (OFFSTAGE px past it). Away, he waits at least AWAY_MIN s and comes back for a pile of
@@ -1294,7 +1296,7 @@
           }
           // Lean into a start, rock back when braking. Decays after he stops so the class can drop.
           var leanTarget = walking && !reduceMotion
-            ? 1 * Math.min(1, p.speed / 260) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
+            ? 2 * Math.min(1, p.speed / WALK_SPEED) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
           p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
           if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
           wrap.classList.toggle('walking', walking || Math.abs(p.lean) > .04);

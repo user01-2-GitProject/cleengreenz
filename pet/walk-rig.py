@@ -1,4 +1,4 @@
-"""Build Chris's walk cycle by re-posing his own pixel legs, into media/pet-chris-poses-v3.png.
+"""Build Chris's walk cycle by re-posing his own pixel legs, into media/pet-chris-poses-v4.png.
 
 Run from the repository root:  python3 pet/walk-rig.py [--preview out.png]
 
@@ -28,17 +28,17 @@ SRC = "pet/chris-keyframes/03_walk_passing_a.png"
 IDLE_SHEET = "media/pet-chris-poses-v2.png"
 # The site's sheet: the twelve poses from pet/build-sheet.py, then the walk frames (poses 12..23).
 # A new file name, so browsers and the Cloudflare cache cannot mix old poses with new code.
-OUT = "media/pet-chris-poses-v3.png"
+OUT = "media/pet-chris-poses-v4.png"
 W, H = 192, 200
-FRAMES = 12
-STANCE = 0.58
-STEP = 60           # boot-to-boot distance at contact, px
-LIFT = 10           # swing boot peak lift, px
-REST_BEND = 4.0     # knees stay this soft at passing, so the hips bob about this much, not more
+FRAMES = 16
+STANCE = 0.55
+STEP = 72           # boot-to-boot distance at contact, px (about 0.4 of his height, a normal step)
+LIFT = 7            # swing boot peak lift, px: the foot passes low, it is not hoisted
+REST_BEND = 6.0     # knees stay this soft at passing, so the hips bob about this much, not more
 # The passing keyframe's legs are bent, so it stands 10px shorter than the idle pose. The rig
 # lengthens thigh and shin until his head sits HEAD_DROP px below idle's at passing, so he does not
 # shrink when he sets off.
-HEAD_DROP = 5
+HEAD_DROP = 2
 SRC_HEAD = 10       # top row of the cap in the passing keyframe (idle's is 0)
 LOGO_BOX = (70, 65, 93, 81)   # the white "CG" on the shirt, x0 y0 x1 y1 (exclusive), in the keyframe
 GROUND = 197        # lowest sole row in every frame
@@ -60,10 +60,14 @@ PELVIS_BOX = (55, 100, 97, 121)
 OUTLINE = (38, 22, 14, 255)
 # Arms below the sleeves, and the shoulder each one swings from (measured on the keyframe). The
 # sleeves stay on the body and are drawn over the top of the arm, so the joint never shows.
-# NEAR_ARM is the one on the same side as the near (cargo-pocket) leg; it swings opposite that leg.
-FAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
-NEAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
-ARM_SWING = 9.0     # degrees each way
+# He faces right in three-quarter view with his chest toward us, so his right side is the near side:
+# the near (cargo-pocket) leg is his right leg and the near arm is the one at the back of the
+# silhouette (image left). Each arm swings opposite its own side's leg. The far arm (his left, at
+# the chest side) is drawn behind the body and legs, the near arm in front.
+NEAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
+FAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
+ARM_SWING = 16.0    # degrees each way
+ARM_LAG = 0.06      # arms trail the legs by this much of a cycle, so they swing rather than pump
 STAND_GAP = 14      # px between the boots in the standing frame
 # The cargo pocket is on the outside of the near leg only; the far leg gets it painted out.
 POCKET_BOX = (63, 116, 80, 142)
@@ -313,13 +317,16 @@ def foot_track(phase):
         u = phase / STANCE
         x = front + (back - front) * u
         # Heel strike: toe comes down over the first bit; toe-off: heel rises over the last bit.
-        pitch = -12 * max(0, 1 - u / .15) + 18 * max(0, (u - .82) / .18)
+        pitch = -12 * max(0, 1 - u / .15) + 22 * max(0, (u - .7) / .3)
         return x, 0.0, pitch
+    # Swing: the foot swings from the hip rather than the knee driving up. The heel peels up behind
+    # right after toe-off (lift peaks early), the foot passes low, and the leg reaches out nearly
+    # straight, arriving by 90% of the swing.
     u = (phase - STANCE) / (1 - STANCE)
-    s = (1 - math.cos(math.pi * u)) / 2   # ease in and out
+    s = (1 - math.cos(math.pi * min(1, u / .9))) / 2
     x = back + (front - back) * s
-    lift = LIFT * math.sin(math.pi * u) ** 1.2
-    pitch = 18 * (1 - u / .35) if u < .35 else -12 * min(1, (u - .5) / .5) if u > .5 else 0
+    lift = LIFT * math.sin(math.pi * u ** .6) ** 1.5
+    pitch = 24 * (1 - u / .4) if u < .4 else -14 * min(1, (u - .45) / .45) if u > .45 else 0
     return x, lift, pitch
 
 
@@ -349,7 +356,7 @@ def main():
 
     body = src.copy()
     arms = []
-    for arm in (NEAR_ARM, FAR_ARM):
+    for arm in (FAR_ARM, NEAR_ARM):
         x0, y0, x1, y1 = arm["box"]
         a = np.zeros_like(src)
         box = np.zeros(src.shape[:2], bool)
@@ -422,20 +429,23 @@ def main():
             layer = outline(layer)
             # Never through the ground: a pitched boot's heel or toe corner is lifted back onto it.
             rows = np.where(layer[..., 3].any(axis=1))[0]
-            if len(rows) and rows[-1] > GROUND:
-                layer = shift_y(layer, GROUND - rows[-1])
+            if len(rows) and (rows[-1] > GROUND or (planted and rows[-1] < GROUND)):
+                layer = shift_y(layer, GROUND - rows[-1])   # and a planted boot sits right on it
             if i == 1:  # far leg: a touch darker, like the art's far leg
                 layer[..., :3] = (layer[..., :3] * .82).astype(np.uint8)
             layers.append(layer)
 
         body_shift = shift_y(body, dy)
         up = np.array([0, dy], float)
-        near_arm = affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing))
-        far_arm = affine_sample(arms[1][0], (H, W), rot_map(arms[1][1], arms[1][1] + up, swing))
-        # Under each swinging arm, its unmoved upper part, so no gap opens against the torso.
-        for a, _ in arms:
+        # (outlined, so its top edge, cut where it meets the sleeve, is not left raw when it swings)
+        far_arm = outline(affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing)))
+        near_arm = affine_sample(arms[1][0], (H, W), rot_map(arms[1][1], arms[1][1] + up, swing))
+        # Under each swinging arm, the unmoved shoulder just below the sleeve, so no gap opens
+        # against the torso (only a few rows, or it shows as a ghost arm beside the swung one).
+        for (a, _), arm in zip(arms, (FAR_ARM, NEAR_ARM)):
             base = np.zeros_like(a)
-            base[:96] = a[:96]
+            top = arm["box"][1]
+            base[top:top + 6] = a[top:top + 6]
             over(frame, shift_y(base, dy))
         over(frame, far_arm)
         over(frame, layers[1])
@@ -447,6 +457,11 @@ def main():
         hem[:SHIRT_HEM + dy] = body_shift[:SHIRT_HEM + dy]
         over(frame, hem)
         over(frame, near_arm)
+        # The sleeve goes back over the top of the swinging arm, so no arm edge pokes past it.
+        sleeve = np.zeros_like(body_shift)
+        sy = NEAR_ARM["box"][1] + dy + 2
+        sleeve[:sy, :NEAR_ARM["box"][2] + 4] = body_shift[:sy, :NEAR_ARM["box"][2] + 4]
+        over(frame, sleeve)
         # No shirt below the hem: where a thigh swung away, the shirt's corner would hang loose.
         r, g, b = (frame[..., k].astype(int) for k in range(3))
         loose = (g > r + 20) & (g > b + 20) & (frame[..., 3] > 0)
@@ -469,8 +484,8 @@ def main():
     frames = []
     for ph, feet, need in cycle:
         dy = int(math.ceil(max(need, lo + (hi - lo) * (.5 + .5 * math.cos(4 * math.pi * ph))) - .01))
-        # Near arm is furthest back when the near foot strikes (phase 0), forward half a cycle later.
-        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * ph)), dy))
+        # Near arm is furthest back just after the near foot strikes (phase 0 + ARM_LAG), forward half a cycle later.
+        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * (ph - ARM_LAG))), dy))
     # Standing still in walking profile, boots side by side: the frame he stops on before idle.
     stand = [(STAND_GAP / 2, 0.0, 0.0, True), (-STAND_GAP / 2, 0.0, 0.0, True)]
     sdy = int(math.ceil(needed_dy(stand) - REST_BEND - .01))   # knees straight, not the walk's soft bend
