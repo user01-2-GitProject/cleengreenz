@@ -46,6 +46,8 @@
   function showDone() {
     fieldsBox.style.display = 'none';
     done.classList.add('show');
+    var heading = done.querySelector('h3');
+    if (heading) heading.focus();
   }
 
   function openEmail(d) {
@@ -94,9 +96,10 @@
     if (window.trackLead) window.trackLead('form', 'estimate', { service: d.service });
 
     sending = true;
-    var label = button.textContent;
+    var label = button.innerHTML;
     button.disabled = true;
-    button.textContent = 'Sending...';
+    button.setAttribute('aria-busy', 'true');
+    button.innerHTML = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Sending...';
     fetch('/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -104,6 +107,11 @@
     })
       .then(function (res) { if (!res.ok) throw new Error(res.status); showDone(); })
       .catch(function () { openEmail(d); })
-      .then(function () { sending = false; button.disabled = false; button.textContent = label; });
+      .then(function () {
+        sending = false;
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.innerHTML = label;
+      });
   });
 })();
