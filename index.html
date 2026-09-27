@@ -77,6 +77,8 @@
   .btn-primary:hover { box-shadow: 0 8px 0 var(--pumpkin-2); }
   .btn-ghost { background: var(--paper); color: var(--forest); box-shadow: 0 6px 0 #d9ccb3; }
   .btn svg { width: 1.1em; height: 1.1em; }
+  .btn .spinner { animation: btn-spin 0.8s linear infinite; }
+  @keyframes btn-spin { to { transform: rotate(360deg); } }
 
   /* Season ribbon */
   .ribbon {
@@ -685,8 +687,8 @@
           <h3>Request a free estimate</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
-            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true"></div>
-            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true"></div>
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"></div>
           </div>
           <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"></div>
           <div class="field">
@@ -706,7 +708,7 @@
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
         <div class="form-done" role="status" aria-live="polite">
-          <h3>Thanks, got it!</h3>
+          <h3 tabindex="-1">Thanks, got it!</h3>
           <p>Chris has your request and will be in touch soon.</p>
           <p>Need him sooner? Call or text <strong>(269) 362-8286</strong>.</p>
           <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="form-fallback">Call Chris instead</a>
