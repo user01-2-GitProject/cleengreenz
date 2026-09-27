@@ -88,8 +88,26 @@
   /* Header */
   header.site {
     position: sticky; top: 0; z-index: 40;
-    background: rgba(251, 245, 233, .92); backdrop-filter: blur(8px);
+    background: rgba(251, 245, 233, .92);
     border-bottom: 1px solid rgba(59, 47, 36, .08);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .header-town-media {
+    position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none;
+    background: var(--cream-2);
+  }
+  .header-town-media video,
+  .header-town-media img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 54%;
+  }
+  .header-town-media video { opacity: 0; transition: opacity 1.2s ease; }
+  .header-town-media.is-playing video { opacity: 1; }
+  .header-town-media.is-fading video { opacity: 0; }
+  .header-town-media::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(251,245,233,.88), rgba(251,245,233,.64) 42%, rgba(251,245,233,.72));
+    backdrop-filter: blur(1.5px);
   }
   .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; }
   .brand img { height: 56px; width: auto; }
@@ -433,6 +451,12 @@
 <div class="ribbon">🍂 Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate">Save your spot</a></div>
 
 <header class="site">
+  <div class="header-town-media" aria-hidden="true">
+    <img src="media/mascot-mower.jpg" alt="">
+    <video muted playsinline preload="metadata" poster="media/mascot-mower.jpg">
+      <source src="media/mascot-mower.mp4" type="video/mp4">
+    </video>
+  </div>
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="Cleen Greenz home"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358"></a>
     <ul class="nav-links">
@@ -731,6 +755,43 @@
   (function () {
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // One-shot sticky-header establishing shot. It plays slowly once per tab/session,
+    // then crossfades to the static image. Replace these temporary media paths with
+    // the final Niles tilt-shift assets when they are ready.
+    (function () {
+      var media = document.querySelector('.header-town-media');
+      if (!media) return;
+      var video = media.querySelector('video');
+      if (!video) return;
+
+      var played = false;
+      try { played = sessionStorage.getItem('cg-header-town-played') === '1'; } catch (e) {}
+
+      if (reduceMotion || played) {
+        video.pause();
+        return;
+      }
+
+      video.playbackRate = 0.55;
+      var finish = function () {
+        media.classList.add('is-fading');
+        try { sessionStorage.setItem('cg-header-town-played', '1'); } catch (e) {}
+        window.setTimeout(function () {
+          video.pause();
+          media.classList.remove('is-playing');
+        }, 1400);
+      };
+
+      video.addEventListener('ended', finish, { once: true });
+      video.addEventListener('error', finish, { once: true });
+      var started = video.play();
+      if (started && typeof started.then === 'function') {
+        started.then(function () { media.classList.add('is-playing'); }).catch(finish);
+      } else {
+        media.classList.add('is-playing');
+      }
+    }());
 
     // Lead events. Every call, email and form submit goes through here so a
     // counter (analytics, a Worker, a sheet) can be plugged in later in one place.
