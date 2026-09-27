@@ -60,9 +60,12 @@ PELVIS_BOX = (55, 100, 97, 121)
 OUTLINE = (38, 22, 14, 255)
 # Arms below the sleeves, and the shoulder each one swings from (measured on the keyframe). The
 # sleeves stay on the body and are drawn over the top of the arm, so the joint never shows.
-# NEAR_ARM is the one on the same side as the near (cargo-pocket) leg; it swings opposite that leg.
-FAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
-NEAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
+# He faces right in three-quarter view with his chest toward us, so his right side is the near side:
+# the near (cargo-pocket) leg is his right leg and the near arm is the one at the back of the
+# silhouette (image left). Each arm swings opposite its own side's leg. The far arm (his left, at
+# the chest side) is drawn behind the body and legs, the near arm in front.
+NEAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
+FAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
 ARM_SWING = 16.0    # degrees each way
 ARM_LAG = 0.06      # arms trail the legs by this much of a cycle, so they swing rather than pump
 STAND_GAP = 14      # px between the boots in the standing frame
@@ -353,7 +356,7 @@ def main():
 
     body = src.copy()
     arms = []
-    for arm in (NEAR_ARM, FAR_ARM):
+    for arm in (FAR_ARM, NEAR_ARM):
         x0, y0, x1, y1 = arm["box"]
         a = np.zeros_like(src)
         box = np.zeros(src.shape[:2], bool)
@@ -426,20 +429,22 @@ def main():
             layer = outline(layer)
             # Never through the ground: a pitched boot's heel or toe corner is lifted back onto it.
             rows = np.where(layer[..., 3].any(axis=1))[0]
-            if len(rows) and rows[-1] > GROUND:
-                layer = shift_y(layer, GROUND - rows[-1])
+            if len(rows) and (rows[-1] > GROUND or (planted and rows[-1] < GROUND)):
+                layer = shift_y(layer, GROUND - rows[-1])   # and a planted boot sits right on it
             if i == 1:  # far leg: a touch darker, like the art's far leg
                 layer[..., :3] = (layer[..., :3] * .82).astype(np.uint8)
             layers.append(layer)
 
         body_shift = shift_y(body, dy)
         up = np.array([0, dy], float)
-        near_arm = affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing))
-        far_arm = affine_sample(arms[1][0], (H, W), rot_map(arms[1][1], arms[1][1] + up, swing))
-        # Under each swinging arm, its unmoved upper part, so no gap opens against the torso.
-        for a, _ in arms:
+        far_arm = affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing))
+        near_arm = affine_sample(arms[1][0], (H, W), rot_map(arms[1][1], arms[1][1] + up, swing))
+        # Under each swinging arm, the unmoved shoulder just below the sleeve, so no gap opens
+        # against the torso (only a few rows, or it shows as a ghost arm beside the swung one).
+        for (a, _), arm in zip(arms, (FAR_ARM, NEAR_ARM)):
             base = np.zeros_like(a)
-            base[:96] = a[:96]
+            top = arm["box"][1]
+            base[top:top + 6] = a[top:top + 6]
             over(frame, shift_y(base, dy))
         over(frame, far_arm)
         over(frame, layers[1])
@@ -454,7 +459,7 @@ def main():
         # The sleeve goes back over the top of the swinging arm, so no arm edge pokes past it.
         sleeve = np.zeros_like(body_shift)
         sy = NEAR_ARM["box"][1] + dy + 2
-        sleeve[:sy, NEAR_ARM["box"][0] - 4:] = body_shift[:sy, NEAR_ARM["box"][0] - 4:]
+        sleeve[:sy, :NEAR_ARM["box"][2] + 4] = body_shift[:sy, :NEAR_ARM["box"][2] + 4]
         over(frame, sleeve)
         # No shirt below the hem: where a thigh swung away, the shirt's corner would hang loose.
         r, g, b = (frame[..., k].astype(int) for k in range(3))
