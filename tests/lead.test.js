@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { authorized } from '../functions/leads.js';
 
 test('sanitizePhone helper function', async (t) => {
   await t.test('preserves valid phone numbers and formatting characters', async () => {
@@ -57,6 +58,43 @@ test('json helper function', async (t) => {
 
     const nullRes = json(null);
     assert.equal(await nullRes.json(), null);
+  });
+});
+
+test('authorized authentication helper function', async (t) => {
+  const secret = 'super-secret-password-123';
+
+  function makeReq(authHeader) {
+    const headers = new Headers();
+    if (authHeader) headers.set('authorization', authHeader);
+    return new Request('https://cleengreenz.com/leads', { headers });
+  }
+
+  function basicAuth(username, password) {
+    return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
+  }
+
+  await t.test('returns true for correct password', async () => {
+    const req = makeReq(basicAuth('admin', secret));
+    assert.equal(authorized(req, secret), true);
+  });
+
+  await t.test('returns false for wrong password of same length', async () => {
+    const req = makeReq(basicAuth('admin', 'super-secret-password-124'));
+    assert.equal(authorized(req, secret), false);
+  });
+
+  await t.test('returns false for wrong password of different length', async () => {
+    const req = makeReq(basicAuth('admin', 'wrong'));
+    assert.equal(authorized(req, secret), false);
+    const reqLonger = makeReq(basicAuth('admin', 'super-secret-password-123-extra'));
+    assert.equal(authorized(reqLonger, secret), false);
+  });
+
+  await t.test('returns false for missing or invalid authorization header', async () => {
+    assert.equal(authorized(makeReq(null), secret), false);
+    assert.equal(authorized(makeReq('Bearer xyz'), secret), false);
+    assert.equal(authorized(makeReq('Basic invalid_base64!'), secret), false);
   });
 });
 

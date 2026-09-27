@@ -8,7 +8,7 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function authorized(request, password) {
+export function authorized(request, password) {
   const header = request.headers.get('authorization') || '';
   if (!header.startsWith('Basic ')) return false;
   let decoded = '';
@@ -18,11 +18,23 @@ function authorized(request, password) {
     return false;
   }
   const given = decoded.slice(decoded.indexOf(':') + 1);
-  // Constant-time compare so the password can't be guessed a character at a time.
+  // Constant-time compare so the password length and content can't be guessed via timing.
   const a = new TextEncoder().encode(given);
   const b = new TextEncoder().encode(password);
-  if (a.length !== b.length) return false;
-  return crypto.subtle.timingSafeEqual(a, b);
+  const lengthsMatch = a.length === b.length;
+  // Use b if lengths match; otherwise compare a against a dummy buffer of matching length.
+  const compB = lengthsMatch ? b : new Uint8Array(a.length);
+  let equal = false;
+  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.timingSafeEqual === 'function') {
+    equal = crypto.subtle.timingSafeEqual(a, compB);
+  } else {
+    let mismatch = 0;
+    for (let i = 0; i < a.length; i++) {
+      mismatch |= a[i] ^ compB[i];
+    }
+    equal = mismatch === 0;
+  }
+  return lengthsMatch && equal;
 }
 
 const LABELS = { form: 'Estimate forms', call: 'Call taps', email: 'Email taps', estimate_click: 'Estimate button clicks' };
