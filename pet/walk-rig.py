@@ -238,6 +238,29 @@ def fill_holes(frame, top):
     return frame
 
 
+def drop_specks(frame, smallest=15):
+    """Remove little islands of pixels cut loose from the figure (bits of the old back outline)."""
+    m = frame[..., 3] > 0
+    seen = np.zeros_like(m)
+    for y0, x0 in zip(*np.where(m)):
+        if seen[y0, x0]:
+            continue
+        comp, todo = [], [(y0, x0)]
+        seen[y0, x0] = True
+        while todo:
+            y, x = todo.pop()
+            comp.append((y, x))
+            for yy in (y - 1, y, y + 1):
+                for xx in (x - 1, x, x + 1):
+                    if 0 <= yy < H and 0 <= xx < W and m[yy, xx] and not seen[yy, xx]:
+                        seen[yy, xx] = True
+                        todo.append((yy, xx))
+        if len(comp) < smallest:
+            for y, x in comp:
+                frame[y, x] = 0
+    return frame
+
+
 def close_notches(frame, y0, y1, widest=9):
     """Across the hips, a narrow wedge of background between two bits of cloth (where a thigh
     swings away from the pelvis) is filled with the cloth to its right, and edged."""
@@ -429,7 +452,7 @@ def main():
         loose = (g > r + 20) & (g > b + 20) & (frame[..., 3] > 0)
         loose[:SHIRT_HEM + dy + 5] = False
         frame[loose] = 0
-        return close_notches(fill_holes(tidy(frame), SHIRT_HEM + dy - 2), SHIRT_HEM + dy, SHIRT_HEM + dy + 24)
+        return drop_specks(close_notches(fill_holes(tidy(frame), SHIRT_HEM + dy - 2), SHIRT_HEM + dy, SHIRT_HEM + dy + 24))
 
     cycle = []
     for f in range(FRAMES):

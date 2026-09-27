@@ -1014,7 +1014,8 @@
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
         var dx = gx - p.x, dy = gy - p.y, d = Math.sqrt(dx * dx + dy * dy);
-        if (p.hop == null) p.hop = d < WALK.step;
+        if (p.hop == null) { p.hop = d < WALK.step; p.hopD = d; }
+        p.hopLeft = d;
         if (Math.abs(dx) > 2) p.face = dx > 0 ? 1 : -1;
         if (d < 1.5) { p.x = gx; p.y = gy; p.speed = 0; p.acc = 0; return true; }
         // Constant-acceleration motion: speed ramps up at ACCEL and is never allowed to exceed
@@ -1247,9 +1248,13 @@
           var pose = POSE.idle, walkSet = shownFace < 0 ? WALK.firstLeft : WALK.first;
           var settling = now - walkEdgeAt < WALK.settle && !reduceMotion && !walking &&
             (p.state === 'idle' || p.state === 'clear' || p.state === 'wait');
-          // Standing frame (boots side by side): for a beat after he stops, and for a hop shorter
-          // than one step, where a stride would only flicker.
-          if (settling || (walking && p.hop)) pose = walkSet + WALK.frames;
+          // Standing frame (boots side by side) for a beat after he stops. A move shorter than one
+          // step is a single step: boots-together to boots-together (half a cycle) over the move.
+          if (settling) pose = walkSet + WALK.frames;
+          else if (walking && p.hop) {
+            var hopDone = p.hopD > 0 ? 1 - p.hopLeft / p.hopD : 1;
+            pose = walkSet + WALK.start + Math.round(Math.max(0, Math.min(1, hopDone)) * WALK.frames / 2);
+          }
           else if (walking) {
             // Nearest walk frame to the distance walked (frame f is drawn at phase f / frames).
             pose = walkSet + Math.round(p.stride / (2 * WALK.step) * WALK.frames) % WALK.frames;
