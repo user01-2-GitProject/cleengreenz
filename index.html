@@ -401,6 +401,7 @@
   form.estimate .btn { width: 100%; margin-top: 8px; }
   .form-note { font-size: .88rem; color: var(--bark-soft); text-align: center; margin: 14px 0 0; }
   .form-done { display: none; text-align: center; padding: 24px 0 8px; }
+  .form-done:focus { outline: none; }
   .form-done.show { display: block; }
   .form-done .btn { margin-top: 10px; }
   @media (max-width: 900px) {
@@ -705,7 +706,7 @@
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
-        <div class="form-done" role="status" aria-live="polite">
+        <div class="form-done" tabindex="-1" role="status" aria-live="polite">
           <h3>Thanks, got it!</h3>
           <p>Chris has your request and will be in touch soon.</p>
           <p>Need him sooner? Call or text <strong>(269) 362-8286</strong>.</p>

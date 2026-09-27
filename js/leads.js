@@ -46,6 +46,7 @@
   function showDone() {
     fieldsBox.style.display = 'none';
     done.classList.add('show');
+    if (done.focus) done.focus();
   }
 
   function openEmail(d) {
