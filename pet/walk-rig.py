@@ -1,4 +1,4 @@
-"""Build Chris's walk cycle by re-posing his own pixel legs, into media/pet-chris-poses-v3.png.
+"""Build Chris's walk cycle by re-posing his own pixel legs, into media/pet-chris-poses-v4.png.
 
 Run from the repository root:  python3 pet/walk-rig.py [--preview out.png]
 
@@ -28,13 +28,13 @@ SRC = "pet/chris-keyframes/03_walk_passing_a.png"
 IDLE_SHEET = "media/pet-chris-poses-v2.png"
 # The site's sheet: the twelve poses from pet/build-sheet.py, then the walk frames (poses 12..23).
 # A new file name, so browsers and the Cloudflare cache cannot mix old poses with new code.
-OUT = "media/pet-chris-poses-v3.png"
+OUT = "media/pet-chris-poses-v4.png"
 W, H = 192, 200
-FRAMES = 12
+FRAMES = 16
 STANCE = 0.58
-STEP = 60           # boot-to-boot distance at contact, px
-LIFT = 10           # swing boot peak lift, px
-REST_BEND = 4.0     # knees stay this soft at passing, so the hips bob about this much, not more
+STEP = 72           # boot-to-boot distance at contact, px (about 0.4 of his height, a normal step)
+LIFT = 7            # swing boot peak lift, px: the foot passes low, it is not hoisted
+REST_BEND = 7.0     # knees stay this soft at passing, so the hips bob about this much, not more
 # The passing keyframe's legs are bent, so it stands 10px shorter than the idle pose. The rig
 # lengthens thigh and shin until his head sits HEAD_DROP px below idle's at passing, so he does not
 # shrink when he sets off.
@@ -63,7 +63,8 @@ OUTLINE = (38, 22, 14, 255)
 # NEAR_ARM is the one on the same side as the near (cargo-pocket) leg; it swings opposite that leg.
 FAR_ARM = dict(box=(28, 79, 56, 130), pivot=(46, 70))
 NEAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
-ARM_SWING = 9.0     # degrees each way
+ARM_SWING = 12.0    # degrees each way
+ARM_LAG = 0.06      # arms trail the legs by this much of a cycle, so they swing rather than pump
 STAND_GAP = 14      # px between the boots in the standing frame
 # The cargo pocket is on the outside of the near leg only; the far leg gets it painted out.
 POCKET_BOX = (63, 116, 80, 142)
@@ -315,11 +316,14 @@ def foot_track(phase):
         # Heel strike: toe comes down over the first bit; toe-off: heel rises over the last bit.
         pitch = -12 * max(0, 1 - u / .15) + 18 * max(0, (u - .82) / .18)
         return x, 0.0, pitch
+    # Swing: the foot swings from the hip rather than the knee driving up. The heel peels up behind
+    # right after toe-off (lift peaks early), the foot passes low, and the leg reaches out nearly
+    # straight, arriving by 90% of the swing.
     u = (phase - STANCE) / (1 - STANCE)
-    s = (1 - math.cos(math.pi * u)) / 2   # ease in and out
+    s = (1 - math.cos(math.pi * min(1, u / .9))) / 2
     x = back + (front - back) * s
-    lift = LIFT * math.sin(math.pi * u) ** 1.2
-    pitch = 18 * (1 - u / .35) if u < .35 else -12 * min(1, (u - .5) / .5) if u > .5 else 0
+    lift = LIFT * math.sin(math.pi * u ** .6) ** 1.5
+    pitch = 24 * (1 - u / .4) if u < .4 else -14 * min(1, (u - .45) / .45) if u > .45 else 0
     return x, lift, pitch
 
 
@@ -469,8 +473,8 @@ def main():
     frames = []
     for ph, feet, need in cycle:
         dy = int(math.ceil(max(need, lo + (hi - lo) * (.5 + .5 * math.cos(4 * math.pi * ph))) - .01))
-        # Near arm is furthest back when the near foot strikes (phase 0), forward half a cycle later.
-        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * ph)), dy))
+        # Near arm is furthest back just after the near foot strikes (phase 0 + ARM_LAG), forward half a cycle later.
+        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * (ph - ARM_LAG))), dy))
     # Standing still in walking profile, boots side by side: the frame he stops on before idle.
     stand = [(STAND_GAP / 2, 0.0, 0.0, True), (-STAND_GAP / 2, 0.0, 0.0, True)]
     sdy = int(math.ceil(needed_dy(stand) - REST_BEND - .01))   # knees straight, not the walk's soft bend
