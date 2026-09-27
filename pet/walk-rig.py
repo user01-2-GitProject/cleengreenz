@@ -437,7 +437,8 @@ def main():
 
         body_shift = shift_y(body, dy)
         up = np.array([0, dy], float)
-        far_arm = affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing))
+        # (outlined, so its top edge, cut where it meets the sleeve, is not left raw when it swings)
+        far_arm = outline(affine_sample(arms[0][0], (H, W), rot_map(arms[0][1], arms[0][1] + up, -swing)))
         near_arm = affine_sample(arms[1][0], (H, W), rot_map(arms[1][1], arms[1][1] + up, swing))
         # Under each swinging arm, the unmoved shoulder just below the sleeve, so no gap opens
         # against the torso (only a few rows, or it shows as a ghost arm beside the swung one).
