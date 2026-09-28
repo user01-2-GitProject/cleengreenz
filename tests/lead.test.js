@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
-import { authorized, onRequestGet } from '../functions/leads.js';
+import { authorized, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 const require = createRequire(import.meta.url);
 const { buildPayload } = require('../js/leads.js');
@@ -144,6 +144,44 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
+  });
+});
+
+test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
+  await t.test('renders HTML with default empty arrays when options omitted', async () => {
+    const html = renderLeadsHtml();
+    assert.match(html, /<title>Cleen Greenz leads<\/title>/);
+    assert.match(html, /No leads yet\./);
+    assert.match(html, /No requests yet\./);
+  });
+
+  await t.test('renders total cards, monthly breakdown table, and recent requests', async () => {
+    const totals = [
+      { type: 'form', month: 5, week: 2, total: 10 },
+      { type: 'call', month: 12, week: 3, total: 25 },
+    ];
+    const months = [
+      { month: '2026-03', type: 'form', n: 5 },
+      { month: '2026-03', type: 'call', n: 12 },
+    ];
+    const recent = [
+      {
+        created_at: '2026-03-30T14:30:00Z',
+        name: 'Jane Doe',
+        phone: '269-555-0100',
+        address: '456 Oak St',
+        service: 'Lawn Mowing',
+        notes: 'Backyard only',
+        emailed: 0,
+      },
+    ];
+
+    const html = renderLeadsHtml({ totals, months, recent });
+    assert.match(html, /Estimate forms/);
+    assert.match(html, /2026-03/);
+    assert.match(html, /Jane Doe/);
+    assert.match(html, /269-555-0100/);
+    assert.match(html, /No/);
   });
 });
 

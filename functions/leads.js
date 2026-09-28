@@ -43,40 +43,13 @@ export function authorized(request, password) {
 
 const LABELS = { form: 'Estimate forms', call: 'Call taps', email: 'Email taps', estimate_click: 'Estimate button clicks' };
 
-export async function onRequestGet({ request, env }) {
-  if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
-    return new Response('Password required', {
-      status: 401,
-      headers: { 'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"' },
-    });
-  }
-  if (!env.DB) return new Response('Lead database is not connected yet.', { status: 503 });
-
-  const [totals, months, recent] = await env.DB.batch([
-    env.DB.prepare(
-      `SELECT type,
-              SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-7 days'))  AS week,
-              SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-30 days')) AS month,
-              COUNT(*) AS total
-         FROM leads GROUP BY type`
-    ),
-    env.DB.prepare(
-      `SELECT substr(created_at, 1, 7) AS month, type, COUNT(*) AS n
-         FROM leads WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-12 months')
-        GROUP BY month, type ORDER BY month DESC`
-    ),
-    env.DB.prepare(
-      `SELECT created_at, name, phone, address, service, notes, emailed
-         FROM leads WHERE type = 'form' ORDER BY id DESC LIMIT 50`
-    ),
-  ]);
-
-  const byType = Object.fromEntries(totals.results.map((r) => [r.type, r]));
+export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
+  const byType = Object.fromEntries(totals.map((r) => [r.type, r]));
   const types = Object.keys(LABELS);
   const monthRows = {};
-  for (const r of months.results) (monthRows[r.month] ||= {})[r.type] = r.n;
+  for (const r of months) (monthRows[r.month] ||= {})[r.type] = r.n;
 
-  const html = `<!doctype html>
+  return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex"><title>Cleen Greenz leads</title>
 <style>
@@ -112,7 +85,7 @@ ${Object.keys(monthRows)
 </table></div>
 <h2>Latest estimate requests</h2>
 <div class="scroll"><table><tr><th>When (UTC)</th><th>Name</th><th>Phone</th><th>Address</th><th>Service</th><th>Notes</th><th>Emailed</th></tr>
-${recent.results
+${recent
   .map(
     (r) => `<tr><td>${escapeHtml(r.created_at.replace('T', ' ').slice(0, 16))}</td><td>${escapeHtml(r.name)}</td>
 <td><a href="tel:${encodeURIComponent(sanitizePhone(r.phone))}">${escapeHtml(r.phone)}</a></td><td>${escapeHtml(r.address)}</td>
@@ -121,6 +94,41 @@ ${recent.results
   .join('') || '<tr><td colspan="7">No requests yet.</td></tr>'}
 </table></div>
 </main></body></html>`;
+}
+
+export async function onRequestGet({ request, env }) {
+  if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
+    return new Response('Password required', {
+      status: 401,
+      headers: { 'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"' },
+    });
+  }
+  if (!env.DB) return new Response('Lead database is not connected yet.', { status: 503 });
+
+  const [totals, months, recent] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT type,
+              SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-7 days'))  AS week,
+              SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-30 days')) AS month,
+              COUNT(*) AS total
+         FROM leads GROUP BY type`
+    ),
+    env.DB.prepare(
+      `SELECT substr(created_at, 1, 7) AS month, type, COUNT(*) AS n
+         FROM leads WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-12 months')
+        GROUP BY month, type ORDER BY month DESC`
+    ),
+    env.DB.prepare(
+      `SELECT created_at, name, phone, address, service, notes, emailed
+         FROM leads WHERE type = 'form' ORDER BY id DESC LIMIT 50`
+    ),
+  ]);
+
+  const html = renderLeadsHtml({
+    totals: totals.results,
+    months: months.results,
+    recent: recent.results,
+  });
 
   return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
