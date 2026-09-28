@@ -903,7 +903,7 @@
         l.sticky = Math.random() < 0.82;
         l.opacity = 1;
         if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
-        l.lastTransform = '';
+        l.lastRx = l.lastRy = l.lastRrot = null;
         l.host = null;
       }
       function blowPile(host, dir) {
@@ -1198,11 +1198,11 @@
             if (l.opacity <= 0 || y > H + 40 || x < -60 || x > W + 60) { resetLeaf(l, false); continue; }
           }
           // Using Math.round avoids expensive float-to-string toFixed() conversions inside the animation frame loop.
-          // Cache transform string to avoid redundant inline DOM mutations when positions have not changed (e.g. landed leaves).
-          var transformStr = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0) rotate(' + Math.round(l.rot) + 'deg)';
-          if (l.lastTransform !== transformStr) {
-            l.el.style.transform = transformStr;
-            l.lastTransform = transformStr;
+          // Comparing rounded numeric coordinates directly avoids unnecessary string concatenations in every frame.
+          var rx = Math.round(x), ry = Math.round(y), rrot = Math.round(l.rot);
+          if (rx !== l.lastRx || ry !== l.lastRy || rrot !== l.lastRrot) {
+            l.lastRx = rx; l.lastRy = ry; l.lastRrot = rrot;
+            l.el.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0) rotate(' + rrot + 'deg)';
           }
         }
 
