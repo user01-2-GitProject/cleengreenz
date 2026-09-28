@@ -170,6 +170,69 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 });
 
+test('onRequestGet authorization and response handling', async (t) => {
+  const secret = 'super-secret-password-123';
+
+  function basicAuth(username, password) {
+    return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
+  }
+
+  await t.test('returns 401 when LEADS_PASSWORD env is missing', async () => {
+    const request = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: basicAuth('admin', secret) },
+    });
+    const res = await onRequestGet({ request, env: {} });
+
+    assert.equal(res.status, 401);
+    assert.equal(await res.text(), 'Password required');
+    assert.equal(
+      res.headers.get('www-authenticate'),
+      'Basic realm="Cleen Greenz leads", charset="UTF-8"'
+    );
+  });
+
+  await t.test('returns 401 when authorization header is missing', async () => {
+    const request = new Request('https://cleengreenz.com/leads');
+    const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
+
+    assert.equal(res.status, 401);
+    assert.equal(await res.text(), 'Password required');
+    assert.equal(
+      res.headers.get('www-authenticate'),
+      'Basic realm="Cleen Greenz leads", charset="UTF-8"'
+    );
+  });
+
+  await t.test('returns 401 when authorization header has invalid password or format', async () => {
+    const reqWrongPass = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: basicAuth('admin', 'wrong-password') },
+    });
+    const resWrongPass = await onRequestGet({ request: reqWrongPass, env: { LEADS_PASSWORD: secret } });
+    assert.equal(resWrongPass.status, 401);
+    assert.equal(
+      resWrongPass.headers.get('www-authenticate'),
+      'Basic realm="Cleen Greenz leads", charset="UTF-8"'
+    );
+
+    const reqInvalidHeader = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: 'Bearer token123' },
+    });
+    const resInvalidHeader = await onRequestGet({ request: reqInvalidHeader, env: { LEADS_PASSWORD: secret } });
+    assert.equal(resInvalidHeader.status, 401);
+  });
+
+  await t.test('allows request when authorization header is valid', async () => {
+    const request = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: basicAuth('admin', secret) },
+    });
+    const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
+
+    // Should pass authorization check and hit DB missing check (503)
+    assert.equal(res.status, 503);
+    assert.equal(await res.text(), 'Lead database is not connected yet.');
+  });
+});
+
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
   await t.test('strips HTML attribute injection in phone numbers for tel: links', async () => {
     const mockDb = {
