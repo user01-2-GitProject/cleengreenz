@@ -14,10 +14,11 @@
   function rnd(a, b) { return a + Math.random() * (b - a); }
 
   function setup() {
-    if (wrap && wrap.isConnected) return true;
+    if (wrap && wrap.isConnected && bubble) return true;
     wrap = document.querySelector('.pet-wrap');
     if (!wrap) return false;
     bubble = wrap.querySelector('.pet-bubble');
+    if (!bubble) return false;
     nextFidget = Date.now() + rnd(6000, 10000);
     return true;
   }
