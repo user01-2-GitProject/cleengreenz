@@ -12,6 +12,9 @@ desktop.ini
 *.sln
 *.swp
 
+# Dependencies
+node_modules/
+
 # Local log files
 *.log
 

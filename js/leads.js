@@ -6,13 +6,26 @@
 // to /api/lead, which stores it and emails Chris. If that fails, the form falls
 // back to opening a prefilled email like before.
 (function () {
+  function buildPayload(data) {
+    var page = typeof location !== 'undefined' ? location.pathname : '';
+    var referrer = typeof document !== 'undefined' ? document.referrer : '';
+    return Object.assign({ page: page, referrer: referrer }, data);
+  }
+
   function send(data) {
-    var payload = JSON.stringify(Object.assign({ page: location.pathname, referrer: document.referrer }, data));
+    var payload = JSON.stringify(buildPayload(data));
     if (navigator.sendBeacon) {
       navigator.sendBeacon('/api/lead', new Blob([payload], { type: 'application/json' }));
     } else {
       fetch('/api/lead', { method: 'POST', headers: { 'content-type': 'application/json' }, body: payload, keepalive: true }).catch(function () {});
     }
+  }
+
+  if (typeof document === 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      module.exports = { buildPayload };
+    }
+    return;
   }
 
   // Call and email taps. Form requests are recorded by the server when submitted.
@@ -41,6 +54,7 @@
   var fieldsBox = form.querySelector('.form-fields');
   var done = form.querySelector('.form-done');
   var button = form.querySelector('button[type="submit"]');
+  var requiredFields = form.querySelectorAll('[required]');
   var sending = false;
 
   function showDone() {
@@ -86,10 +100,9 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (sending) return;
-    var fields = form.querySelectorAll('[required]');
     var invalidField = null;
-    for (var i = 0; i < fields.length; i++) {
-      var field = fields[i];
+    for (var i = 0; i < requiredFields.length; i++) {
+      var field = requiredFields[i];
       var errEl = errorFor(field);
       if (!field.value.trim()) {
         field.setAttribute('aria-invalid', 'true');
@@ -119,7 +132,7 @@
     fetch('/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(Object.assign({ type: 'form', location: 'estimate', page: location.pathname, referrer: document.referrer }, d))
+      body: JSON.stringify(buildPayload(Object.assign({ type: 'form', location: 'estimate' }, d)))
     })
       .then(function (res) { if (!res.ok) throw new Error(res.status); showDone(); })
       .catch(function () { openEmail(d); })
@@ -130,4 +143,8 @@
         button.innerHTML = label;
       });
   });
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { buildPayload };
+  }
 })();
