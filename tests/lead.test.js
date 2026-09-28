@@ -141,6 +141,29 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
   });
+
+  await t.test('returns 400 with missing_fields error on form submission missing required fields', async () => {
+    const testCases = [
+      { body: { type: 'form' }, missing: 'all required fields' },
+      { body: { type: 'form', phone: '269-555-0100', address: '123 Main St' }, missing: 'name' },
+      { body: { type: 'form', name: 'John Doe', address: '123 Main St' }, missing: 'phone' },
+      { body: { type: 'form', name: 'John Doe', phone: '269-555-0100' }, missing: 'address' },
+      { body: { type: 'form', name: '   ', phone: '269-555-0100', address: '123 Main St' }, missing: 'whitespace name' },
+    ];
+
+    for (const { body, missing } of testCases) {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 400, `Expected status 400 when missing ${missing}`);
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.deepEqual(await res.json(), { ok: false, error: 'missing_fields' }, `Expected error missing_fields when missing ${missing}`);
+    }
+  });
 });
 
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
