@@ -145,6 +145,93 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
   });
+
+  await t.test('handles D1 database insert failure gracefully for click lead', async () => {
+    const originalConsoleError = console.error;
+    console.error = () => {};
+    try {
+      const failingDb = {
+        prepare() {
+          throw new Error('D1 connection failed');
+        },
+      };
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'call' }),
+      });
+      const res = await onRequestPost({ request, env: { DB: failingDb }, waitUntil: () => {} });
+
+      assert.equal(res.status, 200);
+      assert.deepEqual(await res.json(), { ok: true });
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+
+  await t.test('handles D1 database insert failure gracefully for form submission when emailing fails', async () => {
+    const originalConsoleError = console.error;
+    console.error = () => {};
+    try {
+      const failingDb = {
+        prepare() {
+          throw new Error('D1 insert failed');
+        },
+      };
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane Doe',
+          phone: '269-555-0199',
+          address: '123 Main St',
+        }),
+      });
+      const res = await onRequestPost({ request, env: { DB: failingDb }, waitUntil: () => {} });
+
+      assert.equal(res.status, 503);
+      assert.deepEqual(await res.json(), { ok: false, error: 'email_failed', stored: false });
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+
+  await t.test('handles D1 database insert failure gracefully for form submission when emailing succeeds', async () => {
+    const originalConsoleError = console.error;
+    const originalFetch = globalThis.fetch;
+    console.error = () => {};
+    globalThis.fetch = async () => new Response(JSON.stringify({ id: 'msg_123' }), { status: 200 });
+
+    try {
+      const failingDb = {
+        prepare() {
+          throw new Error('D1 insert failed');
+        },
+      };
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane Doe',
+          phone: '269-555-0199',
+          address: '123 Main St',
+        }),
+      });
+      const res = await onRequestPost({
+        request,
+        env: { DB: failingDb, RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.deepEqual(await res.json(), { ok: true });
+    } finally {
+      console.error = originalConsoleError;
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
 
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
