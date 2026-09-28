@@ -371,6 +371,7 @@
   .faq summary {
     cursor: pointer; list-style: none; padding: 20px 24px; font-family: "Fredoka", sans-serif; font-weight: 600;
     font-size: 1.15rem; color: var(--forest); display: flex; justify-content: space-between; gap: 16px; align-items: center;
+    border-radius: 16px;
   }
   .faq summary::-webkit-details-marker { display: none; }
   .faq summary::after { content: "+"; font-size: 1.6rem; line-height: 1; color: var(--pumpkin); transition: transform .2s; }
@@ -397,7 +398,8 @@
     font: inherit; font-size: 1rem; color: var(--bark); background: var(--cream); border: 2px solid var(--cream-2);
     border-radius: 14px; padding: 12px 14px; width: 100%;
   }
-  input:focus, select:focus, textarea:focus { border-color: var(--leaf); outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
+  input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
   textarea { min-height: 96px; resize: vertical; }
   form.estimate .btn { width: 100%; margin-top: 8px; }
