@@ -4,6 +4,8 @@
 // estimate requests. Protected by a browser password prompt; the password is
 // the LEADS_PASSWORD secret (any username works).
 
+import { sanitizePhone } from './api/lead.js';
+
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -111,7 +113,7 @@ ${Object.keys(monthRows)
 ${recent.results
   .map(
     (r) => `<tr><td>${escapeHtml(r.created_at.replace('T', ' ').slice(0, 16))}</td><td>${escapeHtml(r.name)}</td>
-<td><a href="tel:${escapeHtml(r.phone)}">${escapeHtml(r.phone)}</a></td><td>${escapeHtml(r.address)}</td>
+<td><a href="tel:${encodeURIComponent(sanitizePhone(r.phone))}">${escapeHtml(r.phone)}</a></td><td>${escapeHtml(r.address)}</td>
 <td>${escapeHtml(r.service)}</td><td>${escapeHtml(r.notes)}</td><td>${r.emailed ? 'Yes' : 'No'}</td></tr>`
   )
   .join('') || '<tr><td colspan="7">No requests yet.</td></tr>'}

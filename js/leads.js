@@ -68,12 +68,17 @@
       '&body=' + encodeURIComponent(body);
   }
 
+  // The honeypot field is built without an id, so skip the lookup rather than query '#-err'.
+  function errorFor(field) {
+    return field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
+  }
+
   form.addEventListener('input', function (e) {
     var field = e.target;
     if (field && field.removeAttribute) {
       field.removeAttribute('aria-invalid');
       field.removeAttribute('aria-describedby');
-      var errEl = form.querySelector('#' + CSS.escape(field.id) + '-err');
+      var errEl = errorFor(field);
       if (errEl) errEl.classList.remove('show');
     }
   });
@@ -85,7 +90,7 @@
     var invalidField = null;
     for (var i = 0; i < fields.length; i++) {
       var field = fields[i];
-      var errEl = form.querySelector('#' + CSS.escape(field.id) + '-err');
+      var errEl = errorFor(field);
       if (!field.value.trim()) {
         field.setAttribute('aria-invalid', 'true');
         if (errEl) {
