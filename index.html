@@ -174,7 +174,7 @@
   .leaf svg { display: block; width: 100%; height: 100%; fill: currentColor; }
 
   /* Pet Chris */
-  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
+  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; transform: translate3d(var(--x, 0px), var(--y, 0px), 0); --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
   .pet {
     pointer-events: auto; display: block; position: relative; width: var(--pet-w); height: var(--pet-h);
     padding: 0; border: 0; background: none; cursor: grab; touch-action: none;
@@ -1325,11 +1325,15 @@
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
-          // Cache wrap transform to avoid redundant DOM mutations when idle/stationary.
-          var wrapTransform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
-          if (p.lastWrapTransform !== wrapTransform) {
-            wrap.style.transform = wrapTransform;
-            p.lastWrapTransform = wrapTransform;
+          // Track integer coordinates and set CSS variables only when coordinates change to avoid string concatenation.
+          var rx = Math.round(p.x), ry = Math.round(p.y);
+          if (rx !== p.lastRx) {
+            wrap.style.setProperty('--x', rx + 'px');
+            p.lastRx = rx;
+          }
+          if (ry !== p.lastRy) {
+            wrap.style.setProperty('--y', ry + 'px');
+            p.lastRy = ry;
           }
           if (p.face !== shownFace && faceAt < 0) faceAt = now;
           if (faceAt >= 0 && now - faceAt >= FLIP_AT) { shownFace = p.face; faceAt = -1; }
