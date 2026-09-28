@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
 import { authorized, onRequestGet } from '../functions/leads.js';
+
+const require = createRequire(import.meta.url);
+const { buildPayload } = require('../js/leads.js');
 
 test('sanitizePhone helper function', async (t) => {
   await t.test('preserves valid phone numbers and formatting characters', async () => {
@@ -178,5 +182,56 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
 
     assert.match(html, /href="tel:269-555-0199%20\(1\)"/);
     assert.doesNotMatch(html, /onclick="alert\(1\)"/);
+  });
+});
+
+test('buildPayload helper function in js/leads.js', async (t) => {
+  await t.test('enriches lead payload with location.pathname and document.referrer', async () => {
+    globalThis.location = { pathname: '/estimate-page' };
+    globalThis.document = { referrer: 'https://google.com' };
+
+    const payload = buildPayload({ type: 'call', location: 'hero' });
+    assert.deepEqual(payload, {
+      page: '/estimate-page',
+      referrer: 'https://google.com',
+      type: 'call',
+      location: 'hero',
+    });
+
+    delete globalThis.location;
+    delete globalThis.document;
+  });
+
+  await t.test('enriches estimate form submission data correctly', async () => {
+    globalThis.location = { pathname: '/' };
+    globalThis.document = { referrer: 'https://bing.com' };
+
+    const formData = { name: 'Jane', phone: '2695550199', service: 'Mowing' };
+    const payload = buildPayload(Object.assign({ type: 'form', location: 'estimate' }, formData));
+
+    assert.deepEqual(payload, {
+      page: '/',
+      referrer: 'https://bing.com',
+      type: 'form',
+      location: 'estimate',
+      name: 'Jane',
+      phone: '2695550199',
+      service: 'Mowing',
+    });
+
+    delete globalThis.location;
+    delete globalThis.document;
+  });
+
+  await t.test('handles missing location and document gracefully', async () => {
+    delete globalThis.location;
+    delete globalThis.document;
+
+    const payload = buildPayload({ type: 'email' });
+    assert.deepEqual(payload, {
+      page: '',
+      referrer: '',
+      type: 'email',
+    });
   });
 });
