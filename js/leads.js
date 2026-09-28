@@ -68,9 +68,18 @@
       '&body=' + encodeURIComponent(body);
   }
 
+  // The honeypot field is built without an id, so skip the lookup rather than query '#-err'.
+  function errorFor(field) {
+    return field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
+  }
+
   form.addEventListener('input', function (e) {
-    if (e.target && e.target.removeAttribute) {
-      e.target.removeAttribute('aria-invalid');
+    var field = e.target;
+    if (field && field.removeAttribute) {
+      field.removeAttribute('aria-invalid');
+      field.removeAttribute('aria-describedby');
+      var errEl = errorFor(field);
+      if (errEl) errEl.classList.remove('show');
     }
   });
 
@@ -80,16 +89,23 @@
     var fields = form.querySelectorAll('[required]');
     var invalidField = null;
     for (var i = 0; i < fields.length; i++) {
-      if (!fields[i].value.trim()) {
-        fields[i].setAttribute('aria-invalid', 'true');
-        if (!invalidField) invalidField = fields[i];
+      var field = fields[i];
+      var errEl = errorFor(field);
+      if (!field.value.trim()) {
+        field.setAttribute('aria-invalid', 'true');
+        if (errEl) {
+          errEl.classList.add('show');
+          field.setAttribute('aria-describedby', errEl.id);
+        }
+        if (!invalidField) invalidField = field;
       } else {
-        fields[i].removeAttribute('aria-invalid');
+        field.removeAttribute('aria-invalid');
+        field.removeAttribute('aria-describedby');
+        if (errEl) errEl.classList.remove('show');
       }
     }
     if (invalidField) {
       invalidField.focus();
-      invalidField.reportValidity && invalidField.reportValidity();
       return;
     }
     var d = Object.fromEntries(new FormData(form));

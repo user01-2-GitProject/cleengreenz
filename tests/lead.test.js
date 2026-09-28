@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
-import { authorized } from '../functions/leads.js';
+import { authorized, onRequestGet } from '../functions/leads.js';
 
 test('sanitizePhone helper function', async (t) => {
   await t.test('preserves valid phone numbers and formatting characters', async () => {
@@ -96,6 +96,11 @@ test('authorized authentication helper function', async (t) => {
     assert.equal(authorized(makeReq('Bearer xyz'), secret), false);
     assert.equal(authorized(makeReq('Basic invalid_base64!'), secret), false);
   });
+
+  await t.test('handles basic auth strings without colon correctly', async () => {
+    const noColon = 'Basic ' + Buffer.from('nocolonhere').toString('base64');
+    assert.equal(authorized(makeReq(noColon), secret), false);
+  });
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
@@ -135,5 +140,43 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
+  });
+});
+
+test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
+  await t.test('strips HTML attribute injection in phone numbers for tel: links', async () => {
+    const mockDb = {
+      prepare: (sql) => ({ sql }),
+      batch: async () => [
+        { results: [] },
+        { results: [] },
+        {
+          results: [
+            {
+              created_at: '2026-03-30T12:00:00Z',
+              name: 'John Doe',
+              phone: '269-555-0199" onclick="alert(1)"',
+              address: '123 Main St',
+              service: 'Mowing',
+              notes: 'None',
+              emailed: 1,
+            },
+          ],
+        },
+      ],
+    };
+
+    const secret = 'test-pass';
+    const authHeader = 'Basic ' + Buffer.from(`admin:${secret}`).toString('base64');
+    const request = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: authHeader },
+    });
+
+    const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: mockDb } });
+    assert.equal(res.status, 200);
+    const html = await res.text();
+
+    assert.match(html, /href="tel:269-555-0199%20\(1\)"/);
+    assert.doesNotMatch(html, /onclick="alert\(1\)"/);
   });
 });
