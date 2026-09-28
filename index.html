@@ -861,6 +861,9 @@
       var piles = new Map();
       catchers.forEach(function (el) { piles.set(el, []); });
       var rects = new Map();
+      var catcherItems = catchers.map(function (el) {
+        return { el: el, pile: piles.get(el), r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0 };
+      });
       var MAX_PILE = 12, CLEAR_AT = 6;
       function rnd(a, b) { return a + Math.random() * (b - a); }
 
@@ -1129,9 +1132,18 @@
         // Batch DOM layout reads: update cached element bounding rects and bar height only when dirty (scroll/resize/initial)
         if (rectsDirty) {
           barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
-          catchers.forEach(function (el) {
+          catchers.forEach(function (el, idx) {
             var r = el.getBoundingClientRect();
-            rects.set(el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(el, valid);
+            var ci = catcherItems[idx];
+            ci.r = valid;
+            if (valid) {
+              ci.top = valid.top;
+              ci.topMax = valid.top + 10;
+              ci.leftMin = valid.left - 18;
+              ci.rightMax = valid.right + 18;
+            }
           });
           rectsDirty = false;
         }
@@ -1147,12 +1159,12 @@
             y = l.y;
             if (l.sticky && y > 0) {
               var cx = x + l.size / 2, bottom = y + l.size * 0.8;
-              for (var j = 0; j < catchers.length; j++) {
-                var c = catchers[j], r = rects.get(c), pile = piles.get(c);
+              for (var j = 0; j < catcherItems.length; j++) {
+                var ci = catcherItems[j], r = ci.r, pile = ci.pile;
                 if (!r || pile.length >= MAX_PILE) continue;
-                if (bottom >= r.top && bottom <= r.top + 10 && cx > r.left - 18 && cx < r.right + 18) {
+                if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
-                  l.host = c;
+                  l.host = ci.el;
                   // Gather toward the middle and stack in a low mound, not a flat row.
                   l.ox = Math.max(12, Math.min(r.width - 12,
                     r.width / 2 + (cx - r.left - r.width / 2) * .62));
