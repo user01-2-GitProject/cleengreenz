@@ -100,10 +100,24 @@ export async function onRequestGet({ request, env }) {
   if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
     return new Response('Password required', {
       status: 401,
-      headers: { 'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"' },
+      headers: {
+        'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"',
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'referrer-policy': 'strict-origin-when-cross-origin',
+      },
     });
   }
-  if (!env.DB) return new Response('Lead database is not connected yet.', { status: 503 });
+  if (!env.DB) {
+    return new Response('Lead database is not connected yet.', {
+      status: 503,
+      headers: {
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'referrer-policy': 'strict-origin-when-cross-origin',
+      },
+    });
+  }
 
   const [totals, months, recent] = await env.DB.batch([
     env.DB.prepare(
@@ -130,5 +144,13 @@ export async function onRequestGet({ request, env }) {
     recent: recent.results,
   });
 
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-frame-options': 'DENY',
+      'x-content-type-options': 'nosniff',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+    },
+  });
 }

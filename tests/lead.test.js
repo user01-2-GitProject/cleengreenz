@@ -50,9 +50,10 @@ test('json helper function', async (t) => {
     assert.equal(res503.status, 503);
   });
 
-  await t.test('sets content-type header to application/json', async () => {
+  await t.test('sets content-type and security headers', async () => {
     const res = json({ message: 'hello' });
     assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -476,7 +477,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
 
-  await t.test('returns 401 when LEADS_PASSWORD env is missing', async () => {
+  await t.test('returns 401 with security headers when LEADS_PASSWORD env is missing', async () => {
     const request = new Request('https://cleengreenz.com/leads', {
       headers: { authorization: basicAuth('admin', secret) },
     });
@@ -488,6 +489,9 @@ test('onRequestGet authorization and response handling', async (t) => {
       res.headers.get('www-authenticate'),
       'Basic realm="Cleen Greenz leads", charset="UTF-8"'
     );
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
   });
 
   await t.test('returns 401 when authorization header is missing', async () => {
