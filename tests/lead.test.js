@@ -168,6 +168,42 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       assert.deepEqual(await res.json(), { ok: false, error: 'missing_fields' }, `Expected error missing_fields when missing ${missing}`);
     }
   });
+  await t.test('returns 200 JSON response when bot trap website field is filled and bypasses DB/email', async () => {
+    let dbCalled = false;
+    const mockDb = {
+      prepare: () => {
+        dbCalled = true;
+        return {
+          bind: () => ({
+            first: async () => ({ id: 1 }),
+          }),
+        };
+      },
+    };
+
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        type: 'form',
+        name: 'Bot User',
+        phone: '1234567890',
+        address: '123 Web St',
+        website: 'http://spam-site.com',
+      }),
+    });
+
+    const res = await onRequestPost({
+      request,
+      env: { DB: mockDb, RESEND_API_KEY: 'test-key' },
+      waitUntil: () => {},
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: true });
+    assert.equal(dbCalled, false, 'DB insertion should be bypassed for bot trap requests');
+  });
 });
 
 test('onRequestGet authorization and response handling', async (t) => {
