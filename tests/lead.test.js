@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
-import { authorized, onRequestGet } from '../functions/leads.js';
+import { authorized, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 const require = createRequire(import.meta.url);
 const { buildPayload } = require('../js/leads.js');
@@ -144,6 +144,65 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
+  });
+
+  await t.test('returns 400 with missing_fields error on form submission missing required fields', async () => {
+    const testCases = [
+      { body: { type: 'form' }, missing: 'all required fields' },
+      { body: { type: 'form', phone: '269-555-0100', address: '123 Main St' }, missing: 'name' },
+      { body: { type: 'form', name: 'John Doe', address: '123 Main St' }, missing: 'phone' },
+      { body: { type: 'form', name: 'John Doe', phone: '269-555-0100' }, missing: 'address' },
+      { body: { type: 'form', name: '   ', phone: '269-555-0100', address: '123 Main St' }, missing: 'whitespace name' },
+    ];
+
+    for (const { body, missing } of testCases) {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 400, `Expected status 400 when missing ${missing}`);
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.deepEqual(await res.json(), { ok: false, error: 'missing_fields' }, `Expected error missing_fields when missing ${missing}`);
+    }
+  });
+  await t.test('returns 200 JSON response when bot trap website field is filled and bypasses DB/email', async () => {
+    let dbCalled = false;
+    const mockDb = {
+      prepare: () => {
+        dbCalled = true;
+        return {
+          bind: () => ({
+            first: async () => ({ id: 1 }),
+          }),
+        };
+      },
+    };
+
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        type: 'form',
+        name: 'Bot User',
+        phone: '1234567890',
+        address: '123 Web St',
+        website: 'http://spam-site.com',
+      }),
+    });
+
+    const res = await onRequestPost({
+      request,
+      env: { DB: mockDb, RESEND_API_KEY: 'test-key' },
+      waitUntil: () => {},
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: true });
+    assert.equal(dbCalled, false, 'DB insertion should be bypassed for bot trap requests');
   });
 
   await t.test('returns 503 with stored: false when email failed and not stored in DB', async () => {
@@ -313,6 +372,107 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 });
 
+test('onRequestGet authorization and response handling', async (t) => {
+  const secret = 'super-secret-password-123';
+
+  function basicAuth(username, password) {
+    return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
+  }
+
+  await t.test('returns 401 when LEADS_PASSWORD env is missing', async () => {
+    const request = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: basicAuth('admin', secret) },
+    });
+    const res = await onRequestGet({ request, env: {} });
+
+    assert.equal(res.status, 401);
+    assert.equal(await res.text(), 'Password required');
+    assert.equal(
+      res.headers.get('www-authenticate'),
+      'Basic realm="Cleen Greenz leads", charset="UTF-8"'
+    );
+  });
+
+  await t.test('returns 401 when authorization header is missing', async () => {
+    const request = new Request('https://cleengreenz.com/leads');
+    const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
+
+    assert.equal(res.status, 401);
+    assert.equal(await res.text(), 'Password required');
+    assert.equal(
+      res.headers.get('www-authenticate'),
+      'Basic realm="Cleen Greenz leads", charset="UTF-8"'
+    );
+  });
+
+  await t.test('returns 401 when authorization header has invalid password or format', async () => {
+    const reqWrongPass = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: basicAuth('admin', 'wrong-password') },
+    });
+    const resWrongPass = await onRequestGet({ request: reqWrongPass, env: { LEADS_PASSWORD: secret } });
+    assert.equal(resWrongPass.status, 401);
+    assert.equal(
+      resWrongPass.headers.get('www-authenticate'),
+      'Basic realm="Cleen Greenz leads", charset="UTF-8"'
+    );
+
+    const reqInvalidHeader = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: 'Bearer token123' },
+    });
+    const resInvalidHeader = await onRequestGet({ request: reqInvalidHeader, env: { LEADS_PASSWORD: secret } });
+    assert.equal(resInvalidHeader.status, 401);
+  });
+
+  await t.test('allows request when authorization header is valid', async () => {
+    const request = new Request('https://cleengreenz.com/leads', {
+      headers: { authorization: basicAuth('admin', secret) },
+    });
+    const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
+
+    // Should pass authorization check and hit DB missing check (503)
+    assert.equal(res.status, 503);
+    assert.equal(await res.text(), 'Lead database is not connected yet.');
+  });
+});
+
+test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
+  await t.test('renders HTML with default empty arrays when options omitted', async () => {
+    const html = renderLeadsHtml();
+    assert.match(html, /<title>Cleen Greenz leads<\/title>/);
+    assert.match(html, /No leads yet\./);
+    assert.match(html, /No requests yet\./);
+  });
+
+  await t.test('renders total cards, monthly breakdown table, and recent requests', async () => {
+    const totals = [
+      { type: 'form', month: 5, week: 2, total: 10 },
+      { type: 'call', month: 12, week: 3, total: 25 },
+    ];
+    const months = [
+      { month: '2026-03', type: 'form', n: 5 },
+      { month: '2026-03', type: 'call', n: 12 },
+    ];
+    const recent = [
+      {
+        created_at: '2026-03-30T14:30:00Z',
+        name: 'Jane Doe',
+        phone: '269-555-0100',
+        address: '456 Oak St',
+        service: 'Lawn Mowing',
+        notes: 'Backyard only',
+        emailed: 0,
+      },
+    ];
+
+    const html = renderLeadsHtml({ totals, months, recent });
+    assert.match(html, /Estimate forms/);
+    assert.match(html, /2026-03/);
+    assert.match(html, /Jane Doe/);
+    assert.match(html, /269-555-0100/);
+    assert.match(html, /No/);
+  });
+});
+
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
   await t.test('strips HTML attribute injection in phone numbers for tel: links', async () => {
     const mockDb = {
@@ -348,6 +508,323 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
 
     assert.match(html, /href="tel:269-555-0199%20\(1\)"/);
     assert.doesNotMatch(html, /onclick="alert\(1\)"/);
+  });
+});
+
+test('frontend js/leads.js event handling and form submission', async (t) => {
+  const fs = await import('node:fs');
+  const vm = await import('node:vm');
+
+  function setupDomEnvironment() {
+    class ClassList {
+      constructor() { this._classes = new Set(); }
+      add(c) { this._classes.add(c); }
+      remove(c) { this._classes.delete(c); }
+      contains(c) { return this._classes.has(c); }
+    }
+
+    class MockElement extends EventTarget {
+      constructor(tagName, id = '') {
+        super();
+        this.tagName = tagName.toUpperCase();
+        this.id = id;
+        this.style = {};
+        this.classList = new ClassList();
+        this.attributes = {};
+        this.value = '';
+        this.innerHTML = '';
+        this.children = [];
+        this.disabled = false;
+        this.type = '';
+        this.name = '';
+        this.focused = false;
+      }
+      setAttribute(k, v) { this.attributes[k] = String(v); }
+      getAttribute(k) { return this.attributes[k] !== undefined ? this.attributes[k] : null; }
+      removeAttribute(k) { delete this.attributes[k]; }
+      appendChild(c) { this.children.push(c); return c; }
+      querySelector(sel) { return querySelectorIn(this, sel); }
+      querySelectorAll(sel) { return querySelectorAllIn(this, sel); }
+      focus() { this.focused = true; }
+      closest(sel) { return null; }
+    }
+
+    function matchesSelector(el, sel) {
+      if (!el || !el.tagName) return false;
+      if (sel === '.form-fields') return el.classList.contains('form-fields');
+      if (sel === '.form-done') return el.classList.contains('form-done');
+      if (sel === 'button[type="submit"]') return el.tagName === 'BUTTON' && el.type === 'submit';
+      if (sel === '[required]') return el.attributes.required !== undefined;
+      if (sel === 'h3') return el.tagName === 'H3';
+      if (sel === 'p') return el.tagName === 'P';
+      if (sel.startsWith('#')) {
+        const idTarget = sel.slice(1);
+        return el.id === idTarget;
+      }
+      if (sel.startsWith('a[href=')) return el.tagName === 'A';
+      return false;
+    }
+
+    function querySelectorIn(parent, sel) {
+      for (const child of parent.children) {
+        if (matchesSelector(child, sel)) return child;
+        const sub = querySelectorIn(child, sel);
+        if (sub) return sub;
+      }
+      return null;
+    }
+
+    function querySelectorAllIn(parent, sel) {
+      let results = [];
+      for (const child of parent.children) {
+        if (matchesSelector(child, sel)) results.push(child);
+        results = results.concat(querySelectorAllIn(child, sel));
+      }
+      return results;
+    }
+
+    const doc = new EventTarget();
+    doc.referrer = 'https://google.com';
+    const elementsById = {};
+
+    doc.getElementById = (id) => elementsById[id] || null;
+    doc.createElement = (tagName) => new MockElement(tagName);
+
+    const form = new MockElement('form', 'estimate-form');
+    elementsById['estimate-form'] = form;
+
+    const fieldsBox = new MockElement('div');
+    fieldsBox.classList.add('form-fields');
+    form.appendChild(fieldsBox);
+
+    const doneBox = new MockElement('div');
+    doneBox.classList.add('form-done');
+    const doneHeading = new MockElement('h3');
+    const doneParagraph = new MockElement('p');
+    doneBox.appendChild(doneHeading);
+    doneBox.appendChild(doneParagraph);
+    form.appendChild(doneBox);
+
+    const submitBtn = new MockElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.innerHTML = 'Send request';
+    fieldsBox.appendChild(submitBtn);
+
+    const nameInput = new MockElement('input', 'f-name');
+    nameInput.name = 'name';
+    nameInput.setAttribute('required', 'true');
+    fieldsBox.appendChild(nameInput);
+
+    const nameErr = new MockElement('span', 'f-name-err');
+    fieldsBox.appendChild(nameErr);
+    elementsById['f-name-err'] = nameErr;
+
+    const phoneInput = new MockElement('input', 'f-phone');
+    phoneInput.name = 'phone';
+    phoneInput.setAttribute('required', 'true');
+    fieldsBox.appendChild(phoneInput);
+
+    const phoneErr = new MockElement('span', 'f-phone-err');
+    fieldsBox.appendChild(phoneErr);
+    elementsById['f-phone-err'] = phoneErr;
+
+    const serviceSelect = new MockElement('select', 'f-service');
+    serviceSelect.name = 'service';
+    serviceSelect.value = 'Mowing';
+    fieldsBox.appendChild(serviceSelect);
+
+    const locationObj = { pathname: '/estimate', href: 'https://cleengreenz.com/' };
+
+    const trackedLeads = [];
+    const windowObj = {
+      location: locationObj,
+      trackLead: (type, loc, extra) => {
+        trackedLeads.push({ type, loc, extra });
+      },
+    };
+
+    const fetchCalls = [];
+    let fetchImpl = async (url, options) => {
+      fetchCalls.push({ url, options });
+      return { ok: true, status: 200 };
+    };
+
+    const sendBeaconCalls = [];
+    const navigatorObj = {
+      sendBeacon: (url, blob) => {
+        sendBeaconCalls.push({ url, blob });
+        return true;
+      },
+    };
+
+    function collectInputs(parent) {
+      let inputs = [];
+      for (const child of parent.children) {
+        if (['INPUT', 'SELECT', 'TEXTAREA'].includes(child.tagName)) {
+          inputs.push(child);
+        }
+        inputs = inputs.concat(collectInputs(child));
+      }
+      return inputs;
+    }
+
+    class MockFormData {
+      constructor(f) {
+        this._map = new Map();
+        for (const child of collectInputs(f)) {
+          if (child.name) {
+            this._map.set(child.name, child.value);
+          }
+        }
+      }
+      [Symbol.iterator]() {
+        return this._map.entries();
+      }
+    }
+
+    const sandbox = {
+      document: doc,
+      location: locationObj,
+      window: windowObj,
+      navigator: navigatorObj,
+      fetch: (url, options) => fetchImpl(url, options),
+      CSS: { escape: (str) => str },
+      FormData: MockFormData,
+      JSON,
+      Object,
+      Blob,
+      CustomEvent,
+      Event,
+      setFetchImpl: (fn) => { fetchImpl = fn; },
+      fetchCalls,
+      sendBeaconCalls,
+      trackedLeads,
+      form,
+      fieldsBox,
+      doneBox,
+      doneHeading,
+      doneParagraph,
+      submitBtn,
+      nameInput,
+      nameErr,
+      phoneInput,
+      phoneErr,
+      serviceSelect,
+    };
+
+    const scriptCode = fs.readFileSync('js/leads.js', 'utf8');
+    vm.createContext(sandbox);
+    vm.runInContext(scriptCode, sandbox);
+
+    return sandbox;
+  }
+
+  await t.test('submits valid form successfully and updates UI', async () => {
+    const env = setupDomEnvironment();
+    env.nameInput.value = 'Jane Doe';
+    env.phoneInput.value = '(269) 555-0199';
+    env.serviceSelect.value = 'Fall leaf cleanup';
+
+    const submitEvent = new env.Event('submit', { cancelable: true });
+    env.form.dispatchEvent(submitEvent);
+
+    assert.equal(env.submitBtn.disabled, true);
+    assert.equal(env.submitBtn.getAttribute('aria-busy'), 'true');
+
+    // Wait for promise resolution chain in submit listener
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    assert.equal(env.fetchCalls.length, 1);
+    assert.equal(env.fetchCalls[0].url, '/api/lead');
+    const body = JSON.parse(env.fetchCalls[0].options.body);
+    assert.deepEqual(body, {
+      type: 'form',
+      location: 'estimate',
+      page: '/estimate',
+      referrer: 'https://google.com',
+      name: 'Jane Doe',
+      phone: '(269) 555-0199',
+      service: 'Fall leaf cleanup',
+      website: '',
+    });
+
+    assert.equal(env.fieldsBox.style.display, 'none');
+    assert.equal(env.doneBox.classList.contains('show'), true);
+    assert.equal(env.doneHeading.focused, true);
+
+    assert.equal(env.submitBtn.disabled, false);
+    assert.equal(env.submitBtn.getAttribute('aria-busy'), null);
+    assert.equal(env.submitBtn.innerHTML, 'Send request');
+
+    assert.equal(env.trackedLeads.length, 1);
+    assert.equal(env.trackedLeads[0].type, 'form');
+    assert.equal(env.trackedLeads[0].loc, 'estimate');
+    assert.equal(env.trackedLeads[0].extra.service, 'Fall leaf cleanup');
+  });
+
+  await t.test('falls back to mailto link when fetch fails', async () => {
+    const env = setupDomEnvironment();
+    env.setFetchImpl(async () => {
+      throw new Error('Network error');
+    });
+
+    env.nameInput.value = 'John Smith';
+    env.phoneInput.value = '269-555-1234';
+
+    const submitEvent = new env.Event('submit', { cancelable: true });
+    env.form.dispatchEvent(submitEvent);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    assert.equal(env.doneHeading.textContent, 'Almost there!');
+    assert.match(env.doneParagraph.textContent, /Your email app should have opened/);
+    assert.match(env.location.href, /^mailto:chris@cleengreenz\.com/);
+    assert.match(env.location.href, /John%20Smith/);
+  });
+
+  await t.test('prevents submission when required fields are empty and shows errors', async () => {
+    const env = setupDomEnvironment();
+    env.nameInput.value = '   ';
+    env.phoneInput.value = '';
+
+    const submitEvent = new env.Event('submit', { cancelable: true });
+    env.form.dispatchEvent(submitEvent);
+
+    assert.equal(env.fetchCalls.length, 0);
+    assert.equal(env.nameInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(env.nameInput.getAttribute('aria-describedby'), 'f-name-err');
+    assert.equal(env.nameErr.classList.contains('show'), true);
+    assert.equal(env.nameInput.focused, true);
+
+    assert.equal(env.phoneInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(env.phoneInput.getAttribute('aria-describedby'), 'f-phone-err');
+    assert.equal(env.phoneErr.classList.contains('show'), true);
+  });
+
+  await t.test('clears error state when user types into invalid input field', async () => {
+    const env = setupDomEnvironment();
+    env.nameInput.setAttribute('aria-invalid', 'true');
+    env.nameInput.setAttribute('aria-describedby', 'f-name-err');
+    env.nameErr.classList.add('show');
+
+    const inputEvent = new env.CustomEvent('input', { bubbles: true });
+    Object.defineProperty(inputEvent, 'target', { value: env.nameInput });
+    env.form.dispatchEvent(inputEvent);
+
+    assert.equal(env.nameInput.getAttribute('aria-invalid'), null);
+    assert.equal(env.nameInput.getAttribute('aria-describedby'), null);
+    assert.equal(env.nameErr.classList.contains('show'), false);
+  });
+
+  await t.test('sends lead data on cg:lead custom event via sendBeacon', async () => {
+    const env = setupDomEnvironment();
+    const customEvt = new env.CustomEvent('cg:lead', {
+      detail: { lead_type: 'call', lead_location: 'header' },
+    });
+    env.document.dispatchEvent(customEvt);
+
+    assert.equal(env.sendBeaconCalls.length, 1);
+    assert.equal(env.sendBeaconCalls[0].url, '/api/lead');
   });
 });
 
