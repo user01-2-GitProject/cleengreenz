@@ -1,0 +1,12 @@
+{
+  "name": "cleen-greenz",
+  "version": "1.0.0",
+  "description": "Cleen Greenz Lawn Care website",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  }
+}

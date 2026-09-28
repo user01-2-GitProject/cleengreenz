@@ -54,6 +54,7 @@
   var fieldsBox = form.querySelector('.form-fields');
   var done = form.querySelector('.form-done');
   var button = form.querySelector('button[type="submit"]');
+  var requiredFields = form.querySelectorAll('[required]');
   var sending = false;
 
   function showDone() {
@@ -99,10 +100,9 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (sending) return;
-    var fields = form.querySelectorAll('[required]');
     var invalidField = null;
-    for (var i = 0; i < fields.length; i++) {
-      var field = fields[i];
+    for (var i = 0; i < requiredFields.length; i++) {
+      var field = requiredFields[i];
       var errEl = errorFor(field);
       if (!field.value.trim()) {
         field.setAttribute('aria-invalid', 'true');
