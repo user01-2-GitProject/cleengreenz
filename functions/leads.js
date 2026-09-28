@@ -19,7 +19,9 @@ export function authorized(request, password) {
   } catch {
     return false;
   }
-  const given = decoded.slice(decoded.indexOf(':') + 1);
+  const colonIndex = decoded.indexOf(':');
+  if (colonIndex === -1) return false;
+  const given = decoded.slice(colonIndex + 1);
   // Constant-time compare so the password length and content can't be guessed via timing.
   const a = new TextEncoder().encode(given);
   const b = new TextEncoder().encode(password);

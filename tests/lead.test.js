@@ -96,6 +96,11 @@ test('authorized authentication helper function', async (t) => {
     assert.equal(authorized(makeReq('Bearer xyz'), secret), false);
     assert.equal(authorized(makeReq('Basic invalid_base64!'), secret), false);
   });
+
+  await t.test('handles basic auth strings without colon correctly', async () => {
+    const noColon = 'Basic ' + Buffer.from('nocolonhere').toString('base64');
+    assert.equal(authorized(makeReq(noColon), secret), false);
+  });
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
