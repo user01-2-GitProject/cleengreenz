@@ -893,7 +893,8 @@
         l.spin = rnd(-90, 90);
         l.sticky = Math.random() < 0.82;
         l.opacity = 1;
-        l.el.style.opacity = 1;
+        if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
+        l.lastTransform = '';
         l.host = null;
       }
       function blowPile(host, dir) {
@@ -1118,6 +1119,13 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
+
+        // Skip animation work when document is hidden to save CPU and battery in background tabs
+        if (document.hidden) {
+          if (leaves.length || wrap) requestAnimationFrame(frame);
+          return;
+        }
+
         // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
         if (rectsDirty) {
           catchers.forEach(function (el) {
@@ -1158,8 +1166,11 @@
           }
           if (l.state === 'land') {
             var hr = rects.get(l.host);
-            if (!hr) { l.el.style.opacity = 0; continue; }
-            l.el.style.opacity = 1;
+            if (!hr) {
+              if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
+              continue;
+            }
+            if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
             x = hr.left + l.ox - l.size / 2;
             y = hr.top - l.size * 0.75 - l.lift;
           }
@@ -1168,12 +1179,18 @@
             l.x += l.vx * dt; l.y += l.vy * dt;
             l.rot += l.spin * dt;
             l.opacity -= dt * 0.7;
-            l.el.style.opacity = Math.max(l.opacity, 0);
+            var op = Math.max(l.opacity, 0);
+            if (l.lastOpacity !== op) { l.el.style.opacity = op; l.lastOpacity = op; }
             x = l.x; y = l.y;
             if (l.opacity <= 0 || y > H + 40 || x < -60 || x > W + 60) { resetLeaf(l, false); continue; }
           }
-          // Using Math.round avoids expensive float-to-string toFixed() conversions inside the animation frame loop
-          l.el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0) rotate(' + Math.round(l.rot) + 'deg)';
+          // Using Math.round avoids expensive float-to-string toFixed() conversions inside the animation frame loop.
+          // Cache transform string to avoid redundant inline DOM mutations when positions have not changed (e.g. landed leaves).
+          var transformStr = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0) rotate(' + Math.round(l.rot) + 'deg)';
+          if (l.lastTransform !== transformStr) {
+            l.el.style.transform = transformStr;
+            l.lastTransform = transformStr;
+          }
         }
 
         // Pet
@@ -1307,7 +1324,12 @@
           wrap.classList.toggle('face-left', p.face < 0);
           wrap.classList.toggle('bubble-left', p.x > W / 2);
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
-          wrap.style.transform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
+          // Cache wrap transform to avoid redundant DOM mutations when idle/stationary.
+          var wrapTransform = 'translate3d(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px,0)';
+          if (p.lastWrapTransform !== wrapTransform) {
+            wrap.style.transform = wrapTransform;
+            p.lastWrapTransform = wrapTransform;
+          }
           if (p.face !== shownFace && faceAt < 0) faceAt = now;
           if (faceAt >= 0 && now - faceAt >= FLIP_AT) { shownFace = p.face; faceAt = -1; }
           if (p.face === shownFace) faceAt = -1;
