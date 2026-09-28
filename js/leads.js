@@ -7,7 +7,7 @@
 // back to opening a prefilled email like before.
 (function () {
   function send(data) {
-    var payload = JSON.stringify(Object.assign({ page: location.pathname, referrer: document.referrer }, data));
+    const payload = JSON.stringify(Object.assign({ page: location.pathname, referrer: document.referrer }, data));
     if (navigator.sendBeacon) {
       navigator.sendBeacon('/api/lead', new Blob([payload], { type: 'application/json' }));
     } else {
@@ -17,41 +17,41 @@
 
   // Call and email taps. Form requests are recorded by the server when submitted.
   document.addEventListener('cg:lead', function (e) {
-    var d = e.detail || {};
+    const d = e.detail || {};
     if (d.lead_type === 'form') return;
     send({ type: d.lead_type, location: d.lead_location });
   });
 
   // "Free estimate" buttons that jump to the form.
   document.addEventListener('click', function (e) {
-    var a = e.target.closest('a[href="#estimate"]');
+    const a = e.target.closest('a[href="#estimate"]');
     if (a && window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
   });
 
-  var form = document.getElementById('estimate-form');
+  const form = document.getElementById('estimate-form');
   if (!form) return;
 
   // Hidden field only bots fill in.
-  var trap = document.createElement('input');
+  const trap = document.createElement('input');
   trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
   trap.setAttribute('aria-hidden', 'true');
   trap.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;opacity:0';
   form.appendChild(trap);
 
-  var fieldsBox = form.querySelector('.form-fields');
-  var done = form.querySelector('.form-done');
-  var button = form.querySelector('button[type="submit"]');
-  var sending = false;
+  const fieldsBox = form.querySelector('.form-fields');
+  const done = form.querySelector('.form-done');
+  const button = form.querySelector('button[type="submit"]');
+  let sending = false;
 
   function showDone() {
     fieldsBox.style.display = 'none';
     done.classList.add('show');
-    var heading = done.querySelector('h3');
+    const heading = done.querySelector('h3');
     if (heading) heading.focus();
   }
 
   function openEmail(d) {
-    var body = [
+    const body = [
       'Hi Chris, I would like a free estimate.',
       '',
       'Name: ' + d.name,
@@ -74,11 +74,11 @@
   }
 
   form.addEventListener('input', function (e) {
-    var field = e.target;
+    const field = e.target;
     if (field && field.removeAttribute) {
       field.removeAttribute('aria-invalid');
       field.removeAttribute('aria-describedby');
-      var errEl = errorFor(field);
+      const errEl = errorFor(field);
       if (errEl) errEl.classList.remove('show');
     }
   });
@@ -86,11 +86,11 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (sending) return;
-    var fields = form.querySelectorAll('[required]');
-    var invalidField = null;
-    for (var i = 0; i < fields.length; i++) {
-      var field = fields[i];
-      var errEl = errorFor(field);
+    const fields = form.querySelectorAll('[required]');
+    let invalidField = null;
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      const errEl = errorFor(field);
       if (!field.value.trim()) {
         field.setAttribute('aria-invalid', 'true');
         if (errEl) {
@@ -108,11 +108,11 @@
       invalidField.focus();
       return;
     }
-    var d = Object.fromEntries(new FormData(form));
+    const d = Object.fromEntries(new FormData(form));
     if (window.trackLead) window.trackLead('form', 'estimate', { service: d.service });
 
     sending = true;
-    var label = button.innerHTML;
+    const label = button.innerHTML;
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
     button.innerHTML = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Sending...';
