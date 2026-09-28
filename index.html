@@ -367,7 +367,9 @@
 
   /* FAQ */
   .faq { max-width: 780px; margin: 0 auto; display: grid; gap: 14px; }
-  .faq details { background: var(--paper); border-radius: 18px; border: 2px solid var(--cream-2); }
+  .faq details { background: var(--paper); border-radius: 18px; border: 2px solid var(--cream-2); transition: border-color .2s ease; }
+  .faq details:hover { border-color: var(--leaf-2); }
+  .faq details[open] { border-color: var(--leaf); }
   .faq summary {
     cursor: pointer; list-style: none; padding: 20px 24px; font-family: "Fredoka", sans-serif; font-weight: 600;
     font-size: 1.15rem; color: var(--forest); display: flex; justify-content: space-between; gap: 16px; align-items: center;
@@ -750,10 +752,10 @@
   </div>
 </footer>
 
-<div class="mobile-bar">
+<nav class="mobile-bar" aria-label="Quick contact">
   <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="mobile-bar">Call Chris</a>
   <a class="btn btn-primary" href="#estimate" data-lead-location="mobile-bar">Free estimate</a>
-</div>
+</nav>
 
 <script>
   (function () {
