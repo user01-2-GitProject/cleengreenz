@@ -204,6 +204,172 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: true });
     assert.equal(dbCalled, false, 'DB insertion should be bypassed for bot trap requests');
   });
+
+  await t.test('returns 503 with stored: false when email failed and not stored in DB', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        type: 'form',
+        name: 'Jane Doe',
+        phone: '269-555-0199',
+        address: '123 Main St',
+      }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 503);
+    assert.deepEqual(await res.json(), { ok: false, error: 'email_failed', stored: false });
+  });
+
+  await t.test('returns 503 with stored: true when email failed but lead stored in DB', async () => {
+    const mockDb = {
+      prepare: () => ({
+        bind: () => ({
+          first: async () => ({ id: 42 }),
+        }),
+      }),
+    };
+
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        type: 'form',
+        name: 'Jane Doe',
+        phone: '269-555-0199',
+        address: '123 Main St',
+      }),
+    });
+    const res = await onRequestPost({ request, env: { DB: mockDb }, waitUntil: () => {} });
+
+    assert.equal(res.status, 503);
+    assert.deepEqual(await res.json(), { ok: false, error: 'email_failed', stored: true });
+  });
+
+  await t.test('returns 503 when Resend API returns HTTP error response', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response('Internal Server Error', { status: 500 });
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane Doe',
+          phone: '269-555-0199',
+          address: '123 Main St',
+        }),
+      });
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 503);
+      assert.deepEqual(await res.json(), { ok: false, error: 'email_failed', stored: false });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await t.test('returns 503 when fetch throws network error', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      throw new TypeError('Network error');
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane Doe',
+          phone: '269-555-0199',
+          address: '123 Main St',
+        }),
+      });
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 503);
+      assert.deepEqual(await res.json(), { ok: false, error: 'email_failed', stored: false });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await t.test('returns 200 on successful email delivery and updates DB', async () => {
+    const originalFetch = globalThis.fetch;
+    let fetchCalledWith = null;
+
+    globalThis.fetch = async (url, options) => {
+      fetchCalledWith = { url, options };
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    let waitUntilPromise = null;
+    let dbUpdated = false;
+
+    const mockDb = {
+      prepare: (sql) => {
+        if (sql.includes('UPDATE leads SET emailed = 1')) {
+          return {
+            bind: (id) => ({
+              run: async () => {
+                if (id === 101) dbUpdated = true;
+              },
+            }),
+          };
+        }
+        return {
+          bind: () => ({
+            first: async () => ({ id: 101 }),
+          }),
+        };
+      },
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane Doe',
+          phone: '269-555-0199',
+          address: '123 Main St',
+          service: 'Mowing',
+          notes: 'Front yard only',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key', DB: mockDb },
+        waitUntil: (promise) => {
+          waitUntilPromise = promise;
+        },
+      });
+
+      assert.equal(res.status, 200);
+      assert.deepEqual(await res.json(), { ok: true });
+      assert.equal(fetchCalledWith.url, 'https://api.resend.com/emails');
+
+      if (waitUntilPromise) {
+        await waitUntilPromise;
+      }
+      assert.equal(dbUpdated, true);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
 
 test('onRequestGet authorization and response handling', async (t) => {
