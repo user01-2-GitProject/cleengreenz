@@ -1,11 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
+import fs from 'node:fs';
 import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
 import { authorized, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
-const require = createRequire(import.meta.url);
-const { buildPayload } = require('../js/leads.js');
+// js/leads.js is a classic browser script (loaded via <script src>), so it
+// cannot use ESM export syntax. It assigns module.exports when a CommonJS-style
+// `module` is present, so we evaluate it with one supplied. Using new Function
+// (rather than vm) keeps the script in the real global scope, so buildPayload
+// still reads globalThis.location / globalThis.document at call time.
+function loadLeadsScript() {
+  const src = fs.readFileSync(new URL('../js/leads.js', import.meta.url), 'utf8');
+  const module = { exports: {} };
+  new Function('module', 'exports', src)(module, module.exports);
+  return module.exports;
+}
+const { buildPayload } = loadLeadsScript();
 
 test('sanitizePhone helper function', async (t) => {
   await t.test('preserves valid phone numbers and formatting characters', async () => {
