@@ -7,6 +7,8 @@
 
 const CLICK_TYPES = ['call', 'email', 'estimate_click'];
 const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, location: 40, page: 300, referrer: 300 };
+// Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
+const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 function clean(value, field) {
   if (typeof value !== 'string') return null;
@@ -19,7 +21,7 @@ export function json(body, status = 200) {
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return String(s).replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
 }
 
 export function sanitizePhone(phone) {
