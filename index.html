@@ -114,8 +114,15 @@
   .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; }
   .brand img { height: 56px; width: auto; }
   .nav-links { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; font-weight: 700; }
-  .nav-links a { text-decoration: none; color: var(--bark); }
+  .nav-links a { text-decoration: none; color: var(--bark); position: relative; padding-bottom: 4px; transition: color .2s ease; }
   .nav-links a:hover { color: var(--pumpkin-2); }
+  .nav-links a[aria-current="true"], .nav-links a[aria-current="page"] {
+    color: var(--pumpkin-2);
+  }
+  .nav-links a[aria-current="true"]::after, .nav-links a[aria-current="page"]::after {
+    content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: var(--pumpkin-2); border-radius: 2px;
+  }
   .nav-cta { display: flex; gap: 10px; align-items: center; }
   .nav-cta .btn { font-size: 1rem; padding: .65em 1.2em; }
   .phone-link { font-weight: 800; text-decoration: none; color: var(--forest); white-space: nowrap; }
@@ -828,6 +835,47 @@
       items.forEach(function (el) { io.observe(el); });
     }
 
+    // Active navigation highlighting for header nav links.
+    var navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+    if (navLinks.length && 'IntersectionObserver' in window) {
+      var linkMap = new Map();
+      var sections = [];
+      navLinks.forEach(function (link) {
+        var id = link.getAttribute('href').slice(1);
+        var sec = document.getElementById(id);
+        if (sec) {
+          linkMap.set(sec, link);
+          sections.push(sec);
+        }
+      });
+      var visibleSections = new Set();
+      var navObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            visibleSections.add(entry.target);
+          } else {
+            visibleSections.delete(entry.target);
+          }
+        });
+        // Pick the uppermost section currently in view among those tracked.
+        var activeSection = null;
+        for (var i = 0; i < sections.length; i++) {
+          if (visibleSections.has(sections[i])) {
+            activeSection = sections[i];
+            break;
+          }
+        }
+        navLinks.forEach(function (link) {
+          if (activeSection && linkMap.get(activeSection) === link) {
+            link.setAttribute('aria-current', 'true');
+          } else {
+            link.removeAttribute('aria-current');
+          }
+        });
+      }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+      sections.forEach(function (sec) { navObserver.observe(sec); });
+    }
+
     // Mascot videos: respect reduced motion, and only play while on screen.
     var videos = document.querySelectorAll('video');
     videos.forEach(function (v) {
@@ -835,7 +883,7 @@
       if ('IntersectionObserver' in window) {
         new IntersectionObserver(function (entries) {
           entries.forEach(function (en) {
-            if (en.isIntersecting) { v.play().catch(function () {}); } else { v.pause(); }
+            if (en.isIntersecting) { var p = v.play(); if (p && typeof p.catch === 'function') p.catch(function () {}); } else { v.pause(); }
           });
         }, { threshold: 0.2 }).observe(v);
       }
