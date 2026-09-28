@@ -1065,8 +1065,9 @@
         // A lead while he is off stage brings him back to celebrate.
         if (p.state === 'away') { p.state = 'home'; p.t = 0; }
       }
+      // Cache mobile bar height measurement to avoid forced synchronous layout reflows (layout thrashing) inside rAF
+      var barH = 0;
       function homeY() {
-        var barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
         return H - PET_H - 12 - barH;
       }
       function say(html, ms) {
@@ -1118,8 +1119,9 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
-        // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
+        // Batch DOM layout reads: update cached element bounding rects and bar height only when dirty (scroll/resize/initial)
         if (rectsDirty) {
+          barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
           catchers.forEach(function (el) {
             var r = el.getBoundingClientRect();
             rects.set(el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
