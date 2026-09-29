@@ -13,3 +13,7 @@
 ## 2026-09-28 - Accessible Inline Form Validation with Novalidate
 **Learning:** When using `novalidate` on HTML forms to override browser default tooltips, simply focusing an empty field with `aria-invalid="true"` leaves screen reader users and sighted users without clear visual error explanations. Programmatically toggling visible `.field-error` elements and dynamically associating them via `aria-describedby` when a required field fails validation provides accessible, unambiguous inline feedback.
 **Action:** Always pair `aria-invalid="true"` with visible error elements linked via `aria-describedby`, and clear both on the `input` event when users edit the field.
+
+## 2026-09-29 - Dynamic Navigation State with IntersectionObserver and aria-current
+**Learning:** In single-page websites with in-page anchor links, users navigating by scrolling lack visual feedback and screen readers lack semantic context regarding which section is currently active. Using `IntersectionObserver` to track the visible page sections and dynamically setting `aria-current="true"` on matching navigation anchor links provides accessible context for screen readers and clean visual cues for sighted users.
+**Action:** When adding scroll-based navigation feedback, map sections to header anchor links with `IntersectionObserver` and update `aria-current="true"` (or `aria-current="page"`).
