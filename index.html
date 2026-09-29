@@ -898,13 +898,21 @@
       var W = window.innerWidth, H = window.innerHeight;
       var rectsDirty = true;
       function updateRects() { rectsDirty = true; }
+      var mobileBar = document.querySelector('.mobile-bar');
+      // Cache barH on init and window resize to avoid calling getComputedStyle / offsetHeight on scroll reflows
+      var barH = 0;
+      function updateBarH() {
+        barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
+      }
+      updateBarH();
+
       window.addEventListener('resize', function () {
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
+        updateBarH();
         updateRects();
       });
       window.addEventListener('scroll', updateRects, { passive: true });
-      var mobileBar = document.querySelector('.mobile-bar');
       var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
       var piles = new Map();
       catchers.forEach(function (el) { piles.set(el, []); });
@@ -1123,8 +1131,6 @@
         // A lead while he is off stage brings him back to celebrate.
         if (p.state === 'away') { p.state = 'home'; p.t = 0; }
       }
-      // Cache mobile bar height measurement to avoid forced synchronous layout reflows (layout thrashing) inside rAF
-      var barH = 0;
       function homeY() {
         return H - PET_H - 12 - barH;
       }
@@ -1177,9 +1183,8 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
-        // Batch DOM layout reads: update cached element bounding rects and bar height only when dirty (scroll/resize/initial)
+        // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
         if (rectsDirty) {
-          barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
           catchers.forEach(function (el, idx) {
             var r = el.getBoundingClientRect();
             var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
