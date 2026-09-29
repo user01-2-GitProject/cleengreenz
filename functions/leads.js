@@ -43,6 +43,13 @@ export function authorized(request, password) {
 
 const LABELS = { form: 'Estimate forms', call: 'Call taps', email: 'Email taps', estimate_click: 'Estimate button clicks' };
 
+const SECURITY_HEADERS = {
+  'x-frame-options': 'DENY',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline';",
+};
+
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
   const byType = Object.fromEntries(totals.map((r) => [r.type, r]));
   const types = Object.keys(LABELS);
@@ -100,10 +107,21 @@ export async function onRequestGet({ request, env }) {
   if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
     return new Response('Password required', {
       status: 401,
-      headers: { 'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"' },
+      headers: {
+        'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"',
+        ...SECURITY_HEADERS,
+      },
     });
   }
-  if (!env.DB) return new Response('Lead database is not connected yet.', { status: 503 });
+  if (!env.DB) {
+    return new Response('Lead database is not connected yet.', {
+      status: 503,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        ...SECURITY_HEADERS,
+      },
+    });
+  }
 
   const [totals, months, recent] = await env.DB.batch([
     env.DB.prepare(
@@ -130,5 +148,11 @@ export async function onRequestGet({ request, env }) {
     recent: recent.results,
   });
 
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      ...SECURITY_HEADERS,
+    },
+  });
 }

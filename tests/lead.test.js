@@ -488,6 +488,13 @@ test('onRequestGet authorization and response handling', async (t) => {
       res.headers.get('www-authenticate'),
       'Basic realm="Cleen Greenz leads", charset="UTF-8"'
     );
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(
+      res.headers.get('content-security-policy'),
+      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+    );
   });
 
   await t.test('returns 401 when authorization header is missing', async () => {
@@ -529,6 +536,13 @@ test('onRequestGet authorization and response handling', async (t) => {
     // Should pass authorization check and hit DB missing check (503)
     assert.equal(res.status, 503);
     assert.equal(await res.text(), 'Lead database is not connected yet.');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(
+      res.headers.get('content-security-policy'),
+      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+    );
   });
 });
 
@@ -601,6 +615,13 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
 
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: mockDb } });
     assert.equal(res.status, 200);
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(
+      res.headers.get('content-security-policy'),
+      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+    );
     const html = await res.text();
 
     assert.match(html, /href="tel:269-555-0199%20\(1\)"/);
