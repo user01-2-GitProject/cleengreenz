@@ -38,7 +38,13 @@
   // "Free estimate" buttons that jump to the form.
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href="#estimate"]');
-    if (a && window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+    if (a) {
+      if (window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+      var nameInput = document.getElementById('f-name');
+      if (nameInput) {
+        setTimeout(function () { nameInput.focus(); }, 50);
+      }
+    }
   });
 
   var form = document.getElementById('estimate-form');
