@@ -398,8 +398,9 @@
   label .req { color: var(--pumpkin-2); margin-left: 2px; }
   input, select, textarea {
     font: inherit; font-size: 1rem; color: var(--bark); background: var(--cream); border: 2px solid var(--cream-2);
-    border-radius: 14px; padding: 12px 14px; width: 100%;
+    border-radius: 14px; padding: 12px 14px; width: 100%; transition: border-color .2s ease;
   }
+  input:hover, select:hover, textarea:hover { border-color: var(--leaf-2); }
   input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
   input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
@@ -964,13 +965,19 @@
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
         wrap.innerHTML =
-          '<div class="pet-bubble" role="status"></div>' +
           '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
-          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
+          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>' +
+          '<div class="pet-bubble" role="status"></div>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
+            bubble.classList.remove('is-visible');
+          }
+        });
         sprite = wrap.querySelector('.pet-sprite');
         p.y = homeY();
         pet.addEventListener('pointerdown', function (e) {

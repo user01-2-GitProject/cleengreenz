@@ -13,3 +13,7 @@
 ## 2026-09-28 - Accessible Inline Form Validation with Novalidate
 **Learning:** When using `novalidate` on HTML forms to override browser default tooltips, simply focusing an empty field with `aria-invalid="true"` leaves screen reader users and sighted users without clear visual error explanations. Programmatically toggling visible `.field-error` elements and dynamically associating them via `aria-describedby` when a required field fails validation provides accessible, unambiguous inline feedback.
 **Action:** Always pair `aria-invalid="true"` with visible error elements linked via `aria-describedby`, and clear both on the `input` event when users edit the field.
+
+## 2026-09-29 - Popover Bubble Keyboard Navigation & Global Escape Dismissal
+**Learning:** Interactive popovers or speech bubbles placed before their toggle button in the DOM cause unintuitive backward Tab focus movement for keyboard users. Placing the popover element directly after its trigger button in DOM order ensures forward Tab flow, while attaching a document `keydown` listener for the `Escape` key allows users to quickly dismiss popovers from anywhere without losing focus context.
+**Action:** Always position popover DOM containers directly after their trigger buttons and provide global `Escape` key handlers to dismiss visible popover overlays.
