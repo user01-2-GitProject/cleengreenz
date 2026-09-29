@@ -17,7 +17,10 @@ function clean(value, field) {
 }
 
 export function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json', 'x-content-type-options': 'nosniff' },
+  });
 }
 
 function escapeHtml(s) {
@@ -43,13 +46,15 @@ async function emailChris(env, lead) {
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0"><b>${k}</b></td><td>${escapeHtml(v).replace(/\n/g, '<br>')}</td></tr>`)
     .join('')}</table><p><a href="tel:${encodeURIComponent(safePhone)}">Call ${escapeHtml(lead.name)}</a></p>`;
 
+  const cleanSubjectService = (lead.service || 'lawn care').replace(/[\r\n]/g, ' ');
+  const cleanSubjectName = (lead.name || '').replace(/[\r\n]/g, ' ');
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       from: env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>',
       to: (env.LEAD_TO || 'chris@cleengreenz.com').split(',').map((s) => s.trim()),
-      subject: `Estimate request: ${lead.service || 'lawn care'} (${lead.name})`,
+      subject: `Estimate request: ${cleanSubjectService} (${cleanSubjectName})`,
       text,
       html,
     }),
