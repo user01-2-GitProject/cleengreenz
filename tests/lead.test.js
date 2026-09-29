@@ -54,6 +54,8 @@ test('json helper function', async (t) => {
     const res = json({ message: 'hello' });
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {

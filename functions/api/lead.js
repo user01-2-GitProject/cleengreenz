@@ -19,7 +19,12 @@ function clean(value, field) {
 export function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json', 'x-content-type-options': 'nosniff' },
+    headers: {
+      'content-type': 'application/json',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+    },
   });
 }
 
