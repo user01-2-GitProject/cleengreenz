@@ -969,10 +969,12 @@
       }
       function blowPile(host, dir) {
         var pile = piles.get(host);
+        var hr = rects.get(host);
+        if (!hr) return;
         pile.forEach(function (l) {
           l.state = 'blown';
-          l.x = rects.get(host).left + l.ox - l.size / 2;
-          l.y = rects.get(host).top - l.size * 0.75 - l.lift;
+          l.x = hr.left + l.ox - l.size / 2;
+          l.y = hr.top - l.size * 0.75 - l.lift;
           l.vx = dir * rnd(140, 360);
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
