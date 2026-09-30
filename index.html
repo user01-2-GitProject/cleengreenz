@@ -849,6 +849,7 @@
         }
       });
       var visibleSections = new Set();
+      var currentActiveLink = null;
       var navObserver = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
@@ -865,13 +866,17 @@
             break;
           }
         }
-        navLinks.forEach(function (link) {
-          if (activeSection && linkMap.get(activeSection) === link) {
-            link.setAttribute('aria-current', 'true');
-          } else {
-            link.removeAttribute('aria-current');
+        // Optimize DOM mutations: only update aria-current attribute when active link changes
+        var newActiveLink = activeSection ? linkMap.get(activeSection) : null;
+        if (newActiveLink !== currentActiveLink) {
+          if (currentActiveLink) {
+            currentActiveLink.removeAttribute('aria-current');
           }
-        });
+          if (newActiveLink) {
+            newActiveLink.setAttribute('aria-current', 'true');
+          }
+          currentActiveLink = newActiveLink;
+        }
       }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
       sections.forEach(function (sec) { navObserver.observe(sec); });
     }
