@@ -21,3 +21,7 @@
 ## 2026-09-29 - Accessible Live Character Counters in Form Labels
 **Learning:** For optional or constrained text inputs (like form notes textareas), users lack visual and screen-reader feedback about input bounds until server truncation occurs. Placing a live `aria-live="polite"` remaining count element inside the input `<label>` styled with secondary text tokens (`.opt`) provides real-time feedback that screen readers announce politely without adding extra form layout rows.
 **Action:** When adding character limits to form inputs, set `maxlength` and pair with an inline `aria-live="polite"` span inside the label that updates on the `input` event.
+
+## 2026-09-30 - Accessible Disclosure Relationships with aria-controls
+**Learning:** Native `<details>` and `<summary>` disclosure widgets convey expanded state implicitly in modern screen readers, but screen reader users navigating interactively benefit from explicit `aria-controls` attributes linking the summary toggle directly to the ID of the controlled answer container (`<p id="...">`).
+**Action:** Always provide explicit `id` attributes on expandable content blocks within details disclosures and set `aria-controls` on summary elements.
