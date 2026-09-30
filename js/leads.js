@@ -50,6 +50,18 @@
   var form = document.getElementById('estimate-form');
   if (!form) return;
 
+  var notesInput = form.querySelector('#f-notes');
+  var notesCount = form.querySelector('#f-notes-count');
+  if (notesInput && notesCount) {
+    var maxLen = notesInput.maxLength > 0 ? notesInput.maxLength : 500;
+    function updateNotesCount() {
+      var remaining = maxLen - notesInput.value.length;
+      notesCount.textContent = '· ' + remaining + ' char' + (remaining === 1 ? '' : 's') + ' left';
+    }
+    notesInput.addEventListener('input', updateNotesCount);
+    updateNotesCount();
+  }
+
   // Hidden field only bots fill in.
   var trap = document.createElement('input');
   trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';

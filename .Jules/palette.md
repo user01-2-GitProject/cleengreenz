@@ -17,3 +17,7 @@
 ## 2026-09-29 - Dynamic Navigation State with IntersectionObserver and aria-current
 **Learning:** In single-page websites with in-page anchor links, users navigating by scrolling lack visual feedback and screen readers lack semantic context regarding which section is currently active. Using `IntersectionObserver` to track the visible page sections and dynamically setting `aria-current="true"` on matching navigation anchor links provides accessible context for screen readers and clean visual cues for sighted users.
 **Action:** When adding scroll-based navigation feedback, map sections to header anchor links with `IntersectionObserver` and update `aria-current="true"` (or `aria-current="page"`).
+
+## 2026-09-29 - Accessible Live Character Counters in Form Labels
+**Learning:** For optional or constrained text inputs (like form notes textareas), users lack visual and screen-reader feedback about input bounds until server truncation occurs. Placing a live `aria-live="polite"` remaining count element inside the input `<label>` styled with secondary text tokens (`.opt`) provides real-time feedback that screen readers announce politely without adding extra form layout rows.
+**Action:** When adding character limits to form inputs, set `maxlength` and pair with an inline `aria-live="polite"` span inside the label that updates on the `input` event.
