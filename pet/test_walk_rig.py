@@ -14,8 +14,10 @@ class WalkTests(unittest.TestCase):
         for phase in np.arange(0, 1, 1 / 256):
             feet, dy = rig['walk_pose'](phase)
             for i, (x, lift, pitch, planted) in enumerate(feet):
-                hip = rig['HIP'] + np.array([-5 if i else 0, dy])
-                ankle = rig['ankle_position'](x, lift, pitch) + np.array([-5 if i else 0, 0])
+                hip_offset = rig['FAR_HIP_OFFSET'] if i else 0
+                foot_offset = rig['FAR_FOOT_OFFSET'] if i else 0
+                hip = rig['HIP'] + np.array([hip_offset, dy])
+                ankle = rig['ankle_position'](x, lift, pitch) + np.array([foot_offset, 0])
                 distance = np.linalg.norm(ankle - hip)
                 self.assertLessEqual(distance, sum(lengths) + 1e-6)
                 knee = rig['two_bone'](hip, ankle, *lengths)

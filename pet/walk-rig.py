@@ -1,4 +1,4 @@
-"""Build Chris's walk cycle by re-posing his own pixel legs, into media/pet-chris-poses-v5.png.
+"""Build Chris's walk cycle by re-posing his own pixel legs into a versioned sprite sheet.
 
 Run from the repository root:  python3 pet/walk-rig.py [--preview out.png]
 
@@ -28,8 +28,8 @@ SRC = "pet/chris-keyframes/03_walk_passing_a.png"
 IDLE_SHEET = "media/pet-chris-poses-v2.png"
 # Preserve the approved 58-cell sheet, replacing only its two sixteen-frame walk ranges.
 # A new file name, so browsers and the Cloudflare cache cannot mix old poses with new code.
-BASE_SHEET = "media/pet-chris-poses-v4.png"
-OUT = "media/pet-chris-poses-v5.png"
+BASE_SHEET = "media/pet-chris-poses-v5.png"
+OUT = "media/pet-chris-poses-v22.png"
 W, H = 192, 200
 FRAMES = 16
 STANCE = 0.55
@@ -52,6 +52,11 @@ ANKLE = np.array([86.0, 181.0])
 # Near leg outline (thigh + shin + cuff), drawn by hand around the front leg.
 LEG_POLY = [(57, 99), (96, 99), (96, 126), (93, 140), (93, 160), (96, 172), (97, 181),
             (74, 183), (72, 172), (69, 152), (66, 138), (62, 126), (57, 112)]
+# The far leg reuses the full trouser silhouette but has the near-side cargo pocket painted out.
+FAR_HIP_OFFSET = -5.0
+FAR_FOOT_OFFSET = -5.0
+POCKET_POLY = [(57, 117), (67, 117), (71, 120), (70, 126),
+               (68, 131), (63, 133), (58, 131), (56, 124)]
 # Boot: everything below the cuff line around the front boot.
 BOOT_BOX = (73, 178, 116, 198)
 # Body: everything above this row comes from the passing keyframe unchanged.
@@ -71,8 +76,7 @@ FAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
 ARM_SWING = 16.0    # degrees each way
 ARM_LAG = 0.06      # arms trail the legs by this much of a cycle, so they swing rather than pump
 STAND_GAP = 14      # px between the boots in the standing frame
-# The cargo pocket is on the outside of the near leg only; the far leg gets it painted out.
-POCKET_BOX = (63, 116, 80, 142)
+# The cargo pocket belongs to the near leg; the far leg uses separate source artwork without it.
 
 
 def load_keyframe(path):
@@ -132,7 +136,7 @@ def affine_sample(src, dst_shape, inv):
     return out
 
 
-def bone_map(src_a, src_b, dst_a, dst_b):
+def bone_map(src_a, src_b, dst_a, dst_b, width_scale=1.0):
     """Inverse map that carries bone dst_a->dst_b onto src_a->src_b (rotation + stretch along bone)."""
     sv, dv = src_b - src_a, dst_b - dst_a
     sl, dl = np.hypot(*sv), np.hypot(*dv)
@@ -142,7 +146,7 @@ def bone_map(src_a, src_b, dst_a, dst_b):
     def inv(x, y):
         rx, ry = x - dst_a[0], y - dst_a[1]
         t = (rx * du[0] + ry * du[1]) * (sl / dl)
-        n = rx * dn[0] + ry * dn[1]
+        n = (rx * dn[0] + ry * dn[1]) / width_scale
         return src_a[0] + t * su[0] + n * sn[0], src_a[1] + t * su[1] + n * sn[1]
     return inv
 
@@ -358,7 +362,9 @@ def walk_pose(phase):
         # The reaching swing leg also constrains the hips before heel strike;
         # otherwise it overextends and the body drops abruptly at contact.
         ankle = ankle_position(x, lift, pitch)
-        dx = x
+        hip_offset = FAR_HIP_OFFSET if i == 1 else 0.0
+        foot_offset = FAR_FOOT_OFFSET if i == 1 else 0.0
+        dx = x + foot_offset - hip_offset
         heights.append(ankle[1] - math.sqrt(reach * reach - dx * dx))
     # A small impact dip, released before mid-stance. Zero slope at both ends.
     load_phase = phase % .5
@@ -380,20 +386,22 @@ def main():
     leg_mask &= ~((sg > sr + 20) & (sg > sb + 20))   # the shirt hem is not part of the leg
     thigh_src = cut(src, leg_mask & (np.mgrid[0:H, 0:W][0] < KNEE[1] + 7))
     shin_src = cut(src, leg_mask & (np.mgrid[0:H, 0:W][0] >= KNEE[1] - 7))
+    # Keep the same full-width leg silhouette on the far side, but replace only the small, shaped
+    # pocket panel with cloth from the adjacent thigh. The mask follows the pocket, not a rectangle.
+    far_thigh_src = thigh_src.copy()
+    pocket = poly_mask(POCKET_POLY, src.shape) & (thigh_src[..., 3] > 0)
+    for y, x in zip(*np.where(pocket)):
+        for dx in (14, 13, 15, 12, 16):
+            sx = x + dx
+            if sx < W and thigh_src[y, sx, 3]:
+                far_thigh_src[y, x] = thigh_src[y, sx]
+                break
     bx0, by0, bx1, by1 = BOOT_BOX
     boot_mask = np.zeros(src.shape[:2], bool)
     boot_mask[by0:by1, bx0:bx1] = True
     boot_mask &= src[..., 3] > 0
     boot_mask &= ~poly_mask(LEG_POLY, src.shape) | (np.mgrid[0:H, 0:W][0] >= ANKLE[1] - 1)
     boot_src = cut(src, boot_mask)
-
-    # The far leg is the same leg without the pocket: fill the pocket from the plain cloth beside it.
-    far_thigh_src = thigh_src.copy()
-    px0, py0, px1, py1 = POCKET_BOX
-    for y in range(py0, py1):
-        for x in range(px0, px1):
-            if far_thigh_src[y, x, 3] and thigh_src[y, x + 13, 3]:
-                far_thigh_src[y, x] = thigh_src[y, x + 13]
 
     body = src.copy()
     arms = []
@@ -447,20 +455,24 @@ def main():
             # Pitch about the toe (push-off) or the heel (strike) keeps the planted end on the ground.
             ankle = ankle_position(x, lift, pitch)
             if i == 1:
-                ankle[0] -= 5  # perspective offset applies to both hip and foot
-            h = hip + (np.array([-5.0, 0]) if i == 1 else 0)
+                ankle[0] += FAR_FOOT_OFFSET
+            h = hip + (np.array([FAR_HIP_OFFSET, 0]) if i == 1 else 0)
             knee = two_bone(h, ankle, l1, l2)
             layer = np.zeros((H, W, 4), np.uint8)
             over(layer, affine_sample(boot_src, (H, W), rot_map(ANKLE, ankle, pitch)))
-            over(layer, affine_sample(shin_src, (H, W), bone_map(KNEE, ANKLE, knee, ankle)))
-            over(layer, affine_sample(far_thigh_src if i else thigh_src, (H, W), bone_map(HIP, KNEE, h, knee)))
+            if i == 1:
+                thigh_tex, shin_tex = far_thigh_src, shin_src
+            else:
+                thigh_tex, shin_tex = thigh_src, shin_src
+            over(layer, affine_sample(shin_tex, (H, W), bone_map(KNEE, ANKLE, knee, ankle)))
+            over(layer, affine_sample(thigh_tex, (H, W), bone_map(HIP, KNEE, h, knee)))
             layer = outline(layer)
             # Never through the ground: a pitched boot's heel or toe corner is lifted back onto it.
             rows = np.where(layer[..., 3].any(axis=1))[0]
             if len(rows) and (rows[-1] > GROUND or (planted and rows[-1] < GROUND)):
                 layer = shift_y(layer, GROUND - rows[-1])   # and a planted boot sits right on it
             if i == 1:  # far leg: a touch darker, like the art's far leg
-                layer[..., :3] = (layer[..., :3] * .82).astype(np.uint8)
+                layer[..., :3] = (layer[..., :3] * .96).astype(np.uint8)
             layers.append(layer)
 
         body_shift = shift_y(body, dy)
