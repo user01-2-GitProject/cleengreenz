@@ -71,3 +71,50 @@ test('Active navigation highlighting via IntersectionObserver', async (t) => {
     assert.equal(servicesLink.getAttribute('aria-current'), 'true', 'services link gains aria-current="true"');
   });
 });
+
+test('Pet Chris speech bubble accessibility attributes', async (t) => {
+  await t.test('initializes .pet button with aria-controls and toggles aria-expanded on click', () => {
+    class MockIntersectionObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      resources: 'usable',
+      beforeParse(window) {
+        window.IntersectionObserver = MockIntersectionObserver;
+        window.matchMedia = () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
+        window.requestAnimationFrame = () => 0;
+        window.cancelAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+        window.HTMLMediaElement.prototype.pause = () => {};
+      },
+    });
+
+    const { document, Event } = dom.window;
+    const petBtn = document.querySelector('.pet');
+    const petBubble = document.getElementById('pet-bubble');
+
+    assert.ok(petBtn, '.pet button element should exist');
+    assert.ok(petBubble, '#pet-bubble element should exist');
+    assert.equal(petBtn.getAttribute('aria-controls'), 'pet-bubble');
+    assert.equal(petBtn.getAttribute('aria-expanded'), 'false');
+
+    // Simulate clicking Pet Chris via keyboard activation (detail: 0)
+    petBtn.dispatchEvent(new dom.window.MouseEvent('click', { detail: 0, bubbles: true }));
+
+    assert.equal(petBtn.getAttribute('aria-expanded'), 'true');
+    assert.equal(petBubble.classList.contains('is-visible'), true);
+
+    // Simulate clicking an action inside the speech bubble (e.g. data-pet-go link), which hides the bubble
+    const goLink = document.createElement('a');
+    goLink.setAttribute('data-pet-go', 'true');
+    petBubble.appendChild(goLink);
+    goLink.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+
+    assert.equal(petBtn.getAttribute('aria-expanded'), 'false');
+    assert.equal(petBubble.classList.contains('is-visible'), false);
+  });
+});

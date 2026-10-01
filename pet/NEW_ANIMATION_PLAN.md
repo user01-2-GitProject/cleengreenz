@@ -1,6 +1,8 @@
 # Design Specification & Plans for New Animated Asset: Chris Lawn Mowing Sequence
 
-This document outlines the detailed plans, specifications, and pipeline for a new animated asset sequence featuring Pet Chris pushing a push mower.
+**Status: unapproved proposal; not implemented.** This document is not authorization to create assets, add mower states, or change the live animation. It does not satisfy or replace the separate knee/gait revision approval gate.
+
+This document outlines a possible future pipeline for a new animated asset sequence featuring Pet Chris pushing a push mower.
 
 ---
 

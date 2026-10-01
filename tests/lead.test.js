@@ -159,6 +159,46 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: true });
   });
 
+  await t.test('sanitizes linebreaks in single-line form fields when submitted', async () => {
+    let capturedBody = null;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane\r\nDoe',
+          phone: '269-555-0199\n',
+          address: '123\r\nMain\nSt',
+          service: 'Lawn\rCare',
+          notes: 'Line 1\nLine 2',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.equal(capturedBody.subject, 'Estimate request: Lawn Care (Jane Doe)');
+      assert.match(capturedBody.text, /Name: Jane Doe/);
+      assert.match(capturedBody.text, /Phone: 269-555-0199/);
+      assert.match(capturedBody.text, /Address: 123 Main St/);
+      assert.match(capturedBody.text, /Service: Lawn Care/);
+      assert.match(capturedBody.text, /Notes: Line 1\nLine 2/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   await t.test('returns 400 with missing_fields error on form submission missing required fields', async () => {
     const testCases = [
       { body: { type: 'form' }, missing: 'all required fields' },
@@ -883,6 +923,26 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.match(env.doneParagraph.textContent, /Your email app should have opened/);
     assert.match(env.location.href, /^mailto:chris@cleengreenz\.com/);
     assert.match(env.location.href, /John%20Smith/);
+  });
+
+  await t.test('sanitizes CRLF characters from name and service in mailto fallback link', async () => {
+    const env = setupDomEnvironment();
+    env.setFetchImpl(async () => {
+      throw new Error('Network error');
+    });
+
+    env.nameInput.value = 'John\r\nHeaderInjection';
+    env.phoneInput.value = '269-555-1234';
+    env.serviceSelect.value = 'Fall\nLeaf\rCleanup';
+
+    const submitEvent = new env.Event('submit', { cancelable: true });
+    env.form.dispatchEvent(submitEvent);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const url = new URL(env.location.href);
+    const subject = url.searchParams.get('subject');
+    assert.equal(subject, 'Estimate request: Fall Leaf Cleanup (John HeaderInjection)');
   });
 
   await t.test('prevents submission when required fields are empty and shows errors', async () => {

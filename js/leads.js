@@ -95,8 +95,10 @@
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
+    var cleanService = (d.service || 'lawn care').replace(/\r?\n|\r/g, ' ');
+    var cleanName = (d.name || '').replace(/\r?\n|\r/g, ' ');
     window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
-      encodeURIComponent('Estimate request: ' + d.service + ' (' + d.name + ')') +
+      encodeURIComponent('Estimate request: ' + cleanService + ' (' + cleanName + ')') +
       '&body=' + encodeURIComponent(body);
   }
 
