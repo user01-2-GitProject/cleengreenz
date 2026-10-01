@@ -70,7 +70,7 @@
   .btn:hover { transform: translateY(-2px) rotate(-1deg); }
   .btn:active { transform: translateY(1px); }
   .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
-  .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  button:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 3px solid var(--gold); outline-offset: 3px;
   }
   .btn-primary { background: var(--pumpkin); color: #fff; box-shadow: 0 6px 0 var(--pumpkin-2); }
@@ -1025,8 +1025,8 @@
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
         wrap.innerHTML =
-          '<div class="pet-bubble" role="status"></div>' +
-          '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
+          '<div class="pet-bubble" role="status" id="pet-bubble"></div>' +
+          '<button class="pet" type="button" aria-expanded="false" aria-controls="pet-bubble" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
           '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
         document.body.appendChild(wrap);
@@ -1056,7 +1056,7 @@
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
           p.state = 'drag'; p.t = 0; p.speed = 0;
-          bubble.classList.remove('is-visible');
+          hideBubble();
         });
         function release(e) {
           if (!pointer || e.pointerId !== pointer.id) return;
@@ -1082,7 +1082,7 @@
           say(lines[lineIndex++ % lines.length], 6000);
         });
         bubble.addEventListener('click', function (e) {
-          if (e.target.closest('[data-pet-go]')) { bubble.classList.remove('is-visible'); }
+          if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
             wrap.remove();
@@ -1139,12 +1139,18 @@
       function homeY() {
         return H - PET_H - 12 - barH;
       }
+      function hideBubble() {
+        if (!bubble) return;
+        bubble.classList.remove('is-visible');
+        if (pet) pet.setAttribute('aria-expanded', 'false');
+      }
       function say(html, ms) {
         if (!bubble) return;
         bubble.innerHTML = html;
         bubble.classList.add('is-visible');
+        if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
+        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
