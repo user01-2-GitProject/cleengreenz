@@ -9,6 +9,7 @@ const htmlContent = fs.readFileSync(path.resolve('index.html'), 'utf8');
 function createHarness({ reducedMotion = false } = {}) {
   const frames = [];
   let clock = 1000;
+  let mowerPlayCount = 0;
   const dom = new jsdom.JSDOM(htmlContent, {
     runScripts: 'dangerously',
     url: 'https://cleengreenz.test/',
@@ -31,7 +32,10 @@ function createHarness({ reducedMotion = false } = {}) {
         disconnect() {}
       };
       win.HTMLMediaElement.prototype.pause = () => {};
-      win.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      win.HTMLMediaElement.prototype.play = function () {
+        if (this.classList.contains('grass-mower-video')) mowerPlayCount++;
+        return Promise.resolve();
+      };
     }
   });
 
@@ -72,7 +76,7 @@ function createHarness({ reducedMotion = false } = {}) {
     if (notifyScroll) window.dispatchEvent(new window.Event('scroll'));
   }
 
-  return { dom, window, patches, readCounts, setRect, tick, advance, advanceUntil };
+  return { dom, window, patches, readCounts, setRect, tick, advance, advanceUntil, mowerPlayCount: () => mowerPlayCount };
 }
 
 function visibleRect(top = 300) {
@@ -101,8 +105,13 @@ test('the live pet controller trims an in-view patch and reuses cached geometry 
   assert.equal(h.readCounts.get(target), 1, 'the patch rectangle should be read once during initial cache fill');
   assert.equal(pet.style.getPropertyValue('--x'), '346px', 'Pet Chris should walk to the patch');
   assert.equal(pet.style.getPropertyValue('--y'), '148px', 'Pet Chris should align with the patch before trimming');
-  h.advance(5);
+  assert.equal(h.mowerPlayCount(), 1, 'the mower video should play when the grass action starts');
+  assert.ok(target.classList.contains('mowing'));
+  assert.ok(pet.classList.contains('mowing'), 'the blower-pose sprite should be hidden during the mower scene');
+  assert.equal(target.querySelector('.grass-mower-video source').getAttribute('src'), 'media/mascot-mower.mp4');
+  h.advance(20);
   assert.equal(h.readCounts.get(target), 1, 'animation frames should not read patch layout again');
+  assert.equal(target.classList.contains('mowing'), false, 'the mower scene should end with the trim action');
   h.dom.window.close();
 });
 
@@ -155,6 +164,8 @@ test('reduced motion keeps grass static and disables automatic trimming', () => 
   h.advance(240);
   assert.ok(h.patches.every(patch => !patch.classList.contains('mowed')));
   assert.equal(h.window.document.querySelector('.leaf-layer'), null);
+  assert.equal(h.window.document.querySelector('.grass-mower-video'), null, 'reduced-motion pages should not create or load the mower clip');
+  assert.equal(h.mowerPlayCount(), 0);
   const mediaStart = htmlContent.lastIndexOf('@media (prefers-reduced-motion: reduce)');
   const reducedMotionRules = htmlContent.slice(mediaStart);
   assert.match(reducedMotionRules, /\.grass-blade\s*\{\s*animation:\s*none;/);
