@@ -252,6 +252,45 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
       extra: { service: 'Seeding and fertilizing' },
     });
   });
+
+  await t.test('resets form, restores form fields visibility, and focuses first input when Send another request button is clicked', async () => {
+    const { window, document } = setupEnvironment({
+      fetch: () => Promise.resolve({ ok: true, status: 200 }),
+    });
+
+    const form = document.getElementById('estimate-form');
+    const nameInput = form.querySelector('#f-name');
+    const phoneInput = form.querySelector('#f-phone');
+    const addressInput = form.querySelector('#f-address');
+    const notesInput = form.querySelector('#f-notes');
+    const notesCount = form.querySelector('#f-notes-count');
+    const fieldsBox = form.querySelector('.form-fields');
+    const doneBox = form.querySelector('.form-done');
+    const resetBtn = doneBox.querySelector('#form-reset-btn');
+
+    nameInput.value = 'Alice Smith';
+    phoneInput.value = '269-555-9999';
+    addressInput.value = '456 Elm St';
+    notesInput.value = 'Testing reset';
+
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+    await new Promise((r) => setTimeout(r, 20));
+
+    assert.equal(fieldsBox.style.display, 'none');
+    assert.equal(doneBox.classList.contains('show'), true);
+
+    // Click "Send another request" button
+    resetBtn.click();
+
+    assert.equal(fieldsBox.style.display, '');
+    assert.equal(doneBox.classList.contains('show'), false);
+    assert.equal(nameInput.value, '');
+    assert.equal(phoneInput.value, '');
+    assert.equal(addressInput.value, '');
+    assert.equal(notesInput.value, '');
+    assert.equal(notesCount.textContent, '· 500 chars left');
+    assert.equal(document.activeElement, nameInput);
+  });
 });
 
 test('Estimate form field validation & user input handling', async (t) => {
