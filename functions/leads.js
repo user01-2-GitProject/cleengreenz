@@ -50,6 +50,13 @@ export function authorized(request, password) {
 const LABELS = { form: 'Estimate forms', call: 'Call taps', email: 'Email taps', estimate_click: 'Estimate button clicks' };
 const TYPES = Object.keys(LABELS);
 
+const SECURITY_HEADERS = {
+  'x-frame-options': 'DENY',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline';",
+};
+
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
   // Populate byType directly to avoid creating intermediate 2-tuple arrays with Object.fromEntries.
   const byType = {};
@@ -114,9 +121,7 @@ export async function onRequestGet({ request, env }) {
       status: 401,
       headers: {
         'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"',
-        'x-frame-options': 'DENY',
-        'x-content-type-options': 'nosniff',
-        'referrer-policy': 'strict-origin-when-cross-origin',
+        ...SECURITY_HEADERS,
       },
     });
   }
@@ -124,9 +129,8 @@ export async function onRequestGet({ request, env }) {
     return new Response('Lead database is not connected yet.', {
       status: 503,
       headers: {
-        'x-frame-options': 'DENY',
-        'x-content-type-options': 'nosniff',
-        'referrer-policy': 'strict-origin-when-cross-origin',
+        'content-type': 'text/plain; charset=utf-8',
+        ...SECURITY_HEADERS,
       },
     });
   }
@@ -160,9 +164,7 @@ export async function onRequestGet({ request, env }) {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-frame-options': 'DENY',
-      'x-content-type-options': 'nosniff',
-      'referrer-policy': 'strict-origin-when-cross-origin',
+      ...SECURITY_HEADERS,
     },
   });
 }
