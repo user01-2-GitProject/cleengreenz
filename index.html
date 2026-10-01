@@ -882,17 +882,24 @@
     }
 
     // Mascot videos: respect reduced motion, and only play while on screen.
+    // Optimization: Reuse a single IntersectionObserver instance for all video elements
+    // to avoid allocating N observer objects and reduce layout/GC overhead.
     var videos = document.querySelectorAll('video');
-    videos.forEach(function (v) {
-      if (reduceMotion) { v.removeAttribute('autoplay'); v.pause(); return; }
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) {
-            if (en.isIntersecting) { var p = v.play(); if (p && typeof p.catch === 'function') p.catch(function () {}); } else { v.pause(); }
-          });
-        }, { threshold: 0.2 }).observe(v);
-      }
-    });
+    if (reduceMotion) {
+      videos.forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); });
+    } else if ('IntersectionObserver' in window && videos.length) {
+      var videoObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            var p = en.target.play();
+            if (p && typeof p.catch === 'function') p.catch(function () {});
+          } else {
+            en.target.pause();
+          }
+        });
+      }, { threshold: 0.2 });
+      videos.forEach(function (v) { videoObserver.observe(v); });
+    }
 
     // ===== LEAVES + PET CHRIS: script start =====
     // Falling leaves that pile up on buttons, and pet Chris who clears them.
