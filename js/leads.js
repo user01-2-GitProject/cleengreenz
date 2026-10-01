@@ -111,8 +111,10 @@
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
+    var cleanService = (d.service || 'lawn care').replace(/\r?\n|\r/g, ' ');
+    var cleanName = (d.name || '').replace(/\r?\n|\r/g, ' ');
     window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
-      encodeURIComponent('Estimate request: ' + d.service + ' (' + d.name + ')') +
+      encodeURIComponent('Estimate request: ' + cleanService + ' (' + cleanName + ')') +
       '&body=' + encodeURIComponent(body);
   }
 
@@ -125,9 +127,14 @@
     var field = e.target;
     if (field && field.removeAttribute) {
       field.removeAttribute('aria-invalid');
-      field.removeAttribute('aria-describedby');
       var errEl = errorFor(field);
-      if (errEl) errEl.classList.remove('show');
+      if (errEl) {
+        var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+          .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+        if (descriptions) field.setAttribute('aria-describedby', descriptions);
+        else field.removeAttribute('aria-describedby');
+        errEl.classList.remove('show');
+      }
     }
   });
 

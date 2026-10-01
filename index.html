@@ -70,7 +70,7 @@
   .btn:hover { transform: translateY(-2px) rotate(-1deg); }
   .btn:active { transform: translateY(1px); }
   .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
-  .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  button:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 3px solid var(--gold); outline-offset: 3px;
   }
   .btn-primary { background: var(--pumpkin); color: #fff; box-shadow: 0 6px 0 var(--pumpkin-2); }
@@ -405,9 +405,11 @@
   label .req { color: var(--pumpkin-2); margin-left: 2px; }
   input, select, textarea {
     font: inherit; font-size: 1rem; color: var(--bark); background: var(--cream); border: 2px solid var(--cream-2);
-    border-radius: 14px; padding: 12px 14px; width: 100%;
+    border-radius: 14px; padding: 12px 14px; width: 100%; transition: border-color .2s ease;
   }
+  input:hover, select:hover, textarea:hover { border-color: var(--leaf-2); }
   input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
+  main:focus { outline: none; }
   summary:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
   .field-error { display: none; color: var(--maple); font-size: .85rem; font-weight: 700; margin-top: 2px; }
@@ -487,7 +489,7 @@
   </nav>
 </header>
 
-<main id="main">
+<main id="main" tabindex="-1">
 
   <!-- Hero -->
   <section class="hero" id="top">
@@ -660,24 +662,24 @@
       </div>
       <div class="faq reveal">
         <details>
-          <summary>What happens if it rains?</summary>
-          <p>We shift our route and come as soon as the grass is dry, usually the next day. We'll text you so you're never left wondering.</p>
+          <summary aria-controls="faq-ans-1">What happens if it rains?</summary>
+          <p id="faq-ans-1">We shift our route and come as soon as the grass is dry, usually the next day. We'll text you so you're never left wondering.</p>
         </details>
         <details>
-          <summary>How do I pay?</summary>
-          <p>We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
+          <summary aria-controls="faq-ans-2">How do I pay?</summary>
+          <p id="faq-ans-2">We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
         </details>
         <details>
-          <summary>Do I need to be home?</summary>
-          <p>Nope. As long as the gates are unlocked and pets are inside, we'll take care of everything and let you know when we're done.</p>
+          <summary aria-controls="faq-ans-3">Do I need to be home?</summary>
+          <p id="faq-ans-3">Nope. As long as the gates are unlocked and pets are inside, we'll take care of everything and let you know when we're done.</p>
         </details>
         <details>
-          <summary>Do you do snow removal?</summary>
-          <p>Yes! Snow removal is new this winter. Single-car driveways start at $30 per visit, and bigger driveways are quoted by size. Send us your address and we'll get you on the list before the first snowfall.</p>
+          <summary aria-controls="faq-ans-4">Do you do snow removal?</summary>
+          <p id="faq-ans-4">Yes! Snow removal is new this winter. Single-car driveways start at $30 per visit, and bigger driveways are quoted by size. Send us your address and we'll get you on the list before the first snowfall.</p>
         </details>
         <details>
-          <summary>Do I have to sign a contract?</summary>
-          <p>No. We earn your business every week. If you ever want to pause or stop, just let us know.</p>
+          <summary aria-controls="faq-ans-5">Do I have to sign a contract?</summary>
+          <p id="faq-ans-5">No. We earn your business every week. If you ever want to pause or stop, just let us know.</p>
         </details>
       </div>
     </div>
@@ -716,7 +718,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
@@ -883,17 +885,24 @@
     }
 
     // Mascot videos: respect reduced motion, and only play while on screen.
+    // Optimization: Reuse a single IntersectionObserver instance for all video elements
+    // to avoid allocating N observer objects and reduce layout/GC overhead.
     var videos = document.querySelectorAll('video');
-    videos.forEach(function (v) {
-      if (reduceMotion) { v.removeAttribute('autoplay'); v.pause(); return; }
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) {
-            if (en.isIntersecting) { var p = v.play(); if (p && typeof p.catch === 'function') p.catch(function () {}); } else { v.pause(); }
-          });
-        }, { threshold: 0.2 }).observe(v);
-      }
-    });
+    if (reduceMotion) {
+      videos.forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); });
+    } else if ('IntersectionObserver' in window && videos.length) {
+      var videoObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            var p = en.target.play();
+            if (p && typeof p.catch === 'function') p.catch(function () {});
+          } else {
+            en.target.pause();
+          }
+        });
+      }, { threshold: 0.2 });
+      videos.forEach(function (v) { videoObserver.observe(v); });
+    }
 
     // ===== LEAVES + PET CHRIS: script start =====
     // Falling leaves that pile up on buttons, and pet Chris who clears them.
@@ -970,10 +979,12 @@
       }
       function blowPile(host, dir) {
         var pile = piles.get(host);
+        var hr = rects.get(host);
+        if (!hr) return;
         pile.forEach(function (l) {
           l.state = 'blown';
-          l.x = rects.get(host).left + l.ox - l.size / 2;
-          l.y = rects.get(host).top - l.size * 0.75 - l.lift;
+          l.x = hr.left + l.ox - l.size / 2;
+          l.y = hr.top - l.size * 0.75 - l.lift;
           l.vx = dir * rnd(140, 360);
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
@@ -1026,13 +1037,21 @@
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
         wrap.innerHTML =
-          '<div class="pet-bubble" role="status"></div>' +
-          '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
+          '<button class="pet" type="button" aria-expanded="false" aria-controls="pet-bubble" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
-          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
+          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>' +
+          '<div class="pet-bubble" role="status" id="pet-bubble"></div>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
+            var restorePetFocus = bubble.contains(document.activeElement);
+            hideBubble();
+            if (restorePetFocus && pet) pet.focus();
+          }
+        });
         sprite = wrap.querySelector('.pet-sprite');
         p.y = homeY();
         pet.addEventListener('pointerdown', function (e) {
@@ -1057,7 +1076,7 @@
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
           p.state = 'drag'; p.t = 0; p.speed = 0;
-          bubble.classList.remove('is-visible');
+          hideBubble();
         });
         function release(e) {
           if (!pointer || e.pointerId !== pointer.id) return;
@@ -1083,11 +1102,13 @@
           say(lines[lineIndex++ % lines.length], 6000);
         });
         bubble.addEventListener('click', function (e) {
-          if (e.target.closest('[data-pet-go]')) { bubble.classList.remove('is-visible'); }
+          if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
+            var brandLink = document.querySelector('.brand');
             wrap.remove();
             wrap = null;
+            if (brandLink) brandLink.focus();
           }
         });
         document.addEventListener('cg:lead', function (e) {
@@ -1140,12 +1161,18 @@
       function homeY() {
         return H - PET_H - 12 - barH;
       }
+      function hideBubble() {
+        if (!bubble) return;
+        bubble.classList.remove('is-visible');
+        if (pet) pet.setAttribute('aria-expanded', 'false');
+      }
       function say(html, ms) {
         if (!bubble) return;
         bubble.innerHTML = html;
         bubble.classList.add('is-visible');
+        if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
+        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
@@ -1389,12 +1416,19 @@
             ? 2 * Math.min(1, p.speed / WALK_SPEED) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
           p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
           if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
-          wrap.classList.toggle('walking', walking || Math.abs(p.lean) > .04);
-          wrap.classList.toggle('windup', p.state === 'clear' && p.t < 0.26);
-          wrap.classList.toggle('clearing', p.state === 'clear' && p.t >= 0.26);
-          wrap.classList.toggle('grabbed', p.grab > .02);
-          wrap.classList.toggle('face-left', p.face < 0);
-          wrap.classList.toggle('bubble-left', p.x > W / 2);
+          // Cache element class states on state object `p` to avoid redundant DOM classList toggles every animation frame
+          var isWalking = walking || Math.abs(p.lean) > .04;
+          if (isWalking !== p.lastWalking) { wrap.classList.toggle('walking', isWalking); p.lastWalking = isWalking; }
+          var isWindup = p.state === 'clear' && p.t < 0.26;
+          if (isWindup !== p.lastWindup) { wrap.classList.toggle('windup', isWindup); p.lastWindup = isWindup; }
+          var isClearing = p.state === 'clear' && p.t >= 0.26;
+          if (isClearing !== p.lastClearing) { wrap.classList.toggle('clearing', isClearing); p.lastClearing = isClearing; }
+          var isGrabbed = p.grab > .02;
+          if (isGrabbed !== p.lastGrabbed) { wrap.classList.toggle('grabbed', isGrabbed); p.lastGrabbed = isGrabbed; }
+          var isFaceLeft = p.face < 0;
+          if (isFaceLeft !== p.lastFaceLeft) { wrap.classList.toggle('face-left', isFaceLeft); p.lastFaceLeft = isFaceLeft; }
+          var isBubbleLeft = p.x > W / 2;
+          if (isBubbleLeft !== p.lastBubbleLeft) { wrap.classList.toggle('bubble-left', isBubbleLeft); p.lastBubbleLeft = isBubbleLeft; }
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           // Track integer coordinates and set CSS variables only when coordinates change to avoid string concatenation.
           var rx = Math.round(p.x), ry = Math.round(p.y);
