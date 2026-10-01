@@ -1396,12 +1396,19 @@
             ? 2 * Math.min(1, p.speed / WALK_SPEED) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
           p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
           if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
-          wrap.classList.toggle('walking', walking || Math.abs(p.lean) > .04);
-          wrap.classList.toggle('windup', p.state === 'clear' && p.t < 0.26);
-          wrap.classList.toggle('clearing', p.state === 'clear' && p.t >= 0.26);
-          wrap.classList.toggle('grabbed', p.grab > .02);
-          wrap.classList.toggle('face-left', p.face < 0);
-          wrap.classList.toggle('bubble-left', p.x > W / 2);
+          // Cache element class states on state object `p` to avoid redundant DOM classList toggles every animation frame
+          var isWalking = walking || Math.abs(p.lean) > .04;
+          if (isWalking !== p.lastWalking) { wrap.classList.toggle('walking', isWalking); p.lastWalking = isWalking; }
+          var isWindup = p.state === 'clear' && p.t < 0.26;
+          if (isWindup !== p.lastWindup) { wrap.classList.toggle('windup', isWindup); p.lastWindup = isWindup; }
+          var isClearing = p.state === 'clear' && p.t >= 0.26;
+          if (isClearing !== p.lastClearing) { wrap.classList.toggle('clearing', isClearing); p.lastClearing = isClearing; }
+          var isGrabbed = p.grab > .02;
+          if (isGrabbed !== p.lastGrabbed) { wrap.classList.toggle('grabbed', isGrabbed); p.lastGrabbed = isGrabbed; }
+          var isFaceLeft = p.face < 0;
+          if (isFaceLeft !== p.lastFaceLeft) { wrap.classList.toggle('face-left', isFaceLeft); p.lastFaceLeft = isFaceLeft; }
+          var isBubbleLeft = p.x > W / 2;
+          if (isBubbleLeft !== p.lastBubbleLeft) { wrap.classList.toggle('bubble-left', isBubbleLeft); p.lastBubbleLeft = isBubbleLeft; }
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           // Track integer coordinates and set CSS variables only when coordinates change to avoid string concatenation.
           var rx = Math.round(p.x), ry = Math.round(p.y);
