@@ -25,6 +25,9 @@
 **Learning:** For optional or constrained text inputs (like form notes textareas), users lack visual and screen-reader feedback about input bounds until server truncation occurs. Placing a live `aria-live="polite"` remaining count element inside the input `<label>` styled with secondary text tokens (`.opt`) provides real-time feedback that screen readers announce politely without adding extra form layout rows.
 **Action:** When adding character limits to form inputs, set `maxlength` and pair with an inline `aria-live="polite"` span inside the label that updates on the `input` event.
 
+## 2026-09-30 - Skip Link Focus Target & Dismissible Widget Focus Management
+**Learning:** Target elements like `<main id="main">` for skip-to-content links require explicit `tabindex="-1"` and `main:focus { outline: none; }` to ensure browsers actually shift keyboard focus to the main container upon activation instead of retaining focus in the header navigation. Furthermore, when dismissible interactive widgets (like Pet Chris) remove their wrapper from the DOM, shifting focus to a logical persistent element (like `.brand`) prevents keyboard focus from becoming orphaned on `<body>`.
+**Action:** Always set `tabindex="-1"` on skip link targets and manage focus transition before removing interactive elements from the DOM.
 ## 2026-09-30 - Accessible Disclosure Relationships with aria-controls
 **Learning:** Native `<details>` and `<summary>` disclosure widgets convey expanded state implicitly in modern screen readers, but screen reader users navigating interactively benefit from explicit `aria-controls` attributes linking the summary toggle directly to the ID of the controlled answer container (`<p id="...">`).
 **Action:** Always provide explicit `id` attributes on expandable content blocks within details disclosures and set `aria-controls` on summary elements.

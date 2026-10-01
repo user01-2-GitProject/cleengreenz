@@ -391,3 +391,53 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.equal(document.activeElement, nameInput);
   });
 });
+
+test('Accessibility attributes & focus management enhancements', async (t) => {
+  await t.test('main element has tabindex="-1" for skip link focus targeting', () => {
+    const { document } = setupEnvironment();
+    const mainEl = document.getElementById('main');
+    assert.ok(mainEl, '<main id="main"> should exist');
+    assert.equal(mainEl.getAttribute('tabindex'), '-1');
+  });
+
+  await t.test('notes textarea has aria-describedby pointing to notes character count element', () => {
+    const { document } = setupEnvironment();
+    const notesInput = document.getElementById('f-notes');
+    assert.ok(notesInput, '#f-notes textarea should exist');
+    assert.equal(notesInput.getAttribute('aria-describedby'), 'f-notes-count');
+    notesInput.value = 'abcd';
+    notesInput.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    assert.equal(notesInput.getAttribute('aria-describedby'), 'f-notes-count',
+      'typing must retain the permanent character count description');
+  });
+
+  await t.test('Pet Chris hide button shifts focus to brand link before removing container', () => {
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
+        window.requestAnimationFrame = () => 0;
+        window.cancelAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+        window.HTMLMediaElement.prototype.pause = () => {};
+      },
+    });
+    const { document } = dom.window;
+
+    const wrap = document.querySelector('.pet-wrap');
+    assert.ok(wrap, 'Pet Chris wrap should exist in DOM on load');
+
+    const bubble = wrap.querySelector('.pet-bubble');
+    assert.ok(bubble, 'Pet Chris bubble should exist');
+
+    bubble.innerHTML = '<button type="button" data-pet-hide>Hide me</button>';
+    const hideBtn = bubble.querySelector('[data-pet-hide]');
+
+    hideBtn.click();
+
+    const brandLink = document.querySelector('.brand');
+    assert.equal(document.activeElement, brandLink, 'focus should shift to .brand on hide');
+    assert.equal(document.querySelector('.pet-wrap'), null, 'pet wrap should be removed from DOM');
+  });
+});

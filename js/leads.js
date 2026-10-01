@@ -111,9 +111,14 @@
     var field = e.target;
     if (field && field.removeAttribute) {
       field.removeAttribute('aria-invalid');
-      field.removeAttribute('aria-describedby');
       var errEl = errorFor(field);
-      if (errEl) errEl.classList.remove('show');
+      if (errEl) {
+        var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+          .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+        if (descriptions) field.setAttribute('aria-describedby', descriptions);
+        else field.removeAttribute('aria-describedby');
+        errEl.classList.remove('show');
+      }
     }
   });
 
