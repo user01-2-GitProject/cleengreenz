@@ -405,9 +405,11 @@
   label .req { color: var(--pumpkin-2); margin-left: 2px; }
   input, select, textarea {
     font: inherit; font-size: 1rem; color: var(--bark); background: var(--cream); border: 2px solid var(--cream-2);
-    border-radius: 14px; padding: 12px 14px; width: 100%;
+    border-radius: 14px; padding: 12px 14px; width: 100%; transition: border-color .2s ease;
   }
+  input:hover, select:hover, textarea:hover { border-color: var(--leaf-2); }
   input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
+  main:focus { outline: none; }
   summary:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
   .field-error { display: none; color: var(--maple); font-size: .85rem; font-weight: 700; margin-top: 2px; }
@@ -487,7 +489,7 @@
   </nav>
 </header>
 
-<main id="main">
+<main id="main" tabindex="-1">
 
   <!-- Hero -->
   <section class="hero" id="top">
@@ -660,24 +662,24 @@
       </div>
       <div class="faq reveal">
         <details>
-          <summary>What happens if it rains?</summary>
-          <p>We shift our route and come as soon as the grass is dry, usually the next day. We'll text you so you're never left wondering.</p>
+          <summary aria-controls="faq-ans-1">What happens if it rains?</summary>
+          <p id="faq-ans-1">We shift our route and come as soon as the grass is dry, usually the next day. We'll text you so you're never left wondering.</p>
         </details>
         <details>
-          <summary>How do I pay?</summary>
-          <p>We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
+          <summary aria-controls="faq-ans-2">How do I pay?</summary>
+          <p id="faq-ans-2">We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
         </details>
         <details>
-          <summary>Do I need to be home?</summary>
-          <p>Nope. As long as the gates are unlocked and pets are inside, we'll take care of everything and let you know when we're done.</p>
+          <summary aria-controls="faq-ans-3">Do I need to be home?</summary>
+          <p id="faq-ans-3">Nope. As long as the gates are unlocked and pets are inside, we'll take care of everything and let you know when we're done.</p>
         </details>
         <details>
-          <summary>Do you do snow removal?</summary>
-          <p>Yes! Snow removal is new this winter. Single-car driveways start at $30 per visit, and bigger driveways are quoted by size. Send us your address and we'll get you on the list before the first snowfall.</p>
+          <summary aria-controls="faq-ans-4">Do you do snow removal?</summary>
+          <p id="faq-ans-4">Yes! Snow removal is new this winter. Single-car driveways start at $30 per visit, and bigger driveways are quoted by size. Send us your address and we'll get you on the list before the first snowfall.</p>
         </details>
         <details>
-          <summary>Do I have to sign a contract?</summary>
-          <p>No. We earn your business every week. If you ever want to pause or stop, just let us know.</p>
+          <summary aria-controls="faq-ans-5">Do I have to sign a contract?</summary>
+          <p id="faq-ans-5">No. We earn your business every week. If you ever want to pause or stop, just let us know.</p>
         </details>
       </div>
     </div>
@@ -716,7 +718,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
@@ -882,17 +884,24 @@
     }
 
     // Mascot videos: respect reduced motion, and only play while on screen.
+    // Optimization: Reuse a single IntersectionObserver instance for all video elements
+    // to avoid allocating N observer objects and reduce layout/GC overhead.
     var videos = document.querySelectorAll('video');
-    videos.forEach(function (v) {
-      if (reduceMotion) { v.removeAttribute('autoplay'); v.pause(); return; }
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) {
-            if (en.isIntersecting) { var p = v.play(); if (p && typeof p.catch === 'function') p.catch(function () {}); } else { v.pause(); }
-          });
-        }, { threshold: 0.2 }).observe(v);
-      }
-    });
+    if (reduceMotion) {
+      videos.forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); });
+    } else if ('IntersectionObserver' in window && videos.length) {
+      var videoObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            var p = en.target.play();
+            if (p && typeof p.catch === 'function') p.catch(function () {});
+          } else {
+            en.target.pause();
+          }
+        });
+      }, { threshold: 0.2 });
+      videos.forEach(function (v) { videoObserver.observe(v); });
+    }
 
     // ===== LEAVES + PET CHRIS: script start =====
     // Falling leaves that pile up on buttons, and pet Chris who clears them.
@@ -1027,13 +1036,21 @@
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
         wrap.innerHTML =
-          '<div class="pet-bubble" role="status" id="pet-bubble"></div>' +
           '<button class="pet" type="button" aria-expanded="false" aria-controls="pet-bubble" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
-          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
+          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>' +
+          '<div class="pet-bubble" role="status" id="pet-bubble"></div>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
+            var restorePetFocus = bubble.contains(document.activeElement);
+            hideBubble();
+            if (restorePetFocus && pet) pet.focus();
+          }
+        });
         sprite = wrap.querySelector('.pet-sprite');
         p.y = homeY();
         pet.addEventListener('pointerdown', function (e) {
@@ -1087,8 +1104,10 @@
           if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
+            var brandLink = document.querySelector('.brand');
             wrap.remove();
             wrap = null;
+            if (brandLink) brandLink.focus();
           }
         });
         document.addEventListener('cg:lead', function (e) {
