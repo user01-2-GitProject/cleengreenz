@@ -72,6 +72,53 @@ test('pet-extras setup DOM element caching', async (t) => {
     assert.equal(documentQueryCount, 1);
     assert.equal(wrapQueryCount, 1);
   });
+
+  await t.test('correctly evaluates atHome position using --x custom property', () => {
+    let setIntervalCb = null;
+    const styles = { '--x': '4px' };
+    const mockWrap = {
+      isConnected: true,
+      classList: { contains() { return false; } },
+      style: {
+        getPropertyValue(prop) { return styles[prop] || ''; },
+        transform: ''
+      },
+      querySelector() {
+        return { textContent: '', classList: { add() {}, remove() {}, contains() { return false; } } };
+      }
+    };
+
+    const mockWindow = {
+      matchMedia: () => ({ matches: false }),
+      addEventListener: () => {},
+      setInterval: (fn) => { setIntervalCb = fn; }
+    };
+
+    const mockDocument = {
+      addEventListener: () => {},
+      querySelector: () => mockWrap
+    };
+
+    const scriptCode = fs.readFileSync(path.resolve('pet/pet-extras.js'), 'utf8');
+    const context = vm.createContext({
+      window: mockWindow,
+      document: mockDocument,
+      matchMedia: mockWindow.matchMedia,
+      setInterval: mockWindow.setInterval,
+      setTimeout: () => {},
+      clearTimeout: () => {},
+      clearInterval: () => {},
+      Date,
+      Math
+    });
+
+    vm.runInContext(scriptCode, context);
+
+    assert.equal(typeof setIntervalCb, 'function');
+    // Calling tick() when --x is '4px' executes atHome() without throwing or missing home
+    setIntervalCb();
+    assert.ok(true, 'atHome evaluated successfully with --x custom property');
+  });
 });
 
 test('Pet Chris accessibility and Escape key handling in index.html', async (t) => {

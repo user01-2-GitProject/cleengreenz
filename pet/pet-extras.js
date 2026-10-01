@@ -24,11 +24,18 @@
   }
 
   // Chris is free for extras only while he is standing at home.
+  // Performance optimization: check the --x custom CSS property first to avoid
+  // executing regex on empty wrap.style.transform during frequent tick() calls.
   function atHome() {
     if (!wrap || !wrap.isConnected) return false;
     if (wrap.classList.contains('walking') || wrap.classList.contains('blowing')) return false;
-    var m = /translate3d\(([-\d.]+)px/.exec(wrap.style.transform || '');
-    return m ? Math.abs(parseFloat(m[1]) - HOME_X) < 2 : false;
+    var xVal = wrap.style.getPropertyValue ? wrap.style.getPropertyValue('--x') : (wrap.style && wrap.style['--x']);
+    var x = xVal ? parseFloat(xVal) : NaN;
+    if (isNaN(x)) {
+      var m = /translate3d\(([-\d.]+)px/.exec(wrap.style.transform || '');
+      x = m ? parseFloat(m[1]) : NaN;
+    }
+    return !isNaN(x) ? Math.abs(x - HOME_X) < 2 : false;
   }
 
   function setFrame(f) {
