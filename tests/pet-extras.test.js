@@ -85,6 +85,8 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
           return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
         };
         window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
       }
     });
     try {
@@ -104,7 +106,13 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
         '.pet-bubble should be after button.pet in DOM order for natural keyboard Tab navigation'
       );
 
+      const pet = wrap.querySelector('.pet');
+      pet.click(); pet.click(); pet.click();
       const bubble = wrap.querySelector('.pet-bubble');
+      assert.equal(pet.getAttribute('aria-expanded'), 'true');
+      const bubbleLink = bubble.querySelector('a');
+      bubbleLink.focus();
+      assert.equal(document.activeElement, bubbleLink);
       bubble.classList.add('is-visible');
       assert.equal(bubble.classList.contains('is-visible'), true);
 
@@ -116,6 +124,17 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
         false,
         'Escape key press should dismiss the visible pet speech bubble'
       );
+      assert.equal(document.activeElement, pet,
+        'Escape from a bubble link should restore focus to the trigger');
+      assert.equal(pet.getAttribute('aria-expanded'), 'false',
+        'Escape must also reset the trigger expanded state');
+
+      pet.click();
+      const brand = document.querySelector('.brand');
+      brand.focus();
+      document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert.equal(document.activeElement, brand,
+        'Escape must not steal focus from outside the bubble');
     } finally {
       dom.window.close();
     }

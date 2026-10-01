@@ -38,11 +38,29 @@
   // "Free estimate" buttons that jump to the form.
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href="#estimate"]');
-    if (a && window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+    if (a) {
+      if (window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+      var nameInput = document.getElementById('f-name');
+      if (nameInput) {
+        setTimeout(function () { nameInput.focus(); }, 50);
+      }
+    }
   });
 
   var form = document.getElementById('estimate-form');
   if (!form) return;
+
+  var notesInput = form.querySelector('#f-notes');
+  var notesCount = form.querySelector('#f-notes-count');
+  if (notesInput && notesCount) {
+    var maxLen = notesInput.maxLength > 0 ? notesInput.maxLength : 500;
+    function updateNotesCount() {
+      var remaining = maxLen - notesInput.value.length;
+      notesCount.textContent = '· ' + remaining + ' char' + (remaining === 1 ? '' : 's') + ' left';
+    }
+    notesInput.addEventListener('input', updateNotesCount);
+    updateNotesCount();
+  }
 
   // Hidden field only bots fill in.
   var trap = document.createElement('input');
@@ -77,8 +95,10 @@
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
+    var cleanService = (d.service || 'lawn care').replace(/\r?\n|\r/g, ' ');
+    var cleanName = (d.name || '').replace(/\r?\n|\r/g, ' ');
     window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
-      encodeURIComponent('Estimate request: ' + d.service + ' (' + d.name + ')') +
+      encodeURIComponent('Estimate request: ' + cleanService + ' (' + cleanName + ')') +
       '&body=' + encodeURIComponent(body);
   }
 

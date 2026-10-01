@@ -7,19 +7,33 @@
 
 const CLICK_TYPES = ['call', 'email', 'estimate_click'];
 const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, location: 40, page: 300, referrer: 300 };
+// Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
+const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 function clean(value, field) {
   if (typeof value !== 'string') return null;
-  const s = value.trim().slice(0, LIMITS[field]);
+  let val = value;
+  if (field !== 'notes') {
+    val = val.replace(/[\r\n]+/g, ' ');
+  }
+  const s = val.trim().slice(0, LIMITS[field]);
   return s || null;
 }
 
 export function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'content-type': 'application/json',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+    },
+  });
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return String(s).replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
 }
 
 export function sanitizePhone(phone) {
@@ -41,13 +55,15 @@ async function emailChris(env, lead) {
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0"><b>${k}</b></td><td>${escapeHtml(v).replace(/\n/g, '<br>')}</td></tr>`)
     .join('')}</table><p><a href="tel:${encodeURIComponent(safePhone)}">Call ${escapeHtml(lead.name)}</a></p>`;
 
+  const cleanSubjectService = (lead.service || 'lawn care').replace(/[\r\n]/g, ' ');
+  const cleanSubjectName = (lead.name || '').replace(/[\r\n]/g, ' ');
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       from: env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>',
       to: (env.LEAD_TO || 'chris@cleengreenz.com').split(',').map((s) => s.trim()),
-      subject: `Estimate request: ${lead.service || 'lawn care'} (${lead.name})`,
+      subject: `Estimate request: ${cleanSubjectService} (${cleanSubjectName})`,
       text,
       html,
     }),

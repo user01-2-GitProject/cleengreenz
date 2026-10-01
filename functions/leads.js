@@ -6,9 +6,15 @@
 
 import { sanitizePhone } from './api/lead.js';
 
+// Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
+const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
 function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
 }
+
+// Module-scoped TextEncoder to avoid repeated instantiation on every authorization check.
+const ENCODER = new TextEncoder();
 
 export function authorized(request, password) {
   const header = request.headers.get('authorization') || '';
@@ -23,8 +29,8 @@ export function authorized(request, password) {
   if (colonIndex === -1) return false;
   const given = decoded.slice(colonIndex + 1);
   // Constant-time compare so the password length and content can't be guessed via timing.
-  const a = new TextEncoder().encode(given);
-  const b = new TextEncoder().encode(password);
+  const a = ENCODER.encode(given);
+  const b = ENCODER.encode(password);
   const lengthsMatch = a.length === b.length;
   // Use b if lengths match; otherwise compare a against a dummy buffer of matching length.
   const compB = lengthsMatch ? b : new Uint8Array(a.length);
@@ -42,10 +48,16 @@ export function authorized(request, password) {
 }
 
 const LABELS = { form: 'Estimate forms', call: 'Call taps', email: 'Email taps', estimate_click: 'Estimate button clicks' };
+const TYPES = Object.keys(LABELS);
 
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
-  const byType = Object.fromEntries(totals.map((r) => [r.type, r]));
-  const types = Object.keys(LABELS);
+  // Populate byType directly to avoid creating intermediate 2-tuple arrays with Object.fromEntries.
+  const byType = {};
+  for (let i = 0; i < totals.length; i++) {
+    const r = totals[i];
+    byType[r.type] = r;
+  }
+  const types = TYPES;
   const monthRows = {};
   for (const r of months) (monthRows[r.month] ||= {})[r.type] = r.n;
 
@@ -100,10 +112,24 @@ export async function onRequestGet({ request, env }) {
   if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
     return new Response('Password required', {
       status: 401,
-      headers: { 'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"' },
+      headers: {
+        'www-authenticate': 'Basic realm="Cleen Greenz leads", charset="UTF-8"',
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'referrer-policy': 'strict-origin-when-cross-origin',
+      },
     });
   }
-  if (!env.DB) return new Response('Lead database is not connected yet.', { status: 503 });
+  if (!env.DB) {
+    return new Response('Lead database is not connected yet.', {
+      status: 503,
+      headers: {
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'referrer-policy': 'strict-origin-when-cross-origin',
+      },
+    });
+  }
 
   const [totals, months, recent] = await env.DB.batch([
     env.DB.prepare(
@@ -130,5 +156,13 @@ export async function onRequestGet({ request, env }) {
     recent: recent.results,
   });
 
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-frame-options': 'DENY',
+      'x-content-type-options': 'nosniff',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+    },
+  });
 }
