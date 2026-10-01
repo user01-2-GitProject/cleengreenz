@@ -207,7 +207,7 @@
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses-v4.png") 0 0 / 11136px 200px no-repeat;
+    background: url("media/pet-chris-poses-v5.png") 0 0 / 11136px 200px no-repeat;
     image-rendering: pixelated; pointer-events: none; }
   /* Walking is driven from JS: the walk frame follows distance walked, so a planted boot stays put,
      and --lean follows speed, so Chris leans into a start and rocks back on a stop. The hip bob is
@@ -998,7 +998,7 @@
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0,
         acc: 0, lean: 0, tilt: 0, tiltV: 0, mvx: 0, bounces: 0, stay: 0 };
-      // Pose index into media/pet-chris-poses-v4.png. The order is set in pet/build-sheet.py and
+      // Pose index into media/pet-chris-poses-v5.png. The order is set in pet/build-sheet.py and
       // pet/walk-rig.py (the walk frames follow the twelve poses).
       var POSE = { idle: 0, notice: 6, pickup: 7, level: 8, lower: 9, wave: 10, blink: 11 };
       // The walk: WALK.frames frames per cycle of two steps, from pose WALK.first (facing right) or
@@ -1008,7 +1008,7 @@
       // picking the frame from distance walked keeps the planted boot on one spot at any speed.
       // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together
       // (the frame half a cycle later is the same stance on the other foot).
-      var WALK = { first: 12, firstLeft: 29, frames: 16, step: 72 * (W < 700 ? .81 : 1), start: 4, settle: 140 };
+      var WALK = { first: 12, firstLeft: 29, frames: 16, step: 54 * (W < 700 ? .81 : 1), start: 4, settle: 140 };
       // Poses 0-11 facing left use the copies from LEFT_POSES on, whose logo reads right mirrored.
       // They switch over only once the turn-around squeeze has passed zero width (FLIP_AT ms; the
       // 150ms flip eases, so zero width comes a little after halfway).
