@@ -70,7 +70,7 @@
   .btn:hover { transform: translateY(-2px) rotate(-1deg); }
   .btn:active { transform: translateY(1px); }
   .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
-  .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  button:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 3px solid var(--gold); outline-offset: 3px;
   }
   .btn-primary { background: var(--pumpkin); color: #fff; box-shadow: 0 6px 0 var(--pumpkin-2); }
@@ -114,8 +114,15 @@
   .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; }
   .brand img { height: 56px; width: auto; }
   .nav-links { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; font-weight: 700; }
-  .nav-links a { text-decoration: none; color: var(--bark); }
+  .nav-links a { text-decoration: none; color: var(--bark); position: relative; padding-bottom: 4px; transition: color .2s ease; }
   .nav-links a:hover { color: var(--pumpkin-2); }
+  .nav-links a[aria-current="true"], .nav-links a[aria-current="page"] {
+    color: var(--pumpkin-2);
+  }
+  .nav-links a[aria-current="true"]::after, .nav-links a[aria-current="page"]::after {
+    content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: var(--pumpkin-2); border-radius: 2px;
+  }
   .nav-cta { display: flex; gap: 10px; align-items: center; }
   .nav-cta .btn { font-size: 1rem; padding: .65em 1.2em; }
   .phone-link { font-weight: 800; text-decoration: none; color: var(--forest); white-space: nowrap; }
@@ -401,7 +408,7 @@
     border-radius: 14px; padding: 12px 14px; width: 100%;
   }
   input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
-  input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
+  summary:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
   .field-error { display: none; color: var(--maple); font-size: .85rem; font-weight: 700; margin-top: 2px; }
   .field-error.show { display: block; }
@@ -465,7 +472,7 @@
       <source src="media/mascot-mower.mp4" type="video/mp4">
     </video>
   </div>
-  <div class="wrap nav">
+  <nav class="wrap nav" aria-label="Main">
     <a class="brand" href="#top" aria-label="Cleen Greenz home"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358"></a>
     <ul class="nav-links">
       <li><a href="#season">Fall &amp; winter</a></li>
@@ -474,10 +481,10 @@
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <div class="nav-cta">
-      <a class="phone-link" href="tel:+12693628286" data-lead="call" data-lead-location="header">(269) 362-8286</a>
+      <a class="phone-link" href="tel:+12693628286" data-lead="call" data-lead-location="header" aria-label="Call (269) 362-8286">(269) 362-8286</a>
       <a class="btn btn-primary" href="#estimate" data-lead-location="header">Free estimate</a>
     </div>
-  </div>
+  </nav>
 </header>
 
 <main id="main">
@@ -684,8 +691,8 @@
         <h2>Let's get your yard looking great</h2>
         <p class="lead">Send a few details and Chris will get back to you quickly with a quote.</p>
         <ul class="contact-lines">
-          <li><a href="tel:+12693628286" data-lead="call" data-lead-location="estimate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>(269) 362-8286</a></li>
-          <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="estimate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>chris@cleengreenz.com</a></li>
+          <li><a href="tel:+12693628286" data-lead="call" data-lead-location="estimate" aria-label="Call (269) 362-8286"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>(269) 362-8286</a></li>
+          <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="estimate" aria-label="Email chris@cleengreenz.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>chris@cleengreenz.com</a></li>
         </ul>
       </div>
       <form class="estimate reveal" id="estimate-form" novalidate>
@@ -709,7 +716,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span></label><textarea id="f-notes" name="notes" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
@@ -743,8 +750,8 @@
       <div>
         <h3>Say hello</h3>
         <ul>
-          <li><a href="tel:+12693628286" data-lead="call" data-lead-location="footer">(269) 362-8286</a></li>
-          <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="footer">chris@cleengreenz.com</a></li>
+          <li><a href="tel:+12693628286" data-lead="call" data-lead-location="footer" aria-label="Call (269) 362-8286">(269) 362-8286</a></li>
+          <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="footer" aria-label="Email chris@cleengreenz.com">chris@cleengreenz.com</a></li>
           <li><a href="https://www.instagram.com/cglawncare_niles/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @cglawncare_niles (opens in a new tab)">Instagram @cglawncare_niles</a></li>
           <li>Niles, Michigan 49120</li>
         </ul>
@@ -828,6 +835,52 @@
       items.forEach(function (el) { io.observe(el); });
     }
 
+    // Active navigation highlighting for header nav links.
+    var navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+    if (navLinks.length && 'IntersectionObserver' in window) {
+      var linkMap = new Map();
+      var sections = [];
+      navLinks.forEach(function (link) {
+        var id = link.getAttribute('href').slice(1);
+        var sec = document.getElementById(id);
+        if (sec) {
+          linkMap.set(sec, link);
+          sections.push(sec);
+        }
+      });
+      var visibleSections = new Set();
+      var currentActiveLink = null;
+      var navObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            visibleSections.add(entry.target);
+          } else {
+            visibleSections.delete(entry.target);
+          }
+        });
+        // Pick the uppermost section currently in view among those tracked.
+        var activeSection = null;
+        for (var i = 0; i < sections.length; i++) {
+          if (visibleSections.has(sections[i])) {
+            activeSection = sections[i];
+            break;
+          }
+        }
+        // Optimize DOM mutations: only update aria-current attribute when active link changes
+        var newActiveLink = activeSection ? linkMap.get(activeSection) : null;
+        if (newActiveLink !== currentActiveLink) {
+          if (currentActiveLink) {
+            currentActiveLink.removeAttribute('aria-current');
+          }
+          if (newActiveLink) {
+            newActiveLink.setAttribute('aria-current', 'true');
+          }
+          currentActiveLink = newActiveLink;
+        }
+      }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+      sections.forEach(function (sec) { navObserver.observe(sec); });
+    }
+
     // Mascot videos: respect reduced motion, and only play while on screen.
     var videos = document.querySelectorAll('video');
     videos.forEach(function (v) {
@@ -835,7 +888,7 @@
       if ('IntersectionObserver' in window) {
         new IntersectionObserver(function (entries) {
           entries.forEach(function (en) {
-            if (en.isIntersecting) { v.play().catch(function () {}); } else { v.pause(); }
+            if (en.isIntersecting) { var p = v.play(); if (p && typeof p.catch === 'function') p.catch(function () {}); } else { v.pause(); }
           });
         }, { threshold: 0.2 }).observe(v);
       }
@@ -850,13 +903,21 @@
       var W = window.innerWidth, H = window.innerHeight;
       var rectsDirty = true;
       function updateRects() { rectsDirty = true; }
+      var mobileBar = document.querySelector('.mobile-bar');
+      // Cache barH on init and window resize to avoid calling getComputedStyle / offsetHeight on scroll reflows
+      var barH = 0;
+      function updateBarH() {
+        barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
+      }
+      updateBarH();
+
       window.addEventListener('resize', function () {
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
+        updateBarH();
         updateRects();
       });
       window.addEventListener('scroll', updateRects, { passive: true });
-      var mobileBar = document.querySelector('.mobile-bar');
       var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
       var piles = new Map();
       catchers.forEach(function (el) { piles.set(el, []); });
@@ -908,10 +969,12 @@
       }
       function blowPile(host, dir) {
         var pile = piles.get(host);
+        var hr = rects.get(host);
+        if (!hr) return;
         pile.forEach(function (l) {
           l.state = 'blown';
-          l.x = rects.get(host).left + l.ox - l.size / 2;
-          l.y = rects.get(host).top - l.size * 0.75 - l.lift;
+          l.x = hr.left + l.ox - l.size / 2;
+          l.y = hr.top - l.size * 0.75 - l.lift;
           l.vx = dir * rnd(140, 360);
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
@@ -964,8 +1027,8 @@
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
         wrap.innerHTML =
-          '<div class="pet-bubble" role="status"></div>' +
-          '<button class="pet" type="button" aria-label="Pet Chris. Tap to say hi.">' +
+          '<div class="pet-bubble" role="status" id="pet-bubble"></div>' +
+          '<button class="pet" type="button" aria-expanded="false" aria-controls="pet-bubble" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
           '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>';
         document.body.appendChild(wrap);
@@ -995,7 +1058,7 @@
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
           p.state = 'drag'; p.t = 0; p.speed = 0;
-          bubble.classList.remove('is-visible');
+          hideBubble();
         });
         function release(e) {
           if (!pointer || e.pointerId !== pointer.id) return;
@@ -1021,7 +1084,7 @@
           say(lines[lineIndex++ % lines.length], 6000);
         });
         bubble.addEventListener('click', function (e) {
-          if (e.target.closest('[data-pet-go]')) { bubble.classList.remove('is-visible'); }
+          if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
             wrap.remove();
@@ -1075,17 +1138,21 @@
         // A lead while he is off stage brings him back to celebrate.
         if (p.state === 'away') { p.state = 'home'; p.t = 0; }
       }
-      // Cache mobile bar height measurement to avoid forced synchronous layout reflows (layout thrashing) inside rAF
-      var barH = 0;
       function homeY() {
         return H - PET_H - 12 - barH;
+      }
+      function hideBubble() {
+        if (!bubble) return;
+        bubble.classList.remove('is-visible');
+        if (pet) pet.setAttribute('aria-expanded', 'false');
       }
       function say(html, ms) {
         if (!bubble) return;
         bubble.innerHTML = html;
         bubble.classList.add('is-visible');
+        if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
+        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
@@ -1129,9 +1196,8 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
-        // Batch DOM layout reads: update cached element bounding rects and bar height only when dirty (scroll/resize/initial)
+        // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
         if (rectsDirty) {
-          barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
           catchers.forEach(function (el, idx) {
             var r = el.getBoundingClientRect();
             var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
@@ -1330,12 +1396,19 @@
             ? 2 * Math.min(1, p.speed / WALK_SPEED) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
           p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
           if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
-          wrap.classList.toggle('walking', walking || Math.abs(p.lean) > .04);
-          wrap.classList.toggle('windup', p.state === 'clear' && p.t < 0.26);
-          wrap.classList.toggle('clearing', p.state === 'clear' && p.t >= 0.26);
-          wrap.classList.toggle('grabbed', p.grab > .02);
-          wrap.classList.toggle('face-left', p.face < 0);
-          wrap.classList.toggle('bubble-left', p.x > W / 2);
+          // Cache element class states on state object `p` to avoid redundant DOM classList toggles every animation frame
+          var isWalking = walking || Math.abs(p.lean) > .04;
+          if (isWalking !== p.lastWalking) { wrap.classList.toggle('walking', isWalking); p.lastWalking = isWalking; }
+          var isWindup = p.state === 'clear' && p.t < 0.26;
+          if (isWindup !== p.lastWindup) { wrap.classList.toggle('windup', isWindup); p.lastWindup = isWindup; }
+          var isClearing = p.state === 'clear' && p.t >= 0.26;
+          if (isClearing !== p.lastClearing) { wrap.classList.toggle('clearing', isClearing); p.lastClearing = isClearing; }
+          var isGrabbed = p.grab > .02;
+          if (isGrabbed !== p.lastGrabbed) { wrap.classList.toggle('grabbed', isGrabbed); p.lastGrabbed = isGrabbed; }
+          var isFaceLeft = p.face < 0;
+          if (isFaceLeft !== p.lastFaceLeft) { wrap.classList.toggle('face-left', isFaceLeft); p.lastFaceLeft = isFaceLeft; }
+          var isBubbleLeft = p.x > W / 2;
+          if (isBubbleLeft !== p.lastBubbleLeft) { wrap.classList.toggle('bubble-left', isBubbleLeft); p.lastBubbleLeft = isBubbleLeft; }
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
           // Track integer coordinates and set CSS variables only when coordinates change to avoid string concatenation.
           var rx = Math.round(p.x), ry = Math.round(p.y);

@@ -312,6 +312,22 @@ test('Estimate form field validation & user input handling', async (t) => {
 });
 
 test('Form initialization, honeypot field, and lead tracking events', async (t) => {
+  await t.test('initializes and updates notes character counter live on input', async () => {
+    const { window, document } = setupEnvironment();
+    const notesInput = document.getElementById('f-notes');
+    const notesCount = document.getElementById('f-notes-count');
+
+    assert.ok(notesInput, 'notes input should exist');
+    assert.ok(notesCount, 'notes count element should exist');
+    assert.equal(notesInput.getAttribute('maxlength'), '500');
+    assert.equal(notesCount.textContent, '· 500 chars left');
+
+    notesInput.value = 'Hello world!';
+    notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(notesCount.textContent, '· 488 chars left');
+  });
+
   await t.test('appends a hidden honeypot website field to the form on script load', async () => {
     const { document } = setupEnvironment();
     const form = document.getElementById('estimate-form');
@@ -352,7 +368,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     );
   });
 
-  await t.test('tracks clicks on free estimate links', async () => {
+  await t.test('tracks clicks on free estimate links and shifts focus to first input field', async () => {
     const tracked = [];
     const { window, document } = setupEnvironment({
       trackLead: (type, location) => {
@@ -369,5 +385,9 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     assert.equal(tracked.length, 1);
     assert.deepEqual(tracked[0], { type: 'estimate_click', location: 'hero' });
+
+    await new Promise((r) => setTimeout(r, 60));
+    const nameInput = document.getElementById('f-name');
+    assert.equal(document.activeElement, nameInput);
   });
 });

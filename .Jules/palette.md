@@ -13,3 +13,15 @@
 ## 2026-09-28 - Accessible Inline Form Validation with Novalidate
 **Learning:** When using `novalidate` on HTML forms to override browser default tooltips, simply focusing an empty field with `aria-invalid="true"` leaves screen reader users and sighted users without clear visual error explanations. Programmatically toggling visible `.field-error` elements and dynamically associating them via `aria-describedby` when a required field fails validation provides accessible, unambiguous inline feedback.
 **Action:** Always pair `aria-invalid="true"` with visible error elements linked via `aria-describedby`, and clear both on the `input` event when users edit the field.
+
+## 2026-09-29 - Dynamic Navigation State with IntersectionObserver and aria-current
+**Learning:** In single-page websites with in-page anchor links, users navigating by scrolling lack visual feedback and screen readers lack semantic context regarding which section is currently active. Using `IntersectionObserver` to track the visible page sections and dynamically setting `aria-current="true"` on matching navigation anchor links provides accessible context for screen readers and clean visual cues for sighted users.
+**Action:** When adding scroll-based navigation feedback, map sections to header anchor links with `IntersectionObserver` and update `aria-current="true"` (or `aria-current="page"`).
+
+## 2026-09-29 - Accessible Live Character Counters in Form Labels
+**Learning:** For optional or constrained text inputs (like form notes textareas), users lack visual and screen-reader feedback about input bounds until server truncation occurs. Placing a live `aria-live="polite"` remaining count element inside the input `<label>` styled with secondary text tokens (`.opt`) provides real-time feedback that screen readers announce politely without adding extra form layout rows.
+**Action:** When adding character limits to form inputs, set `maxlength` and pair with an inline `aria-live="polite"` span inside the label that updates on the `input` event.
+
+## 2026-09-30 - Interactive Popover Triggers and Global Button Focus Rings
+**Learning:** Interactive floating mascot and popover trigger buttons lack popup state context for screen readers when `aria-expanded` and `aria-controls` are omitted. Dynamically toggling `aria-expanded="true"|"false"` on trigger buttons when associated speech bubbles open or close gives assistive technologies critical context. Additionally, scoping global focus ring rules to `button:focus-visible` ensures inline controls inside speech bubbles or popups inherit consistent high-contrast focus rings (`var(--gold)`) during keyboard navigation.
+**Action:** Always link interactive popover triggers to controlled target containers using `aria-controls` and dynamically update `aria-expanded` on open/close events, while including `button:focus-visible` in global CSS focus ring rules.
