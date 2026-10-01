@@ -493,11 +493,17 @@ def main():
 
     # Facing left, the page mirrors the sprite, which would put the shirt logo backwards. The
     # second set of walk frames has the logo pre-flipped, so it reads right once mirrored.
-    lx0, ly0, lx1, ly1 = LOGO_BOX
     flipped = []
     for frame, dy in frames:
         fl = frame.copy()
-        fl[ly0 + dy:ly1 + dy, lx0:lx1] = frame[ly0 + dy:ly1 + dy, lx0:lx1][:, ::-1]
+        # Search for white logo pixels strictly within the chest region (x between 55 and 100)
+        chest_mask = np.zeros(fl.shape[:2], bool)
+        chest_mask[58:90, 55:100] = True
+        white = (fl[..., :3].min(axis=2) > 225) & (fl[..., 3] > 0) & chest_mask
+        ys, xs = np.where(white)
+        if len(ys) > 0:
+            y0, y1, x0, x1 = ys.min() - 1, ys.max() + 2, xs.min() - 1, xs.max() + 2
+            fl[y0:y1, x0:x1] = frame[y0:y1, x0:x1][:, ::-1]
         flipped.append(fl)
     frames = [f for f, _ in frames] + flipped
     sheet = np.concatenate(frames, axis=1)
