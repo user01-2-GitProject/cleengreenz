@@ -865,14 +865,15 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.equal(env.trackedLeads[0].extra.service, 'Fall leaf cleanup');
   });
 
-  await t.test('falls back to mailto link when fetch fails', async () => {
+  await t.test('falls back to mailto link when fetch fails and sanitizes linebreaks in subject', async () => {
     const env = setupDomEnvironment();
     env.setFetchImpl(async () => {
       throw new Error('Network error');
     });
 
-    env.nameInput.value = 'John Smith';
+    env.nameInput.value = 'John\r\nSmith\nAttacker';
     env.phoneInput.value = '269-555-1234';
+    env.serviceSelect.value = 'Fall\r\nLeaf Cleanup';
 
     const submitEvent = new env.Event('submit', { cancelable: true });
     env.form.dispatchEvent(submitEvent);
@@ -882,7 +883,10 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.equal(env.doneHeading.textContent, 'Almost there!');
     assert.match(env.doneParagraph.textContent, /Your email app should have opened/);
     assert.match(env.location.href, /^mailto:chris@cleengreenz\.com/);
-    assert.match(env.location.href, /John%20Smith/);
+    const url = new URL(env.location.href);
+    const subject = url.searchParams.get('subject');
+    assert.equal(subject, 'Estimate request: Fall  Leaf Cleanup (John  Smith Attacker)');
+    assert.doesNotMatch(subject, /[\r\n]/);
   });
 
   await t.test('prevents submission when required fields are empty and shows errors', async () => {

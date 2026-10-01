@@ -95,8 +95,11 @@
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
+    // Strip CR/LF from subject fields to prevent email header injection in mailto handoffs.
+    var cleanService = (d.service || 'lawn care').replace(/[\r\n]/g, ' ');
+    var cleanName = (d.name || '').replace(/[\r\n]/g, ' ');
     window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
-      encodeURIComponent('Estimate request: ' + d.service + ' (' + d.name + ')') +
+      encodeURIComponent('Estimate request: ' + cleanService + ' (' + cleanName + ')') +
       '&body=' + encodeURIComponent(body);
   }
 
