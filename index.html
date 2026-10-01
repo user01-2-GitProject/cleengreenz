@@ -408,6 +408,7 @@
     border-radius: 14px; padding: 12px 14px; width: 100%;
   }
   input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
+  main:focus { outline: none; }
   summary:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
   input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
   .field-error { display: none; color: var(--maple); font-size: .85rem; font-weight: 700; margin-top: 2px; }
@@ -487,7 +488,7 @@
   </div>
 </header>
 
-<main id="main">
+<main id="main" tabindex="-1">
 
   <!-- Hero -->
   <section class="hero" id="top">
@@ -716,7 +717,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
         </div>
@@ -1085,8 +1086,10 @@
           if (e.target.closest('[data-pet-go]')) { bubble.classList.remove('is-visible'); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
+            var brandLink = document.querySelector('.brand');
             wrap.remove();
             wrap = null;
+            if (brandLink) brandLink.focus();
           }
         });
         document.addEventListener('cg:lead', function (e) {
