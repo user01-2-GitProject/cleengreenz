@@ -405,6 +405,10 @@ test('Accessibility attributes & focus management enhancements', async (t) => {
     const notesInput = document.getElementById('f-notes');
     assert.ok(notesInput, '#f-notes textarea should exist');
     assert.equal(notesInput.getAttribute('aria-describedby'), 'f-notes-count');
+    notesInput.value = 'abcd';
+    notesInput.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    assert.equal(notesInput.getAttribute('aria-describedby'), 'f-notes-count',
+      'typing must retain the permanent character count description');
   });
 
   await t.test('Pet Chris hide button shifts focus to brand link before removing container', () => {
