@@ -10,6 +10,7 @@
 <meta property="og:description" content="Beautiful lawns without giving up your weekend. Serving Niles and Michiana since 2009.">
 <meta property="og:image" content="media/mascot-trimmer.jpg">
 <link rel="icon" type="image/png" href="media/favicon.png">
+<link rel="preload" as="image" href="media/pet-chris-poses-v22.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -469,13 +470,13 @@
 
 <header class="site">
   <div class="header-town-media" aria-hidden="true">
-    <img src="media/mascot-mower.jpg" alt="">
+    <img src="media/mascot-mower.jpg" alt="" decoding="async">
     <video muted playsinline preload="metadata" poster="media/mascot-mower.jpg">
       <source src="media/mascot-mower.mp4" type="video/mp4">
     </video>
   </div>
   <nav class="wrap nav" aria-label="Main">
-    <a class="brand" href="#top" aria-label="Cleen Greenz home"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358"></a>
+    <a class="brand" href="#top" aria-label="Cleen Greenz home"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358" decoding="async"></a>
     <ul class="nav-links">
       <li><a href="#season">Fall &amp; winter</a></li>
       <li><a href="#services">Services</a></li>
@@ -738,7 +739,7 @@
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <div class="foot-logo"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358" loading="lazy"></div>
+        <div class="foot-logo"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358" loading="lazy" decoding="async"></div>
         <p>Friendly, reliable lawn care for Niles, Michigan and the Michiana area. Locally owned and operated since 2009.</p>
       </div>
       <div>
@@ -1025,6 +1026,7 @@
       var STAY_FOR = 25, OFFSTAGE = 60, AWAY_MIN = 12, AWAY_PILE = 10, AWAY_MAX = 45;
       var pointer = null, reactionTimer = null, idleAt = performance.now();
       var nextBlink = idleAt + rnd(2800, 5800), blinkUntil = 0;
+      var CLEAR_SAYINGS = ['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'];
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
         'Snow removal starts at $30 a visit. Just saying.',
@@ -1336,7 +1338,7 @@
               var g = petGoal(tr);
               if (moveToward(g.x, g.y, dt, WALK_SPEED)) {
                 p.face = g.face; p.state = 'clear'; p.t = 0;
-                say(['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'][Math.floor(Math.random() * 3)], 2200);
+                say(CLEAR_SAYINGS[Math.floor(Math.random() * CLEAR_SAYINGS.length)], 2200);
               }
             }
           } else if (p.state === 'clear') {
