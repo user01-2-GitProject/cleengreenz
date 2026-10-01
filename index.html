@@ -473,6 +473,8 @@
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
     .btn:hover, .service:hover { transform: none; }
+    .grass-patch { transition: none; }
+    .grass-blade { animation: none; }
   }
 </style>
 </head>
@@ -1187,6 +1189,10 @@
         if (gx < 8) { gx = r.right - 30; face = -1; }
         return { x: Math.min(Math.max(gx, 0), W - PET_W), y: r.bottom - PET_H + 2, face: face };
       }
+      function targetRect(target, type) {
+        var el = type === 'grass' ? target && target.el : target;
+        return el ? rects.get(el) : null;
+      }
       // Grass Patches on .green sections representing lawn
       var grassPatches = [];
       var grassSvgTemplate =
@@ -1235,7 +1241,7 @@
               gp.mowed = false;
               gp.el.classList.remove('mowed');
             }
-          } else if (visible(gp.el.getBoundingClientRect())) {
+          } else if (visible(rects.get(gp.el))) {
             return gp;
           }
         }
@@ -1269,6 +1275,10 @@
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
             }
+          });
+          grassPatches.forEach(function (gp) {
+            var r = gp.el.getBoundingClientRect();
+            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
           });
           rectsDirty = false;
         }
@@ -1369,7 +1379,7 @@
               p.x = fromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(br).y;
               p.target = big; p.targetType = 'leaf'; p.state = 'walk'; p.t = 0; idleAt = now;
             } else if (bigGrass) {
-              var gr = bigGrass.el.getBoundingClientRect(), gFromRight = gr.left + gr.width / 2 > W / 2;
+              var gr = targetRect(bigGrass, 'grass'), gFromRight = gr.left + gr.width / 2 > W / 2;
               p.x = gFromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(gr).y;
               p.target = bigGrass; p.targetType = 'grass'; p.state = 'walk'; p.t = 0; idleAt = now;
             } else if (p.t > AWAY_MAX) { p.state = 'home'; p.t = 0; }
@@ -1377,8 +1387,10 @@
             // A beat to spot the target, then he sets off.
             if (p.t > .15) { p.state = 'walk'; p.t = 0; }
           } else if (p.state === 'walk') {
-            var tr = p.targetType === 'grass' ? (p.target && p.target.el ? p.target.el.getBoundingClientRect() : null) : rects.get(p.target);
-            if (!visible(tr) || (p.targetType === 'grass' && p.target.mowed)) { p.state = 'home'; }
+            var tr = targetRect(p.target, p.targetType);
+            if (!visible(tr) || (p.targetType === 'grass' && p.target.mowed)) {
+              p.state = 'home'; p.target = null; p.targetType = null;
+            }
             else {
               var g = petGoal(tr);
               if (moveToward(g.x, g.y, dt, WALK_SPEED)) {
@@ -1391,26 +1403,33 @@
               }
             }
           } else if (p.state === 'clear') {
-            var cr = p.targetType === 'grass' ? (p.target && p.target.el ? p.target.el.getBoundingClientRect() : null) : rects.get(p.target);
-            if (cr) { var cg = petGoal(cr); p.x = cg.x; p.y = cg.y; }
-            // Timeline: 0-.1 finish step, .1-.26 pickup tool, .26-.37 level and kick, run until .85-1.15
-            if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 14) {
-              particle('✦', p.targetType === 'grass' ? 'grass-bit' : 'leaf-bit');
-            }
-            if (p.t > 0.85 && cr) {
-              if (p.targetType === 'grass' && p.target && !p.target.mowed) {
-                p.target.mowed = true;
-                p.target.mowedAt = now;
-                p.target.el.classList.add('mowed');
-              } else if (p.targetType === 'leaf' && piles.get(p.target).length) {
-                blowPile(p.target, p.face);
+            var cr = targetRect(p.target, p.targetType);
+            if (!visible(cr)) {
+              p.state = 'home'; p.target = null; p.targetType = null;
+            } else {
+              var cg = petGoal(cr); p.x = cg.x; p.y = cg.y;
+              // Timeline: 0-.1 finish step, .1-.26 pickup tool, .26-.37 level and kick, run until .85-1.15
+              if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 14) {
+                particle('✦', p.targetType === 'grass' ? 'grass-bit' : 'leaf-bit');
               }
+              if (p.t > 0.85) {
+                if (p.targetType === 'grass' && p.target && !p.target.mowed) {
+                  p.target.mowed = true;
+                  p.target.mowedAt = now;
+                  p.target.el.classList.add('mowed');
+                } else if (p.targetType === 'leaf' && piles.get(p.target).length) {
+                  blowPile(p.target, p.face);
+                }
+              }
+              if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say(p.targetType === 'grass' ? 'Nice and trim!' : 'All clean!', 1600); }
             }
-            if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say(p.targetType === 'grass' ? 'Nice and trim!' : 'All clean!', 1600); }
           } else if (p.state === 'wait') {
-            var wr = rects.get(p.target);
-            if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
-            if (p.t > 1.4) p.state = 'home';
+            var wr = targetRect(p.target, p.targetType);
+            if (!visible(wr)) { p.state = 'home'; p.target = null; p.targetType = null; }
+            else {
+              var wg = petGoal(wr); p.x = wg.x; p.y = wg.y;
+              if (p.t > 1.4) { p.state = 'home'; p.target = null; p.targetType = null; }
+            }
           } else if (p.state === 'drag') {
             var follow = 1 - Math.exp(-dt * 24);
             p.x += (p.dragX - p.x) * follow;
@@ -1438,7 +1457,7 @@
             if (p.t > .2) { p.state = 'home'; p.t = 0; }
           } else if (p.state === 'home') {
             if (moveToward(4, hy, dt, HOME_SPEED)) {
-              p.state = 'idle'; p.t = 0; p.cooldown = 5; p.face = 1;
+              p.state = 'idle'; p.t = 0; p.cooldown = 5; p.face = 1; p.target = null; p.targetType = null;
               nextBlink = now + rnd(2600, 5200);
             }
           }
