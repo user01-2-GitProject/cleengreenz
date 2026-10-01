@@ -73,6 +73,7 @@
   var done = form.querySelector('.form-done');
   var button = form.querySelector('button[type="submit"]');
   var requiredFields = form.querySelectorAll('[required]');
+  var resetBtn = done ? done.querySelector('#form-reset-btn') : null;
   var sending = false;
 
   function showDone() {
@@ -80,6 +81,21 @@
     done.classList.add('show');
     var heading = done.querySelector('h3');
     if (heading) heading.focus();
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      form.reset();
+      done.classList.remove('show');
+      fieldsBox.style.display = '';
+      var heading = done.querySelector('h3');
+      if (heading) heading.textContent = 'Thanks, got it!';
+      var p = done.querySelector('p');
+      if (p) p.textContent = 'Chris has your request and will be in touch soon.';
+      if (notesInput && notesCount) updateNotesCount();
+      var firstInput = form.querySelector('#f-name');
+      if (firstInput) firstInput.focus();
+    });
   }
 
   function openEmail(d) {

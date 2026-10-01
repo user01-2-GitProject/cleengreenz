@@ -21,3 +21,7 @@
 ## 2026-09-29 - Accessible Live Character Counters in Form Labels
 **Learning:** For optional or constrained text inputs (like form notes textareas), users lack visual and screen-reader feedback about input bounds until server truncation occurs. Placing a live `aria-live="polite"` remaining count element inside the input `<label>` styled with secondary text tokens (`.opt`) provides real-time feedback that screen readers announce politely without adding extra form layout rows.
 **Action:** When adding character limits to form inputs, set `maxlength` and pair with an inline `aria-live="polite"` span inside the label that updates on the `input` event.
+
+## 2026-10-01 - Form Reset and State Recovery for Async Form Submissions
+**Learning:** Hiding form input containers on successful async submit without providing an explicit reset mechanism creates a user dead-end when users need to make another request or edit details. Providing a "Send another request" action in the completion state that resets form inputs, restores container visibility, resets character counters, and shifts focus back to the first field enables continuous, accessible form interaction without forcing a full page reload.
+**Action:** When implementing single-page async forms that hide fieldsets on completion, always provide a reset action in the success view that cleanly restores the initial form state and focuses the primary input.
