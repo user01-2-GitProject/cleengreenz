@@ -885,6 +885,26 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.match(env.location.href, /John%20Smith/);
   });
 
+  await t.test('sanitizes CRLF characters from name and service in mailto fallback link', async () => {
+    const env = setupDomEnvironment();
+    env.setFetchImpl(async () => {
+      throw new Error('Network error');
+    });
+
+    env.nameInput.value = 'John\r\nHeaderInjection';
+    env.phoneInput.value = '269-555-1234';
+    env.serviceSelect.value = 'Fall\nLeaf\rCleanup';
+
+    const submitEvent = new env.Event('submit', { cancelable: true });
+    env.form.dispatchEvent(submitEvent);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const url = new URL(env.location.href);
+    const subject = url.searchParams.get('subject');
+    assert.equal(subject, 'Estimate request: Fall Leaf Cleanup (John HeaderInjection)');
+  });
+
   await t.test('prevents submission when required fields are empty and shows errors', async () => {
     const env = setupDomEnvironment();
     env.nameInput.value = '   ';
