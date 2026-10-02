@@ -118,6 +118,29 @@ test('authorized authentication helper function', async (t) => {
     const noColon = 'Basic ' + Buffer.from('nocolonhere').toString('base64');
     assert.equal(authorized(makeReq(noColon), secret), false);
   });
+
+  await t.test('evaluates correctly in manual XOR fallback when crypto timingSafeEqual APIs are missing', async () => {
+    const originalTimingSafeEqual = crypto.timingSafeEqual;
+    const originalSubtle = crypto.subtle;
+
+    try {
+      // Temporarily remove timingSafeEqual functions to force the manual XOR loop branch
+      delete crypto.timingSafeEqual;
+      Object.defineProperty(crypto, 'subtle', { value: undefined, configurable: true });
+
+      const reqCorrect = makeReq(basicAuth('admin', secret));
+      assert.equal(authorized(reqCorrect, secret), true);
+
+      const reqWrongSameLen = makeReq(basicAuth('admin', 'super-secret-password-124'));
+      assert.equal(authorized(reqWrongSameLen, secret), false);
+
+      const reqWrongDiffLen = makeReq(basicAuth('admin', 'wrong'));
+      assert.equal(authorized(reqWrongDiffLen, secret), false);
+    } finally {
+      if (originalTimingSafeEqual) crypto.timingSafeEqual = originalTimingSafeEqual;
+      if (originalSubtle) Object.defineProperty(crypto, 'subtle', { value: originalSubtle, configurable: true });
+    }
+  });
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
