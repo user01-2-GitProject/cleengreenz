@@ -86,6 +86,13 @@
   if (resetBtn) {
     resetBtn.addEventListener('click', function () {
       form.reset();
+      for (var i = 0; i < requiredFields.length; i++) {
+        var f = requiredFields[i];
+        f.removeAttribute('aria-invalid');
+        f.removeAttribute('aria-describedby');
+        var err = errorFor(f);
+        if (err) err.classList.remove('show');
+      }
       done.classList.remove('show');
       fieldsBox.style.display = '';
       var heading = done.querySelector('h3');
