@@ -1278,7 +1278,7 @@
             el.innerHTML = grassSvgTemplate;
             placeGrass(el, pct);
             layer.appendChild(el);
-            grassPatches.push({ el: el, sec: sec, slot: pct, mowed: false, mowedAt: 0 });
+            grassPatches.push({ el: el, sec: sec, slot: pct, mowed: false, mowedAt: 0, r: null });
           });
         });
       }
@@ -1315,19 +1315,22 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
         return null;
       }
 
+      // Optimization: Iterate through cached catcherItems with an indexed for loop and direct property access
+      // (ci.pile and ci.r) to avoid function callback allocations and redundant Map.get lookups on every frame.
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci.el; biggest = count; }
+        }
         return chosen;
       }
 
@@ -1352,7 +1355,9 @@
           });
           grassPatches.forEach(function (gp) {
             var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(gp.el, valid);
+            gp.r = valid;
           });
           rectsDirty = false;
         }
