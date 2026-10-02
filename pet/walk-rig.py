@@ -1,4 +1,4 @@
-"""Build Chris's walk cycle by re-posing his own pixel legs, into media/pet-chris-poses-v4.png.
+"""Build Chris's walk cycle by re-posing his own pixel legs into a versioned sprite sheet.
 
 Run from the repository root:  python3 pet/walk-rig.py [--preview out.png]
 
@@ -26,15 +26,17 @@ from PIL import Image
 
 SRC = "pet/chris-keyframes/03_walk_passing_a.png"
 IDLE_SHEET = "media/pet-chris-poses-v2.png"
-# The site's sheet: the twelve poses from pet/build-sheet.py, then the walk frames (poses 12..23).
+# Preserve the approved 58-cell sheet, replacing only its two sixteen-frame walk ranges.
 # A new file name, so browsers and the Cloudflare cache cannot mix old poses with new code.
-OUT = "media/pet-chris-poses-v4.png"
+BASE_SHEET = "media/pet-chris-poses-v5.png"
+OUT = "media/pet-chris-poses-v22.png"
 W, H = 192, 200
 FRAMES = 16
 STANCE = 0.55
-STEP = 72           # boot-to-boot distance at contact, px (about 0.4 of his height, a normal step)
+STEP = 54           # shorter stride keeps the nearly straight support leg from vaulting the hips
 LIFT = 7            # swing boot peak lift, px: the foot passes low, it is not hoisted
-REST_BEND = 6.0     # knees stay this soft at passing, so the hips bob about this much, not more
+LOAD_DROP = 0.25   # small impact absorption; larger drops read as bouncing at sprite scale
+REACH_MARGIN = 0.12  # almost straight, without snapping through a locked knee
 # The passing keyframe's legs are bent, so it stands 10px shorter than the idle pose. The rig
 # lengthens thigh and shin until his head sits HEAD_DROP px below idle's at passing, so he does not
 # shrink when he sets off.
@@ -50,6 +52,11 @@ ANKLE = np.array([86.0, 181.0])
 # Near leg outline (thigh + shin + cuff), drawn by hand around the front leg.
 LEG_POLY = [(57, 99), (96, 99), (96, 126), (93, 140), (93, 160), (96, 172), (97, 181),
             (74, 183), (72, 172), (69, 152), (66, 138), (62, 126), (57, 112)]
+# The far leg reuses the full trouser silhouette but has the near-side cargo pocket painted out.
+FAR_HIP_OFFSET = -5.0
+FAR_FOOT_OFFSET = -5.0
+POCKET_POLY = [(57, 117), (67, 117), (71, 120), (70, 126),
+               (68, 131), (63, 133), (58, 131), (56, 124)]
 # Boot: everything below the cuff line around the front boot.
 BOOT_BOX = (73, 178, 116, 198)
 # Body: everything above this row comes from the passing keyframe unchanged.
@@ -69,8 +76,7 @@ FAR_ARM = dict(box=(95, 81, 127, 130), pivot=(100, 70))
 ARM_SWING = 16.0    # degrees each way
 ARM_LAG = 0.06      # arms trail the legs by this much of a cycle, so they swing rather than pump
 STAND_GAP = 14      # px between the boots in the standing frame
-# The cargo pocket is on the outside of the near leg only; the far leg gets it painted out.
-POCKET_BOX = (63, 116, 80, 142)
+# The cargo pocket belongs to the near leg; the far leg uses separate source artwork without it.
 
 
 def load_keyframe(path):
@@ -130,7 +136,7 @@ def affine_sample(src, dst_shape, inv):
     return out
 
 
-def bone_map(src_a, src_b, dst_a, dst_b):
+def bone_map(src_a, src_b, dst_a, dst_b, width_scale=1.0):
     """Inverse map that carries bone dst_a->dst_b onto src_a->src_b (rotation + stretch along bone)."""
     sv, dv = src_b - src_a, dst_b - dst_a
     sl, dl = np.hypot(*sv), np.hypot(*dv)
@@ -140,7 +146,7 @@ def bone_map(src_a, src_b, dst_a, dst_b):
     def inv(x, y):
         rx, ry = x - dst_a[0], y - dst_a[1]
         t = (rx * du[0] + ry * du[1]) * (sl / dl)
-        n = rx * dn[0] + ry * dn[1]
+        n = (rx * dn[0] + ry * dn[1]) / width_scale
         return src_a[0] + t * su[0] + n * sn[0], src_a[1] + t * su[1] + n * sn[1]
     return inv
 
@@ -321,13 +327,54 @@ def foot_track(phase):
         return x, 0.0, pitch
     # Swing: the foot swings from the hip rather than the knee driving up. The heel peels up behind
     # right after toe-off (lift peaks early), the foot passes low, and the leg reaches out nearly
-    # straight, arriving by 90% of the swing.
+    # straight, arriving at the next contact without holding at full reach.
     u = (phase - STANCE) / (1 - STANCE)
-    s = (1 - math.cos(math.pi * min(1, u / .9))) / 2
+    s = (1 - math.cos(math.pi * u)) / 2
     x = back + (front - back) * s
     lift = LIFT * math.sin(math.pi * u ** .6) ** 1.5
-    pitch = 24 * (1 - u / .4) if u < .4 else -14 * min(1, (u - .45) / .45) if u > .45 else 0
+    pitch = 22 * (1 - u / .4) if u < .4 else -12 * min(1, (u - .45) / .55) if u > .45 else 0
     return x, lift, pitch
+
+
+def leg_lengths():
+    reach = ANKLE[1] - (HIP[1] + HEAD_DROP - SRC_HEAD)
+    scale = reach / (np.hypot(*(KNEE - HIP)) + np.hypot(*(ANKLE - KNEE)))
+    return np.hypot(*(KNEE - HIP)) * scale, np.hypot(*(ANKLE - KNEE)) * scale
+
+
+def ankle_position(x, lift, pitch):
+    roll = math.sin(math.radians(abs(pitch))) * (14 if pitch > 0 else 4)
+    return np.array([HIP[0] + x, ANKLE[1] - lift - roll])
+
+
+def walk_pose(phase):
+    """Support reach drives hip height; compression belongs to the down pose only.
+
+    Solve against the same rolled ankle and far-hip offset used by the renderer.
+    Keep subpixel bone positions: rounding hips before IK creates visible knee pops.
+    """
+    phase %= 1
+    feet = [(*foot_track((phase + off) % 1), (phase + off) % 1 < STANCE)
+            for off in (0.0, 0.5)]
+    reach = sum(leg_lengths()) - REACH_MARGIN
+    heights = []
+    for i, (x, lift, pitch, planted) in enumerate(feet):
+        # The reaching swing leg also constrains the hips before heel strike;
+        # otherwise it overextends and the body drops abruptly at contact.
+        ankle = ankle_position(x, lift, pitch)
+        hip_offset = FAR_HIP_OFFSET if i == 1 else 0.0
+        foot_offset = FAR_FOOT_OFFSET if i == 1 else 0.0
+        dx = x + foot_offset - hip_offset
+        heights.append(ankle[1] - math.sqrt(reach * reach - dx * dx))
+    # A small impact dip, released before mid-stance. Zero slope at both ends.
+    load_phase = phase % .5
+    compression = LOAD_DROP * math.sin(math.pi * load_phase / .20) ** 2 if load_phase < .20 else 0
+    upright = ANKLE[1] - reach
+    front = STEP * STANCE
+    contact = ankle_position(front, 0, -12)[1] - math.sqrt(reach * reach - front * front)
+    # A continuous two-step arc avoids switching abruptly between support constraints.
+    arc = upright + (contact - upright) * (.5 + .5 * math.cos(4 * math.pi * phase))
+    return feet, max(max(heights), arc) - HIP[1] + compression
 
 
 def main():
@@ -339,20 +386,22 @@ def main():
     leg_mask &= ~((sg > sr + 20) & (sg > sb + 20))   # the shirt hem is not part of the leg
     thigh_src = cut(src, leg_mask & (np.mgrid[0:H, 0:W][0] < KNEE[1] + 7))
     shin_src = cut(src, leg_mask & (np.mgrid[0:H, 0:W][0] >= KNEE[1] - 7))
+    # Keep the same full-width leg silhouette on the far side, but replace only the small, shaped
+    # pocket panel with cloth from the adjacent thigh. The mask follows the pocket, not a rectangle.
+    far_thigh_src = thigh_src.copy()
+    pocket = poly_mask(POCKET_POLY, src.shape) & (thigh_src[..., 3] > 0)
+    for y, x in zip(*np.where(pocket)):
+        for dx in (14, 13, 15, 12, 16):
+            sx = x + dx
+            if sx < W and thigh_src[y, sx, 3]:
+                far_thigh_src[y, x] = thigh_src[y, sx]
+                break
     bx0, by0, bx1, by1 = BOOT_BOX
     boot_mask = np.zeros(src.shape[:2], bool)
     boot_mask[by0:by1, bx0:bx1] = True
     boot_mask &= src[..., 3] > 0
     boot_mask &= ~poly_mask(LEG_POLY, src.shape) | (np.mgrid[0:H, 0:W][0] >= ANKLE[1] - 1)
     boot_src = cut(src, boot_mask)
-
-    # The far leg is the same leg without the pocket: fill the pocket from the plain cloth beside it.
-    far_thigh_src = thigh_src.copy()
-    px0, py0, px1, py1 = POCKET_BOX
-    for y in range(py0, py1):
-        for x in range(px0, px1):
-            if far_thigh_src[y, x, 3] and thigh_src[y, x + 13, 3]:
-                far_thigh_src[y, x] = thigh_src[y, x + 13]
 
     body = src.copy()
     arms = []
@@ -389,11 +438,7 @@ def main():
 
     # Lengthen the legs (drawn lengths l1, l2; the texture stretches along each bone) so the hip
     # sits where HEAD_DROP puts it at passing.
-    reach = (ANKLE[1] - (HIP[1] + HEAD_DROP - SRC_HEAD)) + REST_BEND
-    scale = reach / .99 / (np.hypot(*(KNEE - HIP)) + np.hypot(*(ANKLE - KNEE)))
-    l1 = np.hypot(*(KNEE - HIP)) * scale
-    l2 = np.hypot(*(ANKLE - KNEE)) * scale
-    print(f"legs lengthened x{scale:.3f}")
+    l1, l2 = leg_lengths()
     # The torso's back and front edges lost their outline where the arms were lifted off.
     edge_fix = outline(body.copy())
     sides = np.zeros(body.shape[:2], bool)
@@ -401,38 +446,33 @@ def main():
     sides[:WAIST - 3, 90:] = True
     body[sides] = edge_fix[sides]
 
-    def needed_dy(feet):
-        """How far the hips must drop so every planted boot still reaches the ground."""
-        hip_y = ANKLE[1] - (reach - REST_BEND)
-        for x, lift, pitch, planted in feet:
-            if planted:
-                hip_y = max(hip_y, ANKLE[1] - math.sqrt(max(1, reach ** 2 - x ** 2)))
-        return hip_y - HIP[1]
-
     def render(feet, dy, swing):
         hip = HIP + np.array([0, dy])
+        dy = round(dy)  # pixel artwork moves by whole rows; IK retains smooth subpixel reach
         frame = np.zeros((H, W, 4), np.uint8)
         layers = []
         for i, (x, lift, pitch, planted) in enumerate(feet):
             # Pitch about the toe (push-off) or the heel (strike) keeps the planted end on the ground.
-            ankle = np.array([hip[0] + x, ANKLE[1] - lift])
-            if pitch > 0:   # heel up, rotate about the toe ball
-                ankle[1] -= math.sin(math.radians(pitch)) * 14
-            elif pitch < 0:  # toe up, rotate about the heel
-                ankle[1] -= math.sin(math.radians(-pitch)) * 4
-            h = hip + (np.array([-5.0, 0]) if i == 1 else 0)
+            ankle = ankle_position(x, lift, pitch)
+            if i == 1:
+                ankle[0] += FAR_FOOT_OFFSET
+            h = hip + (np.array([FAR_HIP_OFFSET, 0]) if i == 1 else 0)
             knee = two_bone(h, ankle, l1, l2)
             layer = np.zeros((H, W, 4), np.uint8)
             over(layer, affine_sample(boot_src, (H, W), rot_map(ANKLE, ankle, pitch)))
-            over(layer, affine_sample(shin_src, (H, W), bone_map(KNEE, ANKLE, knee, ankle)))
-            over(layer, affine_sample(far_thigh_src if i else thigh_src, (H, W), bone_map(HIP, KNEE, h, knee)))
+            if i == 1:
+                thigh_tex, shin_tex = far_thigh_src, shin_src
+            else:
+                thigh_tex, shin_tex = thigh_src, shin_src
+            over(layer, affine_sample(shin_tex, (H, W), bone_map(KNEE, ANKLE, knee, ankle)))
+            over(layer, affine_sample(thigh_tex, (H, W), bone_map(HIP, KNEE, h, knee)))
             layer = outline(layer)
             # Never through the ground: a pitched boot's heel or toe corner is lifted back onto it.
             rows = np.where(layer[..., 3].any(axis=1))[0]
             if len(rows) and (rows[-1] > GROUND or (planted and rows[-1] < GROUND)):
                 layer = shift_y(layer, GROUND - rows[-1])   # and a planted boot sits right on it
             if i == 1:  # far leg: a touch darker, like the art's far leg
-                layer[..., :3] = (layer[..., :3] * .82).astype(np.uint8)
+                layer[..., :3] = (layer[..., :3] * .96).astype(np.uint8)
             layers.append(layer)
 
         body_shift = shift_y(body, dy)
@@ -469,54 +509,35 @@ def main():
         frame[loose] = 0
         return drop_specks(close_notches(fill_holes(tidy(frame), SHIRT_HEM + dy - 2), SHIRT_HEM + dy, SHIRT_HEM + dy + 24))
 
-    cycle = []
+    frames = []
     for f in range(FRAMES):
         ph = f / FRAMES
-        feet = []
-        for off in (0.0, 0.5):   # near foot, far foot
-            fp = (ph + off) % 1
-            x, lift, pitch = foot_track(fp)
-            feet.append((x, lift, pitch, fp < STANCE))
-        cycle.append((ph, feet, needed_dy(feet)))
-    # The hips bob on a smooth curve (lowest at each contact, two dips a cycle) that is never higher
-    # than the planted legs allow, rather than dropping for one frame at contact.
-    lo, hi = min(c[2] for c in cycle), max(c[2] for c in cycle)
-    frames = []
-    for ph, feet, need in cycle:
-        dy = int(math.ceil(max(need, lo + (hi - lo) * (.5 + .5 * math.cos(4 * math.pi * ph))) - .01))
+        feet, dy = walk_pose(ph)
         # Near arm is furthest back just after the near foot strikes (phase 0 + ARM_LAG), forward half a cycle later.
-        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * (ph - ARM_LAG))), dy))
-    # Standing still in walking profile, boots side by side: the frame he stops on before idle.
-    stand = [(STAND_GAP / 2, 0.0, 0.0, True), (-STAND_GAP / 2, 0.0, 0.0, True)]
-    sdy = int(math.ceil(needed_dy(stand) - REST_BEND - .01))   # knees straight, not the walk's soft bend
-    frames.append((render(stand, sdy, 0.0), sdy))
+        frames.append((render(feet, dy, ARM_SWING * math.cos(2 * math.pi * (ph - ARM_LAG))), round(dy)))
 
     # Facing left, the page mirrors the sprite, which would put the shirt logo backwards. The
     # second set of walk frames has the logo pre-flipped, so it reads right once mirrored.
-    lx0, ly0, lx1, ly1 = LOGO_BOX
     flipped = []
     for frame, dy in frames:
         fl = frame.copy()
-        fl[ly0 + dy:ly1 + dy, lx0:lx1] = frame[ly0 + dy:ly1 + dy, lx0:lx1][:, ::-1]
-        flipped.append(fl)
-    frames = [f for f, _ in frames] + flipped
-    sheet = np.concatenate(frames, axis=1)
-    poses = np.array(Image.open(IDLE_SHEET).convert("RGBA"))
-    # The same pre-flipped logo for the twelve other poses (idle, blower...), for facing left.
-    poses_left = poses.copy()
-    for k in range(poses.shape[1] // W):
-        f = poses_left[:, k * W:(k + 1) * W]
-        white = (f[..., :3].min(axis=2) > 225) & (f[..., 3] > 0)
-        white[:58] = False
-        white[90:] = False
+        # Search for white logo pixels strictly within the chest region (x between 55 and 100)
+        chest_mask = np.zeros(fl.shape[:2], bool)
+        chest_mask[58:90, 55:100] = True
+        white = (fl[..., :3].min(axis=2) > 225) & (fl[..., 3] > 0) & chest_mask
         ys, xs = np.where(white)
-        y0, y1, x0, x1 = ys.min() - 1, ys.max() + 2, xs.min() - 1, xs.max() + 2
-        f[y0:y1, x0:x1] = f[y0:y1, x0:x1][:, ::-1].copy()
-    Image.fromarray(np.concatenate([poses, sheet, poses_left], axis=1), "RGBA").save(OUT, optimize=True)
-    n = poses.shape[1] // W
-    print("wrote", OUT, f"walk right: poses {n}-{n + FRAMES - 1} then stand {n + FRAMES}; "
-          f"logo pre-flipped for walking left: {n + FRAMES + 1}-{n + 2 * FRAMES} then stand {n + 2 * FRAMES + 1}; "
-          f"poses 0-{n - 1} with the logo pre-flipped: {n + 2 * FRAMES + 2}-{2 * n + 2 * FRAMES + 1}")
+        if len(ys) > 0:
+            y0, y1, x0, x1 = ys.min() - 1, ys.max() + 2, xs.min() - 1, xs.max() + 2
+            fl[y0:y1, x0:x1] = frame[y0:y1, x0:x1][:, ::-1]
+        flipped.append(fl)
+    sheet = np.array(Image.open(BASE_SHEET).convert("RGBA"))
+    if sheet.shape != (H, 58 * W, 4):
+        raise ValueError("Expected the approved 58-frame v4 baseline")
+    # Replace only walk cells. Preserve standing/logo repairs and all other actions exactly.
+    for start, sequence in ((12, [f for f, _ in frames]), (29, flipped)):
+        sheet[:, start * W:(start + FRAMES) * W] = np.concatenate(sequence, axis=1)
+    Image.fromarray(sheet).save(OUT, optimize=True)
+    print("wrote", OUT, "walk cells 12–27 / 29–44; all other cells preserved")
     if preview:
         bg = Image.new("RGBA", (sheet.shape[1], H), (226, 236, 214, 255))
         bg.alpha_composite(Image.fromarray(sheet, "RGBA"))

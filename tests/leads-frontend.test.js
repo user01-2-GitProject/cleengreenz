@@ -252,6 +252,45 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
       extra: { service: 'Seeding and fertilizing' },
     });
   });
+
+  await t.test('resets form, restores form fields visibility, and focuses first input when Send another request button is clicked', async () => {
+    const { window, document } = setupEnvironment({
+      fetch: () => Promise.resolve({ ok: true, status: 200 }),
+    });
+
+    const form = document.getElementById('estimate-form');
+    const nameInput = form.querySelector('#f-name');
+    const phoneInput = form.querySelector('#f-phone');
+    const addressInput = form.querySelector('#f-address');
+    const notesInput = form.querySelector('#f-notes');
+    const notesCount = form.querySelector('#f-notes-count');
+    const fieldsBox = form.querySelector('.form-fields');
+    const doneBox = form.querySelector('.form-done');
+    const resetBtn = doneBox.querySelector('#form-reset-btn');
+
+    nameInput.value = 'Alice Smith';
+    phoneInput.value = '269-555-9999';
+    addressInput.value = '456 Elm St';
+    notesInput.value = 'Testing reset';
+
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+    await new Promise((r) => setTimeout(r, 20));
+
+    assert.equal(fieldsBox.style.display, 'none');
+    assert.equal(doneBox.classList.contains('show'), true);
+
+    // Click "Send another request" button
+    resetBtn.click();
+
+    assert.equal(fieldsBox.style.display, '');
+    assert.equal(doneBox.classList.contains('show'), false);
+    assert.equal(nameInput.value, '');
+    assert.equal(phoneInput.value, '');
+    assert.equal(addressInput.value, '');
+    assert.equal(notesInput.value, '');
+    assert.equal(notesCount.textContent, '· 500 chars left');
+    assert.equal(document.activeElement, nameInput);
+  });
 });
 
 test('Estimate form field validation & user input handling', async (t) => {
@@ -312,6 +351,22 @@ test('Estimate form field validation & user input handling', async (t) => {
 });
 
 test('Form initialization, honeypot field, and lead tracking events', async (t) => {
+  await t.test('initializes and updates notes character counter live on input', async () => {
+    const { window, document } = setupEnvironment();
+    const notesInput = document.getElementById('f-notes');
+    const notesCount = document.getElementById('f-notes-count');
+
+    assert.ok(notesInput, 'notes input should exist');
+    assert.ok(notesCount, 'notes count element should exist');
+    assert.equal(notesInput.getAttribute('maxlength'), '500');
+    assert.equal(notesCount.textContent, '· 500 chars left');
+
+    notesInput.value = 'Hello world!';
+    notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(notesCount.textContent, '· 488 chars left');
+  });
+
   await t.test('appends a hidden honeypot website field to the form on script load', async () => {
     const { document } = setupEnvironment();
     const form = document.getElementById('estimate-form');
@@ -373,5 +428,55 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     await new Promise((r) => setTimeout(r, 60));
     const nameInput = document.getElementById('f-name');
     assert.equal(document.activeElement, nameInput);
+  });
+});
+
+test('Accessibility attributes & focus management enhancements', async (t) => {
+  await t.test('main element has tabindex="-1" for skip link focus targeting', () => {
+    const { document } = setupEnvironment();
+    const mainEl = document.getElementById('main');
+    assert.ok(mainEl, '<main id="main"> should exist');
+    assert.equal(mainEl.getAttribute('tabindex'), '-1');
+  });
+
+  await t.test('notes textarea has aria-describedby pointing to notes character count element', () => {
+    const { document } = setupEnvironment();
+    const notesInput = document.getElementById('f-notes');
+    assert.ok(notesInput, '#f-notes textarea should exist');
+    assert.equal(notesInput.getAttribute('aria-describedby'), 'f-notes-count');
+    notesInput.value = 'abcd';
+    notesInput.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    assert.equal(notesInput.getAttribute('aria-describedby'), 'f-notes-count',
+      'typing must retain the permanent character count description');
+  });
+
+  await t.test('Pet Chris hide button shifts focus to brand link before removing container', () => {
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
+        window.requestAnimationFrame = () => 0;
+        window.cancelAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+        window.HTMLMediaElement.prototype.pause = () => {};
+      },
+    });
+    const { document } = dom.window;
+
+    const wrap = document.querySelector('.pet-wrap');
+    assert.ok(wrap, 'Pet Chris wrap should exist in DOM on load');
+
+    const bubble = wrap.querySelector('.pet-bubble');
+    assert.ok(bubble, 'Pet Chris bubble should exist');
+
+    bubble.innerHTML = '<button type="button" data-pet-hide>Hide me</button>';
+    const hideBtn = bubble.querySelector('[data-pet-hide]');
+
+    hideBtn.click();
+
+    const brandLink = document.querySelector('.brand');
+    assert.equal(document.activeElement, brandLink, 'focus should shift to .brand on hide');
+    assert.equal(document.querySelector('.pet-wrap'), null, 'pet wrap should be removed from DOM');
   });
 });

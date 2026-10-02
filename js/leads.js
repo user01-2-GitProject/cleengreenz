@@ -50,6 +50,18 @@
   var form = document.getElementById('estimate-form');
   if (!form) return;
 
+  var notesInput = form.querySelector('#f-notes');
+  var notesCount = form.querySelector('#f-notes-count');
+  if (notesInput && notesCount) {
+    var maxLen = notesInput.maxLength > 0 ? notesInput.maxLength : 500;
+    function updateNotesCount() {
+      var remaining = maxLen - notesInput.value.length;
+      notesCount.textContent = '· ' + remaining + ' char' + (remaining === 1 ? '' : 's') + ' left';
+    }
+    notesInput.addEventListener('input', updateNotesCount);
+    updateNotesCount();
+  }
+
   // Hidden field only bots fill in.
   var trap = document.createElement('input');
   trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
@@ -61,6 +73,7 @@
   var done = form.querySelector('.form-done');
   var button = form.querySelector('button[type="submit"]');
   var requiredFields = form.querySelectorAll('[required]');
+  var resetBtn = done ? done.querySelector('#form-reset-btn') : null;
   var sending = false;
 
   function showDone() {
@@ -68,6 +81,21 @@
     done.classList.add('show');
     var heading = done.querySelector('h3');
     if (heading) heading.focus();
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      form.reset();
+      done.classList.remove('show');
+      fieldsBox.style.display = '';
+      var heading = done.querySelector('h3');
+      if (heading) heading.textContent = 'Thanks, got it!';
+      var p = done.querySelector('p');
+      if (p) p.textContent = 'Chris has your request and will be in touch soon.';
+      if (notesInput && notesCount) updateNotesCount();
+      var firstInput = form.querySelector('#f-name');
+      if (firstInput) firstInput.focus();
+    });
   }
 
   function openEmail(d) {
@@ -83,8 +111,10 @@
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
+    var cleanService = (d.service || 'lawn care').replace(/\r?\n|\r/g, ' ');
+    var cleanName = (d.name || '').replace(/\r?\n|\r/g, ' ');
     window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
-      encodeURIComponent('Estimate request: ' + d.service + ' (' + d.name + ')') +
+      encodeURIComponent('Estimate request: ' + cleanService + ' (' + cleanName + ')') +
       '&body=' + encodeURIComponent(body);
   }
 
@@ -97,9 +127,14 @@
     var field = e.target;
     if (field && field.removeAttribute) {
       field.removeAttribute('aria-invalid');
-      field.removeAttribute('aria-describedby');
       var errEl = errorFor(field);
-      if (errEl) errEl.classList.remove('show');
+      if (errEl) {
+        var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+          .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+        if (descriptions) field.setAttribute('aria-describedby', descriptions);
+        else field.removeAttribute('aria-describedby');
+        errEl.classList.remove('show');
+      }
     }
   });
 

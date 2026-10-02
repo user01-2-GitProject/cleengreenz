@@ -12,14 +12,23 @@ const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'":
 
 function clean(value, field) {
   if (typeof value !== 'string') return null;
-  const s = value.trim().slice(0, LIMITS[field]);
+  let val = value;
+  if (field !== 'notes') {
+    val = val.replace(/[\r\n]+/g, ' ');
+  }
+  const s = val.trim().slice(0, LIMITS[field]);
   return s || null;
 }
 
 export function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json', 'x-content-type-options': 'nosniff' },
+    headers: {
+      'content-type': 'application/json',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+    },
   });
 }
 
