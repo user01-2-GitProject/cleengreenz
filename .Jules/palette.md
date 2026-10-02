@@ -37,3 +37,7 @@
 ## 2026-09-30 - Interactive Popover Triggers and Global Button Focus Rings
 **Learning:** Interactive floating mascot and popover trigger buttons lack popup state context for screen readers when `aria-expanded` and `aria-controls` are omitted. Dynamically toggling `aria-expanded="true"|"false"` on trigger buttons when associated speech bubbles open or close gives assistive technologies critical context. Additionally, scoping global focus ring rules to `button:focus-visible` ensures inline controls inside speech bubbles or popups inherit consistent high-contrast focus rings (`var(--gold)`) during keyboard navigation.
 **Action:** Always link interactive popover triggers to controlled target containers using `aria-controls` and dynamically update `aria-expanded` on open/close events, while including `button:focus-visible` in global CSS focus ring rules.
+
+## 2026-10-02 - Form Reset Cleanup of Validation Error Attributes
+**Learning:** Calling `form.reset()` on HTML forms clears input values but leaves custom validation DOM states (such as `aria-invalid="true"`, dynamic `aria-describedby` references, and visible error elements) intact. Manually stripping these invalid attributes and hiding error containers when processing a form reset action ensures screen readers and visual users see a clean, error-free form state upon starting a new request.
+**Action:** When implementing custom form reset handlers, always iterate through required fields to clear `aria-invalid`, restore original `aria-describedby` associations, and hide field error message elements.
