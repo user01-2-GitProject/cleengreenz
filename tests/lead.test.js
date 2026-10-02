@@ -199,6 +199,46 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     }
   });
 
+  await t.test('strips NULL bytes and unprintable ASCII control characters from form fields', async () => {
+    let capturedBody = null;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane \x00\x07Doe',
+          phone: '269-555-0199\x1b',
+          address: '123 \x00Main St',
+          service: 'Lawn \x08Care',
+          notes: 'Notes \x00with \x07control',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.equal(capturedBody.subject, 'Estimate request: Lawn Care (Jane Doe)');
+      assert.match(capturedBody.text, /Name: Jane Doe/);
+      assert.match(capturedBody.text, /Phone: 269-555-0199/);
+      assert.match(capturedBody.text, /Address: 123 Main St/);
+      assert.match(capturedBody.text, /Service: Lawn Care/);
+      assert.match(capturedBody.text, /Notes: Notes with control/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   await t.test('returns 400 with missing_fields error on form submission missing required fields', async () => {
     const testCases = [
       { body: { type: 'form' }, missing: 'all required fields' },
