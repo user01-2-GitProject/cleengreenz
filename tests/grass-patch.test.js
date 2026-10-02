@@ -104,12 +104,12 @@ test('the live pet controller trims an in-view patch and reuses cached geometry 
 
   assert.ok(h.advanceUntil(() => target.classList.contains('mowed')), 'Pet Chris should reach and trim the visible patch');
   assert.equal(h.readCounts.get(target), 1, 'the patch rectangle should be read once during initial cache fill');
-  assert.equal(pet.style.getPropertyValue('--x'), '346px', 'Pet Chris should walk to the patch');
+  assert.ok(parseFloat(pet.style.getPropertyValue('--x')) > 340, 'Chris should traverse the patch');
   assert.equal(pet.style.getPropertyValue('--y'), '148px', 'Pet Chris should align with the patch before trimming');
-  assert.equal(h.mowerPlayCount(), 1, 'the mower video should play when the grass action starts');
   assert.ok(target.classList.contains('mowing'));
-  assert.ok(pet.classList.contains('mowing'), 'the blower-pose sprite should be hidden during the mower scene');
-  assert.equal(target.querySelector('.grass-mower-video source').getAttribute('src'), 'media/mascot-mower.mp4');
+  assert.ok(pet.classList.contains('mowing'));
+  assert.ok(pet.querySelector('.pet-mower'));
+  assert.equal(target.style.getPropertyValue('--cut-right'), '100%');
   h.advance(20);
   assert.equal(h.readCounts.get(target), 1, 'animation frames should not read patch layout again');
   assert.equal(target.classList.contains('mowing'), false, 'the mower scene should end with the trim action');
@@ -136,8 +136,7 @@ test('dragging Pet Chris interrupts the mower cutaway and restores the grass pat
   sendPointer('pointermove', 380, 220);
 
   assert.equal(target.classList.contains('mowing'), false, 'the interrupted patch should restore its grass art');
-  assert.equal(h.window.document.querySelector('.grass-mower-video').parentElement, h.window.document.body,
-    'the mower video should be detached from the patch after interruption');
+  assert.equal(target.style.getPropertyValue('--cut'), '');
   h.tick();
   assert.equal(wrap.classList.contains('mowing'), false, 'the Pet should leave the mowing presentation when dragged');
   h.dom.window.close();
@@ -198,5 +197,29 @@ test('reduced motion keeps grass static and disables automatic trimming', () => 
   const reducedMotionRules = htmlContent.slice(mediaStart);
   assert.match(reducedMotionRules, /\.grass-blade\s*\{\s*animation:\s*none;/);
   assert.match(reducedMotionRules, /\.grass-patch\s*\{\s*transition:\s*none;/);
+  h.dom.window.close();
+});
+
+test('regrowth relocates the patch within its lawn lane', () => {
+  const h = createHarness();
+  const target = h.patches[0];
+  const initial = target.style.left + target.style.bottom;
+  assert.ok(h.advanceUntil(() => target.classList.contains('mowed')));
+  assert.ok(h.advanceUntil(() => target.style.left + target.style.bottom !== initial, 700));
+  h.tick();
+  assert.ok(h.readCounts.get(target) >= 2, 'relocation invalidates cached geometry');
+  h.dom.window.close();
+});
+
+test('Chris rides to the grass and returns on the mower without a walk cycle', () => {
+  const h = createHarness();
+  const pet = h.window.document.querySelector('.pet-wrap');
+  assert.ok(h.advanceUntil(() => pet.classList.contains('riding')));
+  assert.equal(pet.classList.contains('walking'), false);
+  assert.equal(h.patches[0].classList.contains('mowed'), false);
+  assert.ok(h.advanceUntil(() => h.patches[0].classList.contains('mowed')));
+  assert.ok(pet.classList.contains('riding'));
+  assert.equal(pet.classList.contains('walking'), false);
+  assert.ok(h.advanceUntil(() => !pet.classList.contains('riding')));
   h.dom.window.close();
 });
