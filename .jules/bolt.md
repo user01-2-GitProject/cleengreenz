@@ -9,8 +9,15 @@
 **Learning:** Instantiating `new IntersectionObserver()` inside a loop for each DOM element (e.g., `<video>`) creates unnecessary observer instances and increases GC and layout calculation overhead. Instantiating a single `IntersectionObserver` instance and observing multiple elements using `en.target` in the callback eliminates redundant observer allocations.
 
 **Action:** Whenever multiple DOM elements share the same intersection callback logic, instantiate a single `IntersectionObserver` and pass each element to `observer.observe(el)`.
+
 ## 2026-09-27 - Cache Map lookups outside array iteration loops
 
 **Learning:** In animation frame handlers and leaf/particle processing functions, repeatedly querying Map instances (e.g. `rects.get(host)`) inside a loop over array elements creates unnecessary hash table lookup overhead. Caching the lookup result in a local variable outside the loop reduces lookups from 2N to 1.
 
 **Action:** Always hoist repeated `Map.get()` or object property lookups outside `forEach` or `for` loops when the key is invariant across iterations.
+
+## 2026-10-02 - Eliminate per-frame closure allocations in idle state polling
+
+**Learning:** Polling functions called on every animation frame (e.g., `readyPile` checking target readiness at 60 FPS while idle) using `.forEach()` allocate callback closures and perform repeated `Map.get()` lookups every frame. Iterating pre-structured item objects (`catcherItems`) directly with a standard `for` loop eliminates GC churn and reduces frame processing overhead by >5x.
+
+**Action:** For functions invoked inside 60 FPS animation frame handlers, avoid array iteration methods (`.forEach`, `.map`) that allocate function closures, and store pre-resolved property references directly on target item objects.

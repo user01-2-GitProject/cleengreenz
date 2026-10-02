@@ -1003,10 +1003,11 @@
         if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
         l.lastRx = l.lastRy = l.lastRrot = null;
         l.host = null;
+        l.hostItem = null;
       }
       function blowPile(host, dir) {
         var pile = piles.get(host);
-        var hr = rects.get(host);
+        var hr = targetRect(host, 'leaf');
         if (!hr) return;
         pile.forEach(function (l) {
           l.state = 'blown';
@@ -1236,9 +1237,15 @@
         return { x: face > 0 ? r.left - 120 + progress * r.width : r.right - PET_W + 120 - progress * r.width,
           y: r.bottom - PET_H + 2, face: face };
       }
+      // Optimization: Access cached bounding rect directly from catcherItems or grass target object
+      // with rects.get fallback to eliminate repeated Map lookups in the animation loop.
       function targetRect(target, type) {
-        var el = type === 'grass' ? target && target.el : target;
-        return el ? rects.get(el) : null;
+        if (!target) return null;
+        if (type === 'grass') return target.r || (target.el && rects.get(target.el));
+        for (var i = 0; i < catcherItems.length; i++) {
+          if (catcherItems[i].el === target) return catcherItems[i].r || rects.get(target);
+        }
+        return rects.get(target);
       }
       // Grass Patches on .green sections representing lawn
       var grassPatches = [];
@@ -1304,6 +1311,7 @@
         gp.el.classList.add('mowing');
       }
 
+      // Optimization: Use pre-cached gp.r property to avoid rects.get(gp.el) Map lookups on every frame.
       function readyGrassPatch() {
         var now = performance.now();
         for (var i = 0; i < grassPatches.length; i++) {
@@ -1315,19 +1323,22 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r || rects.get(gp.el))) {
             return gp;
           }
         }
         return null;
       }
 
+      // Optimization: Iterate pre-cached catcherItems array directly with a for loop
+      // to eliminate callback closure allocations and Map lookups on every animation frame when idle/away.
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci.el; biggest = count; }
+        }
         return chosen;
       }
 
@@ -1352,7 +1363,9 @@
           });
           grassPatches.forEach(function (gp) {
             var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(gp.el, valid);
+            gp.r = valid;
           });
           rectsDirty = false;
         }
@@ -1374,6 +1387,7 @@
                 if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
                   l.host = ci.el;
+                  l.hostItem = ci;
                   // Gather toward the middle and stack in a low mound, not a flat row.
                   l.ox = Math.max(12, Math.min(r.width - 12,
                     r.width / 2 + (cx - r.left - r.width / 2) * .62));
@@ -1387,7 +1401,9 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            var hr = rects.get(l.host);
+            // Optimization: Access host element bounding rect directly via cached hostItem reference
+            // with fallback to rects.get to eliminate Map lookups for every landed leaf on every frame.
+            var hr = (l.hostItem && l.hostItem.r) || rects.get(l.host);
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;
