@@ -88,6 +88,18 @@
       form.reset();
       done.classList.remove('show');
       fieldsBox.style.display = '';
+      for (var i = 0; i < requiredFields.length; i++) {
+        var field = requiredFields[i];
+        field.removeAttribute('aria-invalid');
+        var errEl = errorFor(field);
+        if (errEl) {
+          errEl.classList.remove('show');
+          var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+            .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+          if (descriptions) field.setAttribute('aria-describedby', descriptions);
+          else field.removeAttribute('aria-describedby');
+        }
+      }
       var heading = done.querySelector('h3');
       if (heading) heading.textContent = 'Thanks, got it!';
       var p = done.querySelector('p');
