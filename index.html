@@ -253,8 +253,32 @@
     color: var(--forest); font: 800 16px/1 "Fredoka", sans-serif;
     animation: pet-float 1.1s ease-out forwards; }
   .pet-particle.leaf-bit { top: 60%; color: var(--pumpkin); }
+  .pet-particle.grass-bit { top: 62%; color: var(--leaf-2); }
   @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
     20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
+
+  /* Grass Patch styles on lawn (.green sections) */
+  .lawn-grass-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+  .grass-patch { position: absolute; width: 64px; height: 44px; pointer-events: none; transition: transform .4s ease, opacity .4s ease; transform-origin: bottom center; }
+  .grass-patch.mowed { transform: scaleY(0.15); opacity: 0.35; }
+  .grass-patch svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .grass-mower-video { display: none; position: absolute; z-index: 3; left: 50%; bottom: -18px; width: 136px; max-width: none; height: 132px;
+    object-fit: cover; object-position: 90% center; border-radius: 14px; outline: 2px solid rgba(247,242,231,.9);
+    box-shadow: 0 8px 20px rgba(0,0,0,.24); transform: translateX(-50%); pointer-events: none; }
+  .grass-patch.mowing { transform: none; opacity: 1; }
+  .grass-patch.mowing svg { opacity: 0; }
+  .grass-patch.mowing > .grass-mower-video { display: block; }
+  .pet-wrap.mowing .pet-inner { visibility: hidden; }
+  .grass-blade { transform-origin: bottom center; animation: grass-sway 3.2s ease-in-out infinite alternate; }
+  .grass-blade-1 { animation-delay: 0s; fill: var(--leaf); }
+  .grass-blade-2 { animation-delay: -0.7s; fill: var(--leaf-2); }
+  .grass-blade-3 { animation-delay: -1.4s; fill: #4fa83a; }
+  .grass-blade-4 { animation-delay: -2.1s; fill: var(--leaf-2); }
+  .grass-blade-5 { animation-delay: -2.8s; fill: var(--leaf); }
+  @keyframes grass-sway {
+    0% { transform: rotate(-3.5deg); }
+    100% { transform: rotate(3.5deg); }
+  }
   /* The sheet is drawn at .81 on phones; nearest-neighbour at a fractional scale makes pixels uneven. */
   @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
   .pet-bubble {
@@ -458,6 +482,9 @@
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
     .btn:hover, .service:hover { transform: none; }
+    .grass-patch { transition: none; }
+    .grass-blade { animation: none; }
+    .grass-mower-video { display: none !important; }
   }
 </style>
 </head>
@@ -1075,6 +1102,7 @@
           p.vx = Math.max(-500, Math.min(500, (e.clientX - p.lastPointerX) / elapsed));
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
+          if (activeGrassMowing) stopGrassMowing();
           p.state = 'drag'; p.t = 0; p.speed = 0;
           hideBubble();
         });
@@ -1203,6 +1231,105 @@
         if (gx < 8) { gx = r.right - 30; face = -1; }
         return { x: Math.min(Math.max(gx, 0), W - PET_W), y: r.bottom - PET_H + 2, face: face };
       }
+      function targetRect(target, type) {
+        var el = type === 'grass' ? target && target.el : target;
+        return el ? rects.get(el) : null;
+      }
+      // Grass Patches on .green sections representing lawn
+      var grassPatches = [];
+      var mowerVideo = null, activeGrassMowing = null;
+      var grassSvgTemplate =
+        '<svg viewBox="0 0 64 44">' +
+          '<ellipse cx="32" cy="41" rx="24" ry="4" fill="#163a20" opacity="0.7"/>' +
+          '<path class="grass-blade grass-blade-1" d="M14,41 Q10,22 4,10 Q16,20 20,41 Z"/>' +
+          '<path class="grass-blade grass-blade-2" d="M20,41 Q22,18 20,6 Q26,18 26,41 Z"/>' +
+          '<path class="grass-blade grass-blade-3" d="M25,41 Q30,12 34,2 Q36,16 33,41 Z"/>' +
+          '<path class="grass-blade grass-blade-4" d="M32,41 Q38,14 44,8 Q42,22 40,41 Z"/>' +
+          '<path class="grass-blade grass-blade-5" d="M38,41 Q48,20 56,14 Q48,26 46,41 Z"/>' +
+          '<path class="grass-blade grass-blade-2" d="M8,41 Q14,28 12,18 Q16,28 16,41 Z" fill="#4fa83a"/>' +
+        '</svg>';
+
+      function setupGrassPatches() {
+        var greenSections = document.querySelectorAll('section.green');
+        greenSections.forEach(function (sec) {
+          var layer = sec.querySelector('.lawn-grass-layer');
+          if (!layer) {
+            layer = document.createElement('div');
+            layer.className = 'lawn-grass-layer';
+            layer.setAttribute('aria-hidden', 'true');
+            sec.appendChild(layer);
+          }
+          // Spawn 3 patches per green section at scattered positions along the bottom grass lawn line
+          var positions = [18, 52, 82];
+          positions.forEach(function (pct) {
+            var el = document.createElement('div');
+            el.className = 'grass-patch';
+            el.innerHTML = grassSvgTemplate;
+            el.style.left = pct + '%';
+            el.style.bottom = '12px';
+            layer.appendChild(el);
+            grassPatches.push({ el: el, sec: sec, mowed: false, mowedAt: 0 });
+          });
+        });
+      }
+      setupGrassPatches();
+
+      if (!reduceMotion && grassPatches.length) {
+        mowerVideo = document.createElement('video');
+        mowerVideo.className = 'grass-mower-video';
+        mowerVideo.setAttribute('aria-hidden', 'true');
+        mowerVideo.muted = true;
+        mowerVideo.playsInline = true;
+        mowerVideo.preload = 'none';
+        mowerVideo.poster = 'media/mascot-mower.jpg';
+        var mowerSource = document.createElement('source');
+        mowerSource.src = 'media/mascot-mower.mp4';
+        mowerSource.type = 'video/mp4';
+        mowerVideo.appendChild(mowerSource);
+        document.body.appendChild(mowerVideo);
+        if (typeof videoObserver !== 'undefined') videoObserver.observe(mowerVideo);
+      }
+
+      function stopGrassMowing(gp) {
+        if (!mowerVideo || !activeGrassMowing || (gp && gp !== activeGrassMowing)) return;
+        var finished = activeGrassMowing;
+        finished.el.classList.remove('mowing');
+        mowerVideo.pause();
+        try { mowerVideo.currentTime = 0; } catch (e) {}
+        document.body.appendChild(mowerVideo);
+        activeGrassMowing = null;
+      }
+
+      function startGrassMowing(gp) {
+        if (!mowerVideo || !gp) return;
+        stopGrassMowing();
+        activeGrassMowing = gp;
+        gp.el.classList.add('mowing');
+        gp.el.appendChild(mowerVideo);
+        try { mowerVideo.currentTime = 0; } catch (e) {}
+        var playback = mowerVideo.play();
+        if (playback && typeof playback.catch === 'function') playback.catch(function () {
+          // The cropped mower poster stays visible if autoplay is blocked or decoding fails.
+        });
+      }
+
+      function readyGrassPatch() {
+        var now = performance.now();
+        for (var i = 0; i < grassPatches.length; i++) {
+          var gp = grassPatches[i];
+          if (gp.mowed) {
+            // Regrow grass patch after 18 seconds
+            if (now - gp.mowedAt > 18000) {
+              gp.mowed = false;
+              gp.el.classList.remove('mowed');
+            }
+          } else if (visible(rects.get(gp.el))) {
+            return gp;
+          }
+        }
+        return null;
+      }
+
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
         catchers.forEach(function (el) {
@@ -1230,6 +1357,10 @@
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
             }
+          });
+          grassPatches.forEach(function (gp) {
+            var r = gp.el.getBoundingClientRect();
+            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
           });
           rectsDirty = false;
         }
@@ -1306,52 +1437,86 @@
             }
             if (p.cooldown <= 0 && !reduceMotion) {
               var ready = readyPile(CLEAR_AT);
+              var readyGrass = readyGrassPatch();
               if (p.stay > STAY_FOR && !document.hidden && !bubble.classList.contains('is-visible')) {
                 // He has been around a while: off the left edge he goes, and the leaves pile up.
                 p.state = 'leave'; p.t = 0;
               } else if (ready) {
-                p.target = ready; p.state = 'notice'; p.t = 0;
+                p.target = ready; p.targetType = 'leaf'; p.state = 'notice'; p.t = 0;
+                idleAt = now;
+              } else if (readyGrass) {
+                p.target = readyGrass; p.targetType = 'grass'; p.state = 'notice'; p.t = 0;
                 idleAt = now;
               }
             }
           } else if (p.state === 'leave') {
             if (moveToward(-PET_W - OFFSTAGE, hy, dt, WALK_SPEED)) { p.state = 'away'; p.t = 0; }
           } else if (p.state === 'away') {
-            // Off stage. He comes back when a pile has really built up (walking in from the nearer
-            // edge, straight to it), or after a while anyway, and then just walks home.
+            // Off stage. He comes back when a pile or grass patch has built up
             p.y = hy;
             var big = p.t > AWAY_MIN ? readyPile(AWAY_PILE) : null;
+            var bigGrass = (p.t > AWAY_MIN && !big) ? readyGrassPatch() : null;
             if (big) {
               var br = rects.get(big), fromRight = br.left + br.width / 2 > W / 2;
               p.x = fromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(br).y;
-              p.target = big; p.state = 'walk'; p.t = 0; idleAt = now;
+              p.target = big; p.targetType = 'leaf'; p.state = 'walk'; p.t = 0; idleAt = now;
+            } else if (bigGrass) {
+              var gr = targetRect(bigGrass, 'grass'), gFromRight = gr.left + gr.width / 2 > W / 2;
+              p.x = gFromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(gr).y;
+              p.target = bigGrass; p.targetType = 'grass'; p.state = 'walk'; p.t = 0; idleAt = now;
             } else if (p.t > AWAY_MAX) { p.state = 'home'; p.t = 0; }
           } else if (p.state === 'notice') {
-            // A beat to spot the pile (looking toward it), then he sets off.
+            // A beat to spot the target, then he sets off.
             if (p.t > .15) { p.state = 'walk'; p.t = 0; }
           } else if (p.state === 'walk') {
-            var tr = rects.get(p.target);
-            if (!visible(tr)) { p.state = 'home'; }
+            var tr = targetRect(p.target, p.targetType);
+            if (!visible(tr) || (p.targetType === 'grass' && p.target.mowed)) {
+              p.state = 'home'; p.target = null; p.targetType = null;
+            }
             else {
               var g = petGoal(tr);
               if (moveToward(g.x, g.y, dt, WALK_SPEED)) {
                 p.face = g.face; p.state = 'clear'; p.t = 0;
-                say(['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'][Math.floor(Math.random() * 3)], 2200);
+                if (p.targetType === 'grass') {
+                  startGrassMowing(p.target);
+                  say(['Time for a trim!', 'Keeping the lawn looking sharp.', 'Fresh stripes coming right up!'][Math.floor(Math.random() * 3)], 2200);
+                } else {
+                  say(['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'][Math.floor(Math.random() * 3)], 2200);
+                }
               }
             }
           } else if (p.state === 'clear') {
-            var cr = rects.get(p.target);
-            if (cr) { var cg = petGoal(cr); p.x = cg.x; p.y = cg.y; }
-            // Timeline: 0-.1 finish the last step, .1-.26 pick up the blower, .26-.37 level it and
-            // kick, then it runs (nozzle wobbles level/lower) until the scatter at .85-1.15, when it
-            // holds low; back to level for the last beat. Leaf bits leave from the nozzle.
-            if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 12) particle('✦', 'leaf-bit');
-            if (p.t > 0.85 && piles.get(p.target).length && cr) blowPile(p.target, p.face);
-            if (p.t > 1.6) { p.state = 'wait'; p.t = 0; say('All clean!', 1600); }
+            var cr = targetRect(p.target, p.targetType);
+            if (!visible(cr)) {
+              if (p.targetType === 'grass') stopGrassMowing(p.target);
+              p.state = 'home'; p.target = null; p.targetType = null;
+            } else {
+              var cg = petGoal(cr); p.x = cg.x; p.y = cg.y;
+              // Timeline: 0-.1 finish step, .1-.26 pickup tool, .26-.37 level and kick, run until .85-1.15
+              if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 14) {
+                particle('✦', p.targetType === 'grass' ? 'grass-bit' : 'leaf-bit');
+              }
+              if (p.t > 0.85) {
+                if (p.targetType === 'grass' && p.target && !p.target.mowed) {
+                  p.target.mowed = true;
+                  p.target.mowedAt = now;
+                  p.target.el.classList.add('mowed');
+                } else if (p.targetType === 'leaf' && piles.get(p.target).length) {
+                  blowPile(p.target, p.face);
+                }
+              }
+              if (p.t > 1.6) {
+                if (p.targetType === 'grass') stopGrassMowing(p.target);
+                p.state = 'wait'; p.t = 0; say(p.targetType === 'grass' ? 'Nice and trim!' : 'All clean!', 1600);
+              }
+            }
           } else if (p.state === 'wait') {
-            var wr = rects.get(p.target);
-            if (wr) { var wg = petGoal(wr); p.x = wg.x; p.y = wg.y; }
-            if (p.t > 1.4) p.state = 'home';
+            var wr = targetRect(p.target, p.targetType);
+            if (!visible(wr)) { p.state = 'home'; p.target = null; p.targetType = null; }
+            else {
+              var wg = petGoal(wr); p.x = wg.x; p.y = wg.y;
+              if (p.t > 1.4) { p.state = 'home'; p.target = null; p.targetType = null; }
+            }
           } else if (p.state === 'drag') {
             var follow = 1 - Math.exp(-dt * 24);
             p.x += (p.dragX - p.x) * follow;
@@ -1379,7 +1544,7 @@
             if (p.t > .2) { p.state = 'home'; p.t = 0; }
           } else if (p.state === 'home') {
             if (moveToward(4, hy, dt, HOME_SPEED)) {
-              p.state = 'idle'; p.t = 0; p.cooldown = 5; p.face = 1;
+              p.state = 'idle'; p.t = 0; p.cooldown = 5; p.face = 1; p.target = null; p.targetType = null;
               nextBlink = now + rnd(2600, 5200);
             }
           }
@@ -1423,6 +1588,8 @@
           if (isWindup !== p.lastWindup) { wrap.classList.toggle('windup', isWindup); p.lastWindup = isWindup; }
           var isClearing = p.state === 'clear' && p.t >= 0.26;
           if (isClearing !== p.lastClearing) { wrap.classList.toggle('clearing', isClearing); p.lastClearing = isClearing; }
+          var isMowing = p.state === 'clear' && p.targetType === 'grass';
+          if (isMowing !== p.lastMowing) { wrap.classList.toggle('mowing', isMowing); p.lastMowing = isMowing; }
           var isGrabbed = p.grab > .02;
           if (isGrabbed !== p.lastGrabbed) { wrap.classList.toggle('grabbed', isGrabbed); p.lastGrabbed = isGrabbed; }
           var isFaceLeft = p.face < 0;
