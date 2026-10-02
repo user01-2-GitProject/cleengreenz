@@ -1102,6 +1102,7 @@
           p.vx = Math.max(-500, Math.min(500, (e.clientX - p.lastPointerX) / elapsed));
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
+          if (activeGrassMowing) stopGrassMowing();
           p.state = 'drag'; p.t = 0; p.speed = 0;
           hideBubble();
         });

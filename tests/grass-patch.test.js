@@ -26,6 +26,7 @@ function createHarness({ reducedMotion = false } = {}) {
       });
       win.requestAnimationFrame = callback => { frames.push(callback); return frames.length; };
       win.cancelAnimationFrame = () => {};
+      win.HTMLElement.prototype.setPointerCapture = () => {};
       win.IntersectionObserver = class {
         observe() {}
         unobserve() {}
@@ -112,6 +113,33 @@ test('the live pet controller trims an in-view patch and reuses cached geometry 
   h.advance(20);
   assert.equal(h.readCounts.get(target), 1, 'animation frames should not read patch layout again');
   assert.equal(target.classList.contains('mowing'), false, 'the mower scene should end with the trim action');
+  h.dom.window.close();
+});
+
+test('dragging Pet Chris interrupts the mower cutaway and restores the grass patch', () => {
+  const h = createHarness();
+  const target = h.patches[0];
+  const pet = h.window.document.querySelector('.pet');
+  const wrap = h.window.document.querySelector('.pet-wrap');
+  assert.ok(h.advanceUntil(() => target.classList.contains('mowed')), 'the mowing action should start');
+  const sendPointer = (type, x, y) => {
+    const event = new h.window.Event(type, { bubbles: true });
+    Object.defineProperties(event, {
+      pointerId: { value: 1 },
+      clientX: { value: x },
+      clientY: { value: y }
+    });
+    pet.dispatchEvent(event);
+  };
+
+  sendPointer('pointerdown', 360, 200);
+  sendPointer('pointermove', 380, 220);
+
+  assert.equal(target.classList.contains('mowing'), false, 'the interrupted patch should restore its grass art');
+  assert.equal(h.window.document.querySelector('.grass-mower-video').parentElement, h.window.document.body,
+    'the mower video should be detached from the patch after interruption');
+  h.tick();
+  assert.equal(wrap.classList.contains('mowing'), false, 'the Pet should leave the mowing presentation when dragged');
   h.dom.window.close();
 });
 
