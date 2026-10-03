@@ -1,4 +1,4 @@
-const { performance } = require('perf_hooks');
+import { performance } from 'node:perf_hooks';
 
 function createMockElement() {
   const styleObj = {
