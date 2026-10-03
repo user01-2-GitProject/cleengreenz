@@ -56,6 +56,7 @@ test('json helper function', async (t) => {
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none';");
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -157,6 +158,46 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
+  });
+
+  await t.test('sanitizes null bytes in form fields when submitted', async () => {
+    let capturedBody = null;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane\0 Doe',
+          phone: '269-555-0199\0',
+          address: '123\0 Main St',
+          service: 'Mowing\0',
+          notes: 'Note\0 text',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.equal(capturedBody.subject, 'Estimate request: Mowing (Jane Doe)');
+      assert.match(capturedBody.text, /Name: Jane Doe/);
+      assert.match(capturedBody.text, /Phone: 269-555-0199/);
+      assert.match(capturedBody.text, /Address: 123 Main St/);
+      assert.match(capturedBody.text, /Service: Mowing/);
+      assert.match(capturedBody.text, /Notes: Note text/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   await t.test('sanitizes linebreaks in single-line form fields when submitted', async () => {
