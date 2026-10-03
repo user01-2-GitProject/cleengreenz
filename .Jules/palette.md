@@ -31,6 +31,10 @@
 ## 2026-09-30 - Skip Link Focus Target & Dismissible Widget Focus Management
 **Learning:** Target elements like `<main id="main">` for skip-to-content links require explicit `tabindex="-1"` and `main:focus { outline: none; }` to ensure browsers actually shift keyboard focus to the main container upon activation instead of retaining focus in the header navigation. Furthermore, when dismissible interactive widgets (like Pet Chris) remove their wrapper from the DOM, shifting focus to a logical persistent element (like `.brand`) prevents keyboard focus from becoming orphaned on `<body>`.
 **Action:** Always set `tabindex="-1"` on skip link targets and manage focus transition before removing interactive elements from the DOM.
+## 2026-10-02 - External Tab Links Visual Cues & Explicit Phone Link ARIA Context
+**Learning:** External links with `target="_blank"` require both visual indicator icons for sighted users and accessible `(opens in a new tab)` text in `aria-label` for screen reader users to prevent unexpected navigation context switches. Additionally, action buttons with generic text like "Call Chris" benefit from explicit `aria-label` attributes including the telephone number so screen reader users navigating by interactive controls hear the destination phone number.
+**Action:** Always pair `target="_blank"` with an `aria-hidden="true"` external link SVG icon and `(opens in a new tab)` in `aria-label`, and ensure action call buttons specify the telephone number in their `aria-label`.
+
 ## 2026-09-30 - Accessible Disclosure Relationships with aria-controls
 **Learning:** Native `<details>` and `<summary>` disclosure widgets convey expanded state implicitly in modern screen readers, but screen reader users navigating interactively benefit from explicit `aria-controls` attributes linking the summary toggle directly to the ID of the controlled answer container (`<p id="...">`).
 **Action:** Always provide explicit `id` attributes on expandable content blocks within details disclosures and set `aria-controls` on summary elements.
