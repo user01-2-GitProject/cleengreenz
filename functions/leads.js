@@ -35,8 +35,9 @@ export function authorized(request, password) {
   // Use b if lengths match; otherwise compare a against a dummy buffer of matching length.
   const compB = lengthsMatch ? b : new Uint8Array(a.length);
   let equal = false;
-  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.timingSafeEqual === 'function') {
-    equal = crypto.subtle.timingSafeEqual(a, compB);
+  // Use crypto.timingSafeEqual when available, or fall back to manual constant-time comparison.
+  if (typeof crypto !== 'undefined' && typeof crypto.timingSafeEqual === 'function') {
+    equal = crypto.timingSafeEqual(a, compB);
   } else {
     let mismatch = 0;
     for (let i = 0; i < a.length; i++) {
@@ -99,7 +100,7 @@ ${types
 <h2>By month</h2>
 <div class="scroll"><table><tr><th>Month</th>${types.map((t) => `<th class="num">${LABELS[t]}</th>`).join('')}</tr>
 ${Object.keys(monthRows)
-  .map((m) => `<tr><td>${m}</td>${types.map((t) => `<td class="num">${monthRows[m][t] || 0}</td>`).join('')}</tr>`)
+  .map((m) => `<tr><td>${escapeHtml(m)}</td>${types.map((t) => `<td class="num">${monthRows[m][t] || 0}</td>`).join('')}</tr>`)
   .join('') || `<tr><td colspan="${types.length + 1}">No leads yet.</td></tr>`}
 </table></div>
 <h2>Latest estimate requests</h2>
