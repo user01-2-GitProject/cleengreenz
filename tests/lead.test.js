@@ -118,6 +118,23 @@ test('authorized authentication helper function', async (t) => {
     const noColon = 'Basic ' + Buffer.from('nocolonhere').toString('base64');
     assert.equal(authorized(makeReq(noColon), secret), false);
   });
+
+  await t.test('uses crypto.timingSafeEqual when available', async () => {
+    let timingSafeEqualCalled = false;
+    const origTimingSafeEqual = crypto.timingSafeEqual;
+    crypto.timingSafeEqual = (a, b) => {
+      timingSafeEqualCalled = true;
+      return origTimingSafeEqual ? origTimingSafeEqual(a, b) : true;
+    };
+    try {
+      const req = makeReq(basicAuth('admin', secret));
+      assert.equal(authorized(req, secret), true);
+      assert.equal(timingSafeEqualCalled, true);
+    } finally {
+      if (origTimingSafeEqual) crypto.timingSafeEqual = origTimingSafeEqual;
+      else delete crypto.timingSafeEqual;
+    }
+  });
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
@@ -624,6 +641,15 @@ test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
     assert.match(html, /Jane Doe/);
     assert.match(html, /269-555-0100/);
     assert.match(html, /No/);
+  });
+
+  await t.test('escapes HTML/XSS content in month parameter', async () => {
+    const months = [
+      { month: '2026-03<script>alert(1)</script>', type: 'form', n: 5 },
+    ];
+    const html = renderLeadsHtml({ months });
+    assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+    assert.match(html, /2026-03&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   });
 });
 
