@@ -12,7 +12,8 @@ const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'":
 
 function clean(value, field) {
   if (typeof value !== 'string') return null;
-  let val = value;
+  // Strip null bytes to prevent null-byte truncation or injection risks.
+  let val = value.replace(/\0/g, '');
   if (field !== 'notes') {
     val = val.replace(/[\r\n]+/g, ' ');
   }
@@ -28,6 +29,7 @@ export function json(body, status = 200) {
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
+      'content-security-policy': "default-src 'none';",
     },
   });
 }
