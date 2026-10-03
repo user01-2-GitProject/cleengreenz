@@ -1315,19 +1315,21 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
         return null;
       }
 
+      // Optimization: Iterate over catcherItems using direct array index and cached ci.r to avoid Map lookups
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci.el; biggest = count; }
+        }
         return chosen;
       }
 
@@ -1352,7 +1354,9 @@
           });
           grassPatches.forEach(function (gp) {
             var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            gp.r = valid;
+            rects.set(gp.el, valid);
           });
           rectsDirty = false;
         }
@@ -1374,6 +1378,7 @@
                 if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
                   l.host = ci.el;
+                  l.ci = ci;
                   // Gather toward the middle and stack in a low mound, not a flat row.
                   l.ox = Math.max(12, Math.min(r.width - 12,
                     r.width / 2 + (cx - r.left - r.width / 2) * .62));
@@ -1387,7 +1392,8 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            var hr = rects.get(l.host);
+            // Optimization: Directly access pre-cached bounding rectangle l.ci.r to eliminate Map.get() lookups per landed leaf frame
+            var hr = l.ci ? l.ci.r : rects.get(l.host);
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;
