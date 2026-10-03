@@ -1374,6 +1374,7 @@
                 if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
                   l.host = ci.el;
+                  l.hostItem = ci; // Cache catcher item reference to avoid Map.get lookups per frame
                   // Gather toward the middle and stack in a low mound, not a flat row.
                   l.ox = Math.max(12, Math.min(r.width - 12,
                     r.width / 2 + (cx - r.left - r.width / 2) * .62));
@@ -1387,7 +1388,8 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            var hr = rects.get(l.host);
+            // Optimization: Use cached catcher item bounding rect (l.hostItem.r) instead of rects.get(l.host)
+            var hr = l.hostItem ? l.hostItem.r : rects.get(l.host);
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;
