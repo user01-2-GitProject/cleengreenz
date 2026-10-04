@@ -317,6 +317,8 @@
 
   /* Sections */
   section { position: relative; }
+  section[id] { scroll-margin-top: 84px; }
+  section:focus { outline: none; }
   .section { padding: 96px 0; }
   .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
   .section-head .lead { margin: 0 auto; }
@@ -519,7 +521,7 @@
 <main id="main" tabindex="-1">
 
   <!-- Hero -->
-  <section class="hero" id="top">
+  <section class="hero" id="top" tabindex="-1">
     <div class="wrap hero-grid">
       <div>
         <div class="eyebrow">Niles, MI · Since 2009</div>
@@ -529,7 +531,7 @@
           <a class="btn btn-primary" href="#estimate" data-lead-location="hero">Get my free estimate
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
-          <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="hero">
+          <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="hero" aria-label="Call or text Chris at (269) 362-8286">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
             Call or text Chris
           </a>
@@ -554,7 +556,7 @@
   </section>
 
   <!-- In season now -->
-  <section class="section green" id="season">
+  <section class="section green" id="season" tabindex="-1">
     <div class="wrap">
       <div class="section-head reveal">
         <div class="eyebrow">In season now</div>
@@ -588,7 +590,7 @@
   <svg class="grass" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true" style="transform:scaleY(-1);background:var(--cream)"><path fill="#1f4d2b" d="M0 70V36 Q60.0 18 120 30 Q180.0 40 240 30 Q300.0 18 360 30 Q420.0 40 480 30 Q540.0 18 600 30 Q660.0 40 720 30 Q780.0 18 840 30 Q900.0 40 960 30 Q1020.0 18 1080 30 Q1140.0 40 1200 30 Q1260.0 18 1320 30 Q1380.0 40 1440 30 V70z"/></svg>
 
   <!-- All services -->
-  <section class="section" id="services">
+  <section class="section" id="services" tabindex="-1">
     <div class="wrap">
       <div class="section-head reveal">
         <div class="eyebrow">Year-round care</div>
@@ -625,7 +627,7 @@
   </section>
 
   <!-- Meet Chris -->
-  <section class="section meet" id="meet">
+  <section class="section meet" id="meet" tabindex="-1">
     <div class="wrap meet-grid">
       <div class="video-card reveal">
         <video autoplay muted loop playsinline preload="none" poster="media/mascot-mower.jpg" aria-label="Cartoon Chris riding a mower across a freshly striped lawn">
@@ -647,7 +649,7 @@
   </section>
 
   <!-- How it works -->
-  <section class="section" id="how">
+  <section class="section" id="how" tabindex="-1">
     <div class="wrap">
       <div class="section-head reveal">
         <div class="eyebrow">Easy as 1, 2, 3</div>
@@ -662,7 +664,7 @@
   </section>
 
   <!-- Service area -->
-  <section class="section meet" id="area">
+  <section class="section meet" id="area" tabindex="-1">
     <div class="wrap area-grid">
       <div class="reveal">
         <div class="eyebrow">Where we mow</div>
@@ -681,7 +683,7 @@
   </section>
 
   <!-- FAQ -->
-  <section class="section" id="faq">
+  <section class="section" id="faq" tabindex="-1">
     <div class="wrap">
       <div class="section-head reveal">
         <div class="eyebrow">Good questions</div>
@@ -713,7 +715,7 @@
   </section>
 
   <!-- Estimate -->
-  <section class="section green" id="estimate">
+  <section class="section green" id="estimate" tabindex="-1">
     <div class="wrap estimate-grid">
       <div class="estimate-side reveal">
         <div class="eyebrow">Free, no pressure</div>
@@ -792,7 +794,7 @@
 </footer>
 
 <nav class="mobile-bar" aria-label="Quick contact">
-  <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="mobile-bar">Call Chris</a>
+  <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="mobile-bar" aria-label="Call Chris at (269) 362-8286">Call Chris</a>
   <a class="btn btn-primary" href="#estimate" data-lead-location="mobile-bar">Free estimate</a>
 </nav>
 

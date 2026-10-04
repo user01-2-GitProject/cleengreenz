@@ -118,3 +118,48 @@ test('Pet Chris speech bubble accessibility attributes', async (t) => {
     assert.equal(petBubble.classList.contains('is-visible'), false);
   });
 });
+
+test('Section navigation scroll offset and call CTA accessibility attributes', async (t) => {
+  await t.test('has tabindex="-1" on all section elements and aria-labels on call buttons', () => {
+    class MockIntersectionObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      resources: 'usable',
+      beforeParse(window) {
+        window.IntersectionObserver = MockIntersectionObserver;
+        window.matchMedia = () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
+        window.requestAnimationFrame = () => 0;
+        window.cancelAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+        window.HTMLMediaElement.prototype.pause = () => {};
+      },
+    });
+
+    const { document } = dom.window;
+
+    // Verify all target sections have tabindex="-1"
+    const sectionIds = ['top', 'season', 'services', 'meet', 'how', 'area', 'faq', 'estimate'];
+    sectionIds.forEach((id) => {
+      const sec = document.getElementById(id);
+      assert.ok(sec, `section #${id} exists`);
+      assert.equal(sec.getAttribute('tabindex'), '-1', `section #${id} has tabindex="-1"`);
+    });
+
+    // Verify call CTA aria-labels
+    const heroCallBtn = document.querySelector('.hero-actions a[href^="tel:"]');
+    assert.ok(heroCallBtn, 'hero call CTA button exists');
+    assert.equal(heroCallBtn.getAttribute('aria-label'), 'Call or text Chris at (269) 362-8286');
+
+    const mobileCallBtn = document.querySelector('.mobile-bar a[href^="tel:"]');
+    assert.ok(mobileCallBtn, 'mobile bar call CTA button exists');
+    assert.equal(mobileCallBtn.getAttribute('aria-label'), 'Call Chris at (269) 362-8286');
+
+    // Verify CSS contains section[id] scroll-margin-top
+    assert.match(htmlTemplate, /section\[id\]\s*\{\s*scroll-margin-top:\s*84px;/);
+  });
+});
