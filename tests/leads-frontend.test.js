@@ -429,6 +429,34 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     const nameInput = document.getElementById('f-name');
     assert.equal(document.activeElement, nameInput);
   });
+
+  await t.test('pre-selects matching service option when clicking estimate link with data-service', async () => {
+    const { window, document } = setupEnvironment();
+
+    const serviceSelect = document.getElementById('f-service');
+    serviceSelect.value = 'Weekly mowing and edging';
+
+    const seasonCta = document.querySelector('a[href="#estimate"][data-service]');
+    assert.ok(seasonCta, 'seasonal estimate link with data-service should exist');
+    assert.equal(seasonCta.getAttribute('data-service'), 'Fall leaf cleanup');
+
+    seasonCta.click();
+
+    assert.equal(serviceSelect.value, 'Fall leaf cleanup');
+
+    await new Promise((r) => setTimeout(r, 60));
+    const nameInput = document.getElementById('f-name');
+    assert.equal(document.activeElement, nameInput);
+  });
+
+  await t.test('mobile contact bar link contains phone icon and accessible aria-label', () => {
+    const { document } = setupEnvironment();
+
+    const mobileCallBtn = document.querySelector('.mobile-bar a[data-lead="call"]');
+    assert.ok(mobileCallBtn, 'mobile bar call link exists');
+    assert.equal(mobileCallBtn.getAttribute('aria-label'), 'Call Chris at (269) 362-8286');
+    assert.ok(mobileCallBtn.querySelector('svg'), 'mobile bar call link includes phone icon svg');
+  });
 });
 
 test('Accessibility attributes & focus management enhancements', async (t) => {

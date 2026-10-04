@@ -37,3 +37,7 @@
 ## 2026-09-30 - Interactive Popover Triggers and Global Button Focus Rings
 **Learning:** Interactive floating mascot and popover trigger buttons lack popup state context for screen readers when `aria-expanded` and `aria-controls` are omitted. Dynamically toggling `aria-expanded="true"|"false"` on trigger buttons when associated speech bubbles open or close gives assistive technologies critical context. Additionally, scoping global focus ring rules to `button:focus-visible` ensures inline controls inside speech bubbles or popups inherit consistent high-contrast focus rings (`var(--gold)`) during keyboard navigation.
 **Action:** Always link interactive popover triggers to controlled target containers using `aria-controls` and dynamically update `aria-expanded` on open/close events, while including `button:focus-visible` in global CSS focus ring rules.
+
+## 2026-10-02 - Contextual Service Pre-Selection for Form Jump CTAs
+**Learning:** In single-page websites where multiple call-to-action buttons across different feature sections jump to a single shared estimate form (`#estimate`), leaving form dropdowns set to the default option forces users to manually re-select the service they were just reading about. Attaching `data-service` metadata to section-specific CTAs and pre-selecting matching `<select>` options on click provides smooth, contextual continuity.
+**Action:** When linking section CTAs to a unified form, pass `data-service` on the trigger element to automatically pre-select the relevant option in the form's service select dropdown.
