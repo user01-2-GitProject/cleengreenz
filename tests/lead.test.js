@@ -199,6 +199,43 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     }
   });
 
+  await t.test('escapes HTML special characters in name and form fields in email HTML payload', async () => {
+    let capturedBody = null;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Jane <script>alert(1)</script> "Doe"',
+          phone: '269-555-0199',
+          address: '123 & 456 Main St',
+          service: 'Leaf Cleanup',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.doesNotMatch(capturedBody.html, /<script>/);
+      assert.match(capturedBody.html, /Jane &lt;script&gt;alert\(1\)&lt;\/script&gt; &quot;Doe&quot;/);
+      assert.match(capturedBody.html, /Call Jane &lt;script&gt;alert\(1\)&lt;\/script&gt; &quot;Doe&quot;/);
+      assert.match(capturedBody.html, /123 &amp; 456 Main St/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   await t.test('returns 400 with missing_fields error on form submission missing required fields', async () => {
     const testCases = [
       { body: { type: 'form' }, missing: 'all required fields' },

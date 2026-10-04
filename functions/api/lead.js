@@ -53,7 +53,7 @@ async function emailChris(env, lead) {
   const text = ['New estimate request from cleengreenz.com', '', ...rows.map(([k, v]) => `${k}: ${v}`)].join('\n');
   const html = `<p>New estimate request from cleengreenz.com</p><table>${rows
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0"><b>${k}</b></td><td>${escapeHtml(v).replace(/\n/g, '<br>')}</td></tr>`)
-    .join('')}</table><p><a href="tel:${encodeURIComponent(safePhone)}">Call ${escapeHtml(lead.name)}</a></p>`;
+    .join('')}</table><p><a href="tel:${encodeURIComponent(safePhone)}">Call ${escapeHtml(lead.name || '')}</a></p>`;
 
   const cleanSubjectService = (lead.service || 'lawn care').replace(/[\r\n]/g, ' ');
   const cleanSubjectName = (lead.name || '').replace(/[\r\n]/g, ' ');
