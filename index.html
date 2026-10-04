@@ -689,23 +689,23 @@
       </div>
       <div class="faq reveal">
         <details>
-          <summary aria-controls="faq-ans-1">What happens if it rains?</summary>
+          <summary aria-expanded="false" aria-controls="faq-ans-1">What happens if it rains?</summary>
           <p id="faq-ans-1">We shift our route and come as soon as the grass is dry, usually the next day. We'll text you so you're never left wondering.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-2">How do I pay?</summary>
+          <summary aria-expanded="false" aria-controls="faq-ans-2">How do I pay?</summary>
           <p id="faq-ans-2">We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-3">Do I need to be home?</summary>
+          <summary aria-expanded="false" aria-controls="faq-ans-3">Do I need to be home?</summary>
           <p id="faq-ans-3">Nope. As long as the gates are unlocked and pets are inside, we'll take care of everything and let you know when we're done.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-4">Do you do snow removal?</summary>
+          <summary aria-expanded="false" aria-controls="faq-ans-4">Do you do snow removal?</summary>
           <p id="faq-ans-4">Yes! Snow removal is new this winter. Single-car driveways start at $30 per visit, and bigger driveways are quoted by size. Send us your address and we'll get you on the list before the first snowfall.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-5">Do I have to sign a contract?</summary>
+          <summary aria-expanded="false" aria-controls="faq-ans-5">Do I have to sign a contract?</summary>
           <p id="faq-ans-5">No. We earn your business every week. If you ever want to pause or stop, just let us know.</p>
         </details>
       </div>
@@ -853,6 +853,20 @@
     });
 
     // The estimate form is handled in js/leads.js.
+
+    // Update aria-expanded on FAQ summary elements when details disclosure toggles.
+    var faqContainer = document.querySelector('.faq');
+    if (faqContainer) {
+      faqContainer.addEventListener('toggle', function (e) {
+        var details = e.target;
+        if (details && details.tagName === 'DETAILS') {
+          var summary = details.querySelector('summary');
+          if (summary) {
+            summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
+          }
+        }
+      }, true);
+    }
 
     // Reveal sections as they scroll into view.
     var items = document.querySelectorAll('.reveal');
