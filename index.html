@@ -1003,6 +1003,7 @@
         if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
         l.lastRx = l.lastRy = l.lastRrot = null;
         l.host = null;
+        l.ci = null;
       }
       function blowPile(host, dir) {
         var pile = piles.get(host);
@@ -1236,9 +1237,8 @@
         return { x: face > 0 ? r.left - 120 + progress * r.width : r.right - PET_W + 120 - progress * r.width,
           y: r.bottom - PET_H + 2, face: face };
       }
-      function targetRect(target, type) {
-        var el = type === 'grass' ? target && target.el : target;
-        return el ? rects.get(el) : null;
+      function targetRect(target) {
+        return target ? target.r : null;
       }
       // Grass Patches on .green sections representing lawn
       var grassPatches = [];
@@ -1315,7 +1315,7 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
@@ -1324,10 +1324,11 @@
 
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci; biggest = count; }
+        }
         return chosen;
       }
 
@@ -1352,7 +1353,9 @@
           });
           grassPatches.forEach(function (gp) {
             var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(gp.el, valid);
+            gp.r = valid;
           });
           rectsDirty = false;
         }
@@ -1374,6 +1377,7 @@
                 if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
                   l.host = ci.el;
+                  l.ci = ci;
                   // Gather toward the middle and stack in a low mound, not a flat row.
                   l.ox = Math.max(12, Math.min(r.width - 12,
                     r.width / 2 + (cx - r.left - r.width / 2) * .62));
@@ -1387,7 +1391,7 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            var hr = rects.get(l.host);
+            var hr = l.ci ? l.ci.r : rects.get(l.host);
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;
@@ -1450,11 +1454,11 @@
             var big = p.t > AWAY_MIN ? readyPile(AWAY_PILE) : null;
             var bigGrass = (p.t > AWAY_MIN && !big) ? readyGrassPatch() : null;
             if (big) {
-              var br = rects.get(big), fromRight = br.left + br.width / 2 > W / 2;
+              var br = big.r, fromRight = br.left + br.width / 2 > W / 2;
               p.x = fromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(br).y;
               p.target = big; p.targetType = 'leaf'; p.state = 'walk'; p.t = 0; idleAt = now;
             } else if (bigGrass) {
-              var gr = targetRect(bigGrass, 'grass'), gFromRight = gr.left + gr.width / 2 > W / 2;
+              var gr = bigGrass.r, gFromRight = gr.left + gr.width / 2 > W / 2;
               p.x = gFromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(gr).y;
               p.target = bigGrass; p.targetType = 'grass'; p.riding = true; p.state = 'walk'; p.t = 0; idleAt = now;
             } else if (p.t > AWAY_MAX) { p.state = 'home'; p.t = 0; }
@@ -1462,7 +1466,7 @@
             // A beat to spot the target, then he sets off.
             if (p.t > .15) { p.state = 'walk'; p.t = 0; }
           } else if (p.state === 'walk') {
-            var tr = targetRect(p.target, p.targetType);
+            var tr = targetRect(p.target);
             if (!visible(tr) || (p.targetType === 'grass' && p.target.mowed)) {
               p.state = 'home'; p.target = null; p.targetType = null;
             }
@@ -1479,7 +1483,7 @@
               }
             }
           } else if (p.state === 'clear') {
-            var cr = targetRect(p.target, p.targetType);
+            var cr = targetRect(p.target);
             if (!visible(cr)) {
               if (p.targetType === 'grass') stopGrassMowing(p.target);
               p.state = 'home'; p.target = null; p.targetType = null;
@@ -1501,8 +1505,8 @@
                   p.target.mowed = true;
                   p.target.mowedAt = now;
                   p.target.el.classList.add('mowed');
-                } else if (p.targetType === 'leaf' && piles.get(p.target).length) {
-                  blowPile(p.target, p.face);
+                } else if (p.targetType === 'leaf' && p.target.pile.length) {
+                  blowPile(p.target.el, p.face);
                 }
               }
               if (p.t > (p.targetType === 'grass' ? 2.7 : 1.6)) {
@@ -1511,7 +1515,7 @@
               }
             }
           } else if (p.state === 'wait') {
-            var wr = targetRect(p.target, p.targetType);
+            var wr = targetRect(p.target);
             if (!visible(wr)) { p.state = 'home'; p.target = null; p.targetType = null; }
             else {
               var wg = p.targetType === 'grass' ? grassGoal(wr, 1) : petGoal(wr); p.x = wg.x; p.y = wg.y;
