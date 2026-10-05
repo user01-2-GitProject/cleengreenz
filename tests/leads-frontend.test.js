@@ -407,7 +407,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     );
   });
 
-  await t.test('tracks clicks on free estimate links and shifts focus to first input field', async () => {
+  await t.test('tracks clicks on free estimate links, pre-selects service option if data-service set, and shifts focus to first input field', async () => {
     const tracked = [];
     const { window, document } = setupEnvironment({
       trackLead: (type, location) => {
@@ -418,12 +418,18 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     const link = document.createElement('a');
     link.href = '#estimate';
     link.dataset.leadLocation = 'hero';
+    link.dataset.service = 'Fall leaf cleanup';
     document.body.appendChild(link);
+
+    const serviceSelect = document.getElementById('f-service');
+    // Change initial value to something else to verify pre-selection change
+    serviceSelect.value = 'Snow removal';
 
     link.click();
 
     assert.equal(tracked.length, 1);
     assert.deepEqual(tracked[0], { type: 'estimate_click', location: 'hero' });
+    assert.equal(serviceSelect.value, 'Fall leaf cleanup');
 
     await new Promise((r) => setTimeout(r, 60));
     const nameInput = document.getElementById('f-name');
