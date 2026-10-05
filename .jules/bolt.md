@@ -14,3 +14,9 @@
 **Learning:** In animation frame handlers and leaf/particle processing functions, repeatedly querying Map instances (e.g. `rects.get(host)`) inside a loop over array elements creates unnecessary hash table lookup overhead. Caching the lookup result in a local variable outside the loop reduces lookups from 2N to 1.
 
 **Action:** Always hoist repeated `Map.get()` or object property lookups outside `forEach` or `for` loops when the key is invariant across iterations.
+
+## 2026-09-28 - Require repeatable browser profiles before optimizing low-count animation structures
+
+**Learning:** Micro-optimizations to animation frame handlers that replace small Map lookups with added cached state complexity require end-to-end browser profiling demonstrating a user-visible bottleneck or measured frame-time gain. Without a repeatable browser trace proving a frame-time regression, adding cached state management increases code complexity without proven benefit.
+
+**Action:** Only optimize animation state lookups when accompanied by a repeatable browser profile showing measurable frame-time improvement.
