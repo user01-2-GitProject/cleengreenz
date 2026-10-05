@@ -12,9 +12,12 @@ const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'":
 
 function clean(value, field) {
   if (typeof value !== 'string') return null;
-  let val = value;
+  // Strip non-printable ASCII control characters (excluding tab and newline).
+  let val = value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   if (field !== 'notes') {
     val = val.replace(/[\r\n]+/g, ' ');
+  } else {
+    val = val.replace(/\r\n?/g, '\n');
   }
   const s = val.trim().slice(0, LIMITS[field]);
   return s || null;
