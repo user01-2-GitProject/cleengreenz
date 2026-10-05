@@ -43,9 +43,9 @@
       if (a.dataset.service) {
         var serviceSelect = document.getElementById('f-service');
         if (serviceSelect) {
+          var targetVal = a.dataset.service;
           for (var i = 0; i < serviceSelect.options.length; i++) {
-            var opt = serviceSelect.options[i];
-            if (opt.value === a.dataset.service || opt.text === a.dataset.service) {
+            if (serviceSelect.options[i].text === targetVal || serviceSelect.options[i].value === targetVal) {
               serviceSelect.selectedIndex = i;
               break;
             }
