@@ -318,11 +318,15 @@ test('Estimate form field validation & user input handling', async (t) => {
 
     assert.equal(nameInput.getAttribute('aria-invalid'), 'true');
     assert.equal(nameInput.getAttribute('aria-describedby'), 'f-name-err');
-    assert.equal(document.querySelector('#f-name-err').classList.contains('show'), true);
+    const nameErr = document.querySelector('#f-name-err');
+    assert.equal(nameErr.classList.contains('show'), true);
+    assert.equal(nameErr.getAttribute('role'), 'alert', 'error element must have role="alert" for assistive tech');
 
     assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
     assert.equal(phoneInput.getAttribute('aria-describedby'), 'f-phone-err');
-    assert.equal(document.querySelector('#f-phone-err').classList.contains('show'), true);
+    const phoneErr = document.querySelector('#f-phone-err');
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.getAttribute('role'), 'alert', 'error element must have role="alert" for assistive tech');
 
     // Address input was valid
     assert.equal(addressInput.hasAttribute('aria-invalid'), false);
@@ -463,6 +467,13 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.equal(mobileCallBtn.getAttribute('aria-label'), 'Call Chris at (269) 362-8286');
     assert.ok(mobileCallBtn.querySelector('svg'), 'mobile bar call link includes phone icon svg');
   });
+});
+
+test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
+  const { document } = setupEnvironment();
+  const ribbonLink = document.querySelector('.ribbon a[href="#estimate"]');
+  assert.ok(ribbonLink, 'seasonal ribbon CTA link exists');
+  assert.equal(ribbonLink.dataset.leadLocation, 'ribbon');
 });
 
 test('Accessibility attributes & focus management enhancements', async (t) => {

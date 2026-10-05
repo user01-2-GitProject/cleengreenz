@@ -506,7 +506,7 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <!-- Seasonal ribbon: swap this line each season -->
-<div class="ribbon">🍂 Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate" data-service="Fall leaf cleanup">Save your spot</a></div>
+<div class="ribbon">🍂 Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate" data-service="Fall leaf cleanup" data-lead-location="ribbon">Save your spot</a></div>
 
 <header class="site">
   <div class="header-town-media" aria-hidden="true">
@@ -743,10 +743,10 @@
           <h3>Request a free estimate</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
-            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err">Please enter your name</span></div>
-            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err">Please enter your phone number</span></div>
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err" role="alert">Please enter your phone number</span></div>
           </div>
-          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err">Please enter your street address</span></div>
+          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err" role="alert">Please enter your street address</span></div>
           <div class="field">
             <label for="f-service">What do you need?</label>
             <select id="f-service" name="service">
