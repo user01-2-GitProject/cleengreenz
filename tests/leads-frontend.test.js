@@ -268,6 +268,12 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
     const doneBox = form.querySelector('.form-done');
     const resetBtn = doneBox.querySelector('#form-reset-btn');
 
+    // Trigger validation first so reset verifies stale error state is cleared.
+    nameInput.value = '';
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+    assert.equal(nameInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(document.querySelector('#f-name-err').classList.contains('show'), true);
+
     nameInput.value = 'Alice Smith';
     phoneInput.value = '269-555-9999';
     addressInput.value = '456 Elm St';
@@ -289,6 +295,8 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
     assert.equal(addressInput.value, '');
     assert.equal(notesInput.value, '');
     assert.equal(notesCount.textContent, '· 500 chars left');
+    assert.equal(nameInput.hasAttribute('aria-invalid'), false);
+    assert.equal(document.querySelector('#f-name-err').classList.contains('show'), false);
     assert.equal(document.activeElement, nameInput);
   });
 });
