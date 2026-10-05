@@ -41,3 +41,7 @@
 ## 2026-10-02 - Contextual Service Pre-Selection for Form Jump CTAs
 **Learning:** In single-page websites where multiple call-to-action buttons across different feature sections jump to a single shared estimate form (`#estimate`), leaving form dropdowns set to the default option forces users to manually re-select the service they were just reading about. Attaching `data-service` metadata to section-specific CTAs and pre-selecting matching `<select>` options on click provides smooth, contextual continuity.
 **Action:** When linking section CTAs to a unified form, pass `data-service` on the trigger element to automatically pre-select the relevant option in the form's service select dropdown.
+
+## 2026-10-05 - Mobile Keyboard Action Hints with enterkeyhint & inputmode
+**Learning:** Standard HTML form text inputs on mobile devices often show a generic "Enter" or "Go" key on the virtual keyboard, causing users to accidentally submit multi-field forms prematurely or wonder how to move to the next field. Providing `enterkeyhint="next"` on sequential input fields, `enterkeyhint="done"` or `"send"` on the final note field, and `inputmode="tel"` on telephone fields optimizes the mobile soft keyboard layout and workflow without extra CSS or JS.
+**Action:** Always complement `type` and `autocomplete` attributes on mobile form inputs with explicit `enterkeyhint` and `inputmode` attributes.
