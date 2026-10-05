@@ -257,10 +257,11 @@
   @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
     20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
 
-  /* Grass Patch styles on lawn (.green sections) */
-  .lawn-grass-layer { position: absolute; inset: 0 100px 0 0; pointer-events: none; overflow: visible; z-index: 2; }
+  /* Grass patches are scattered across the dark-green lawn sections, behind their content. */
+  .green > .wrap { position: relative; z-index: 1; }
+  .lawn-grass-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 0; }
   .grass-patch { position: absolute; width: 64px; height: 44px; pointer-events: none; transition: transform .4s ease, opacity .4s ease; transform-origin: bottom center; }
-  .grass-patch.mowed { transform: scaleY(0.15); opacity: 0.35; }
+  .grass-patch.mowed { transform: scale(var(--grass-scale, 1)) scaleY(0.15); opacity: 0.35; }
   .grass-patch svg { width: 100%; height: 100%; overflow: visible; display: block; }
   .grass-patch.mowing { transform: none; opacity: 1; }
   .grass-patch.mowing svg { clip-path: inset(0 var(--cut-right, 0%) 0 var(--cut, 0%)); }
@@ -269,6 +270,19 @@
   .pet-wrap.riding .pet-mower { display: block; }
   .pet-wrap.riding .pet-visual { visibility: hidden; }
   .pet-wrap.riding .pet-inner { animation: none; transform: none; }
+  .pet-wheel { position: absolute; display: block; border: 2px solid #17181b; border-radius: 50%;
+    background: repeating-conic-gradient(#292a2e 0 9deg, #414248 9deg 16deg, #242529 16deg 24deg);
+    box-shadow: inset 0 0 0 3px #202125; transform-origin: center; }
+  .pet-wheel::before { content: ""; position: absolute; inset: 25%; border: 2px solid #a96e00; border-radius: 50%;
+    background: repeating-conic-gradient(#ffd22f 0 28deg, #d99a08 28deg 44deg); }
+  .pet-wheel::after { content: ""; position: absolute; left: 43%; top: 43%; width: 14%; height: 14%;
+    border-radius: 50%; background: #704b12; box-shadow: 0 0 0 1px #ffe07b; }
+  .pet-wheel-drive { left: 25px; top: 143px; width: 48px; height: 48px; }
+  .pet-wheel-roller { left: 125px; top: 176px; width: 16px; height: 16px; }
+  .pet-wheel-caster { left: 146px; top: 167px; width: 34px; height: 34px; }
+  .pet-wheel-front { left: 178px; top: 152px; width: 33px; height: 33px; }
+  .pet-wrap.riding .pet-wheel { animation: mower-wheel-spin .55s linear infinite; }
+  @keyframes mower-wheel-spin { to { transform: rotate(360deg); } }
   .grass-blade { transform-origin: bottom center; animation: grass-sway 3.2s ease-in-out infinite alternate; }
   .grass-blade-1 { animation-delay: 0s; fill: #285b35; }
   .grass-blade-2 { animation-delay: -0.7s; fill: #245530; }
@@ -1254,10 +1268,12 @@
           '<path class="grass-blade grass-blade-2" d="M8,41 Q14,28 12,18 Q16,28 16,41 Z" fill="#285b35"/>' +
         '</svg>';
 
-      function placeGrass(el, slot) {
-        // Disjoint lanes keep random patches apart and inside the section on phones.
-        el.style.left = 'calc(' + (8 + slot * 28 + Math.random() * 15) + '% - 24px)';
-        el.style.bottom = (8 + Math.random() * 35) + 'px';
+      function placeGrass(el, sec, slot) {
+        // Spread patches across the full section; choose a new height when a mowed patch regrows.
+        var maxBottom = Math.max(24, sec.clientHeight - 58);
+        el.style.left = (4 + slot * 31 + Math.random() * 10) + '%';
+        el.style.bottom = (12 + Math.random() * maxBottom) + 'px';
+        el.style.setProperty('--grass-scale', (0.8 + Math.random() * 0.45).toFixed(2));
         updateRects();
       }
       function setupGrassPatches() {
@@ -1270,13 +1286,13 @@
             layer.setAttribute('aria-hidden', 'true');
             sec.appendChild(layer);
           }
-          // Spawn 3 patches per green section at scattered positions along the bottom grass lawn line
+          // Spread patches through the full dark-green surface rather than only along its bottom edge.
           var positions = [0, 1, 2];
           positions.forEach(function (pct) {
             var el = document.createElement('div');
             el.className = 'grass-patch';
             el.innerHTML = grassSvgTemplate;
-            placeGrass(el, pct);
+            placeGrass(el, sec, pct);
             layer.appendChild(el);
             grassPatches.push({ el: el, sec: sec, slot: pct, mowed: false, mowedAt: 0 });
           });
@@ -1287,6 +1303,11 @@
       var mowerSprite = document.createElement('span');
       mowerSprite.className = 'pet-mower';
       mowerSprite.setAttribute('aria-hidden', 'true');
+      ['drive', 'roller', 'caster', 'front'].forEach(function (wheel) {
+        var el = document.createElement('span');
+        el.className = 'pet-wheel pet-wheel-' + wheel;
+        mowerSprite.appendChild(el);
+      });
       if (wrap && !reduceMotion) wrap.querySelector('.pet-inner').appendChild(mowerSprite);
 
       function stopGrassMowing(gp) {
@@ -1313,7 +1334,7 @@
             if (now - gp.mowedAt > 18000) {
               gp.mowed = false;
               gp.el.classList.remove('mowed');
-              placeGrass(gp.el, gp.slot);
+              placeGrass(gp.el, gp.sec, gp.slot);
             }
           } else if (visible(rects.get(gp.el))) {
             return gp;
