@@ -40,6 +40,18 @@
     var a = e.target.closest('a[href="#estimate"]');
     if (a) {
       if (window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+      if (a.dataset.service) {
+        var serviceSelect = document.getElementById('f-service');
+        if (serviceSelect) {
+          var targetVal = a.dataset.service;
+          for (var i = 0; i < serviceSelect.options.length; i++) {
+            if (serviceSelect.options[i].text === targetVal || serviceSelect.options[i].value === targetVal) {
+              serviceSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
       var nameInput = document.getElementById('f-name');
       if (nameInput) {
         setTimeout(function () { nameInput.focus(); }, 50);
