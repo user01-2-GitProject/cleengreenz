@@ -25,6 +25,7 @@ export function json(body, status = 200) {
     status,
     headers: {
       'content-type': 'application/json',
+      'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
@@ -73,6 +74,11 @@ async function emailChris(env, lead) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
+  const contentType = request.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return json({ ok: false, error: 'bad_request' }, 400);
+  }
+
   let body;
   try {
     body = await request.json();
