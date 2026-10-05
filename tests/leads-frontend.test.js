@@ -294,7 +294,7 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
 });
 
 test('Estimate form field validation & user input handling', async (t) => {
-  await t.test('prevents submission and highlights error fields with role="alert" when required fields are empty', async () => {
+  await t.test('prevents submission and highlights error fields when required fields are empty', async () => {
     let fetchCalled = false;
     const { window, document } = setupEnvironment({
       fetch: () => {
@@ -316,15 +316,15 @@ test('Estimate form field validation & user input handling', async (t) => {
 
     assert.equal(fetchCalled, false, 'fetch should not be called when form is invalid');
 
-    const nameErr = document.querySelector('#f-name-err');
     assert.equal(nameInput.getAttribute('aria-invalid'), 'true');
     assert.equal(nameInput.getAttribute('aria-describedby'), 'f-name-err');
+    const nameErr = document.querySelector('#f-name-err');
     assert.equal(nameErr.classList.contains('show'), true);
     assert.equal(nameErr.getAttribute('role'), 'alert', 'error element must have role="alert" for assistive tech');
 
-    const phoneErr = document.querySelector('#f-phone-err');
     assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
     assert.equal(phoneInput.getAttribute('aria-describedby'), 'f-phone-err');
+    const phoneErr = document.querySelector('#f-phone-err');
     assert.equal(phoneErr.classList.contains('show'), true);
     assert.equal(phoneErr.getAttribute('role'), 'alert', 'error element must have role="alert" for assistive tech');
 
@@ -411,7 +411,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     );
   });
 
-  await t.test('tracks clicks on free estimate links and shifts focus to first input field', async () => {
+  await t.test('tracks clicks on free estimate links, pre-selects service option if data-service set, and shifts focus to first input field', async () => {
     const tracked = [];
     const { window, document } = setupEnvironment({
       trackLead: (type, location) => {
@@ -422,24 +422,58 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     const link = document.createElement('a');
     link.href = '#estimate';
     link.dataset.leadLocation = 'hero';
+    link.dataset.service = 'Fall leaf cleanup';
     document.body.appendChild(link);
+
+    const serviceSelect = document.getElementById('f-service');
+    // Change initial value to something else to verify pre-selection change
+    serviceSelect.value = 'Snow removal';
 
     link.click();
 
     assert.equal(tracked.length, 1);
     assert.deepEqual(tracked[0], { type: 'estimate_click', location: 'hero' });
+    assert.equal(serviceSelect.value, 'Fall leaf cleanup');
 
     await new Promise((r) => setTimeout(r, 60));
     const nameInput = document.getElementById('f-name');
     assert.equal(document.activeElement, nameInput);
   });
 
-  await t.test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
-    const { document } = setupEnvironment();
-    const ribbonLink = document.querySelector('.ribbon a[href="#estimate"]');
-    assert.ok(ribbonLink, 'seasonal ribbon CTA link exists');
-    assert.equal(ribbonLink.dataset.leadLocation, 'ribbon');
+  await t.test('pre-selects matching service option when clicking estimate link with data-service', async () => {
+    const { window, document } = setupEnvironment();
+
+    const serviceSelect = document.getElementById('f-service');
+    serviceSelect.value = 'Weekly mowing and edging';
+
+    const seasonCta = document.querySelector('a[href="#estimate"][data-service]');
+    assert.ok(seasonCta, 'seasonal estimate link with data-service should exist');
+    assert.equal(seasonCta.getAttribute('data-service'), 'Fall leaf cleanup');
+
+    seasonCta.click();
+
+    assert.equal(serviceSelect.value, 'Fall leaf cleanup');
+
+    await new Promise((r) => setTimeout(r, 60));
+    const nameInput = document.getElementById('f-name');
+    assert.equal(document.activeElement, nameInput);
   });
+
+  await t.test('mobile contact bar link contains phone icon and accessible aria-label', () => {
+    const { document } = setupEnvironment();
+
+    const mobileCallBtn = document.querySelector('.mobile-bar a[data-lead="call"]');
+    assert.ok(mobileCallBtn, 'mobile bar call link exists');
+    assert.equal(mobileCallBtn.getAttribute('aria-label'), 'Call Chris at (269) 362-8286');
+    assert.ok(mobileCallBtn.querySelector('svg'), 'mobile bar call link includes phone icon svg');
+  });
+});
+
+test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
+  const { document } = setupEnvironment();
+  const ribbonLink = document.querySelector('.ribbon a[href="#estimate"]');
+  assert.ok(ribbonLink, 'seasonal ribbon CTA link exists');
+  assert.equal(ribbonLink.dataset.leadLocation, 'ribbon');
 });
 
 test('Accessibility attributes & focus management enhancements', async (t) => {
