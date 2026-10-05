@@ -14,3 +14,9 @@
 **Learning:** In animation frame handlers and leaf/particle processing functions, repeatedly querying Map instances (e.g. `rects.get(host)`) inside a loop over array elements creates unnecessary hash table lookup overhead. Caching the lookup result in a local variable outside the loop reduces lookups from 2N to 1.
 
 **Action:** Always hoist repeated `Map.get()` or object property lookups outside `forEach` or `for` loops when the key is invariant across iterations.
+
+## 2026-09-28 - Micro-optimizations on cold event paths without measurable impact are rejected
+
+**Learning:** Caching DOM query lookups on infrequent event paths (like single-shot form submission/reset handlers) provides no measurable frame rate or latency improvement and adds maintenance overhead.
+
+**Action:** Focus performance optimizations on hot paths (animation frame loops, scroll/resize handlers, large list processing) where DOM or calculation overhead directly impacts measurable performance.
