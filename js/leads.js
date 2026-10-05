@@ -98,6 +98,18 @@
   if (resetBtn) {
     resetBtn.addEventListener('click', function () {
       form.reset();
+      for (var i = 0; i < requiredFields.length; i++) {
+        var field = requiredFields[i];
+        field.removeAttribute('aria-invalid');
+        var errEl = errorFor(field);
+        if (errEl) {
+          errEl.classList.remove('show');
+          var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+            .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+          if (descriptions) field.setAttribute('aria-describedby', descriptions);
+          else field.removeAttribute('aria-describedby');
+        }
+      }
       done.classList.remove('show');
       fieldsBox.style.display = '';
       var heading = done.querySelector('h3');
