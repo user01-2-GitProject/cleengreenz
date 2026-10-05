@@ -37,3 +37,7 @@
 ## 2026-09-30 - Interactive Popover Triggers and Global Button Focus Rings
 **Learning:** Interactive floating mascot and popover trigger buttons lack popup state context for screen readers when `aria-expanded` and `aria-controls` are omitted. Dynamically toggling `aria-expanded="true"|"false"` on trigger buttons when associated speech bubbles open or close gives assistive technologies critical context. Additionally, scoping global focus ring rules to `button:focus-visible` ensures inline controls inside speech bubbles or popups inherit consistent high-contrast focus rings (`var(--gold)`) during keyboard navigation.
 **Action:** Always link interactive popover triggers to controlled target containers using `aria-controls` and dynamically update `aria-expanded` on open/close events, while including `button:focus-visible` in global CSS focus ring rules.
+
+## 2026-10-02 - Automatic Service Option Pre-Selection via Data Attributes
+**Learning:** When users click section-specific CTA buttons (e.g. "Book fall or winter service") that jump to a general form on a single-page marketing site, requiring them to re-select their intended service in a dropdown introduces unnecessary cognitive load and friction. Decorating anchor links with `data-service="[Option Text]"` and programmatically setting `selectedIndex` on click seamlessly pre-selects the requested option.
+**Action:** Attach `data-service="..."` to targeted anchor links pointing to form sections and handle pre-selection in global click delegation listeners.

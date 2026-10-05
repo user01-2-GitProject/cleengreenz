@@ -429,6 +429,20 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     const nameInput = document.getElementById('f-name');
     assert.equal(document.activeElement, nameInput);
   });
+
+  await t.test('pre-selects service option in #f-service dropdown when clicking a link with data-service', async () => {
+    const { document } = setupEnvironment();
+    const serviceSelect = document.getElementById('f-service');
+
+    const link = document.createElement('a');
+    link.href = '#estimate';
+    link.dataset.service = 'Snow removal';
+    document.body.appendChild(link);
+
+    link.click();
+
+    assert.equal(serviceSelect.value, 'Snow removal');
+  });
 });
 
 test('Accessibility attributes & focus management enhancements', async (t) => {
