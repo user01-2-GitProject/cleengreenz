@@ -74,13 +74,16 @@
   var button = form.querySelector('button[type="submit"]');
   var requiredFields = form.querySelectorAll('[required]');
   var resetBtn = done ? done.querySelector('#form-reset-btn') : null;
+  // Bolt Optimization: Cache DOM sub-element queries once on initialization to avoid
+  // repeating querySelector('h3') and querySelector('p') calls on form interactions.
+  var doneHeading = done ? done.querySelector('h3') : null;
+  var doneParagraph = done ? done.querySelector('p') : null;
   var sending = false;
 
   function showDone() {
     fieldsBox.style.display = 'none';
     done.classList.add('show');
-    var heading = done.querySelector('h3');
-    if (heading) heading.focus();
+    if (doneHeading) doneHeading.focus();
   }
 
   if (resetBtn) {
@@ -88,10 +91,8 @@
       form.reset();
       done.classList.remove('show');
       fieldsBox.style.display = '';
-      var heading = done.querySelector('h3');
-      if (heading) heading.textContent = 'Thanks, got it!';
-      var p = done.querySelector('p');
-      if (p) p.textContent = 'Chris has your request and will be in touch soon.';
+      if (doneHeading) doneHeading.textContent = 'Thanks, got it!';
+      if (doneParagraph) doneParagraph.textContent = 'Chris has your request and will be in touch soon.';
       if (notesInput && notesCount) updateNotesCount();
       var firstInput = form.querySelector('#f-name');
       if (firstInput) firstInput.focus();
@@ -108,8 +109,8 @@
       'Service: ' + d.service,
       d.notes ? 'Notes: ' + d.notes : ''
     ].join('\n');
-    done.querySelector('h3').textContent = 'Almost there!';
-    done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
+    if (doneHeading) doneHeading.textContent = 'Almost there!';
+    if (doneParagraph) doneParagraph.textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
     var cleanService = (d.service || 'lawn care').replace(/\r?\n|\r/g, ' ');
     var cleanName = (d.name || '').replace(/\r?\n|\r/g, ' ');
