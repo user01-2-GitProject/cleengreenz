@@ -53,6 +53,7 @@ test('json helper function', async (t) => {
   await t.test('sets content-type and security headers', async () => {
     const res = json({ message: 'hello' });
     assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.equal(res.headers.get('cache-control'), 'no-store');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
@@ -121,9 +122,23 @@ test('authorized authentication helper function', async (t) => {
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
+  await t.test('returns 400 JSON response when Content-Type is not application/json', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 400);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
+  });
+
   await t.test('returns 400 JSON response on invalid JSON request body', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: 'invalid-json-{',
     });
     const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
