@@ -175,7 +175,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: true });
   });
 
-  await t.test('sanitizes linebreaks in single-line form fields when submitted', async () => {
+  await t.test('sanitizes linebreaks and control characters in form fields when submitted', async () => {
     let capturedBody = null;
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, options) => {
@@ -189,11 +189,11 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           type: 'form',
-          name: 'Jane\r\nDoe',
+          name: 'Jane\x00\x08\r\nDoe\x1F',
           phone: '269-555-0199\n',
           address: '123\r\nMain\nSt',
           service: 'Lawn\rCare',
-          notes: 'Line 1\nLine 2',
+          notes: 'Line 1\r\nLine 2\rLine 3\x07',
         }),
       });
 
@@ -209,7 +209,8 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       assert.match(capturedBody.text, /Phone: 269-555-0199/);
       assert.match(capturedBody.text, /Address: 123 Main St/);
       assert.match(capturedBody.text, /Service: Lawn Care/);
-      assert.match(capturedBody.text, /Notes: Line 1\nLine 2/);
+      assert.match(capturedBody.text, /Notes: Line 1\nLine 2\nLine 3/);
+      assert.equal(capturedBody.html.includes('Line 1<br>Line 2<br>Line 3'), true);
     } finally {
       globalThis.fetch = originalFetch;
     }
