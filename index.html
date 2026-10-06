@@ -977,7 +977,9 @@
       catchers.forEach(function (el) { piles.set(el, []); });
       var rects = new Map();
       var catcherItems = catchers.map(function (el) {
-        return { el: el, pile: piles.get(el), r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0 };
+        var ci = { el: el, pile: piles.get(el), r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0 };
+        el._ci = ci;
+        return ci;
       });
       var MAX_PILE = 12, CLEAR_AT = 6;
       function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -1021,19 +1023,23 @@
         l.lastRx = l.lastRy = l.lastRrot = null;
         l.host = null;
       }
+      // Performance optimization: lookup host._ci directly to avoid Map lookups on piles and rects
       function blowPile(host, dir) {
-        var pile = piles.get(host);
-        var hr = rects.get(host);
-        if (!hr) return;
-        pile.forEach(function (l) {
+        var ci = host ? host._ci : null;
+        if (!ci || !ci.r) return;
+        var pile = ci.pile;
+        var hr = ci.r;
+        for (var i = 0; i < pile.length; i++) {
+          var l = pile[i];
           l.state = 'blown';
           l.x = hr.left + l.ox - l.size / 2;
           l.y = hr.top - l.size * 0.75 - l.lift;
           l.vx = dir * rnd(140, 360);
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
-        });
-        piles.set(host, []);
+        }
+        ci.pile = [];
+        piles.set(host, ci.pile);
       }
 
       // Pet
@@ -1253,9 +1259,12 @@
         return { x: face > 0 ? r.left - 120 + progress * r.width : r.right - PET_W + 120 - progress * r.width,
           y: r.bottom - PET_H + 2, face: face };
       }
+      // Performance optimization: read direct cached bounding rect target.r (grass) or target._ci.r (button)
       function targetRect(target, type) {
-        var el = type === 'grass' ? target && target.el : target;
-        return el ? rects.get(el) : null;
+        if (!target) return null;
+        if (type === 'grass') return target.r || (target.el ? rects.get(target.el) : null);
+        var ci = target._ci;
+        return ci ? ci.r : rects.get(target);
       }
       // Grass Patches on .green sections representing lawn
       var grassPatches = [];
@@ -1328,6 +1337,7 @@
         gp.el.classList.add('mowing');
       }
 
+      // Performance optimization: use gp.r and ci.r directly to avoid rects.get / piles.get Map lookups
       function readyGrassPatch() {
         var now = performance.now();
         for (var i = 0; i < grassPatches.length; i++) {
@@ -1339,7 +1349,7 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.sec, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
@@ -1348,10 +1358,11 @@
 
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci.el; biggest = count; }
+        }
         return chosen;
       }
 
@@ -1361,11 +1372,11 @@
         last = now;
         // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
         if (rectsDirty) {
-          catchers.forEach(function (el, idx) {
-            var r = el.getBoundingClientRect();
+          for (var j = 0; j < catcherItems.length; j++) {
+            var ci = catcherItems[j];
+            var r = ci.el.getBoundingClientRect();
             var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
-            rects.set(el, valid);
-            var ci = catcherItems[idx];
+            rects.set(ci.el, valid);
             ci.r = valid;
             if (valid) {
               ci.top = valid.top;
@@ -1373,11 +1384,14 @@
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
             }
-          });
-          grassPatches.forEach(function (gp) {
-            var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
-          });
+          }
+          for (var k = 0; k < grassPatches.length; k++) {
+            var gp = grassPatches[k];
+            var gr = gp.el.getBoundingClientRect();
+            var gValid = gr.width > 0 && gr.bottom > 0 && gr.top < H ? gr : null;
+            rects.set(gp.el, gValid);
+            gp.r = gValid;
+          }
           rectsDirty = false;
         }
 
@@ -1411,7 +1425,8 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            var hr = rects.get(l.host);
+            var ci = l.ci || (l.host && l.host._ci);
+            var hr = ci ? ci.r : rects.get(l.host);
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;
