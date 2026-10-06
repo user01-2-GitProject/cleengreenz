@@ -553,7 +553,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline';"
     );
   });
 
@@ -601,7 +601,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline';"
     );
   });
 });
@@ -689,7 +689,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline';"
     );
     const html = await res.text();
 
