@@ -1076,7 +1076,8 @@
         'Fall is the best time to seed. Your lawn will thank you in spring.',
         'Getting tired of me? <button type="button" data-pet-hide aria-label="Hide Pet Chris mascot">Hide me</button>'
       ];
-      var lineIndex = 0, bubbleTimer = null;
+      var lineIndex = 0, bubbleTimer = null, bubbleTimerMs = 0, bubbleTimerStart = 0;
+      var isHovered = false, isFocused = false, isBubbleInteracting = false;
       if (!hidePet) {
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
@@ -1089,11 +1090,39 @@
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
 
+        function checkBubbleInteraction() {
+          var interacting = isHovered || isFocused;
+          if (interacting && !isBubbleInteracting) {
+            isBubbleInteracting = true;
+            if (bubbleTimer) {
+              clearTimeout(bubbleTimer);
+              bubbleTimer = null;
+              var elapsed = performance.now() - bubbleTimerStart;
+              bubbleTimerMs = Math.max(1000, bubbleTimerMs - elapsed);
+            }
+          } else if (!interacting && isBubbleInteracting) {
+            isBubbleInteracting = false;
+            if (bubble.classList.contains('is-visible') && bubbleTimerMs > 0) {
+              clearTimeout(bubbleTimer);
+              bubbleTimerStart = performance.now();
+              bubbleTimer = setTimeout(hideBubble, bubbleTimerMs);
+            }
+          }
+        }
+
+        bubble.addEventListener('mouseenter', function () { isHovered = true; checkBubbleInteraction(); });
+        bubble.addEventListener('mouseleave', function () { isHovered = false; checkBubbleInteraction(); });
+        bubble.addEventListener('focusin', function () { isFocused = true; checkBubbleInteraction(); });
+        bubble.addEventListener('focusout', function () {
+          setTimeout(function () {
+            isFocused = bubble.contains(document.activeElement);
+            checkBubbleInteraction();
+          }, 0);
+        });
+
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
-            var restorePetFocus = bubble.contains(document.activeElement);
             hideBubble();
-            if (restorePetFocus && pet) pet.focus();
           }
         });
         sprite = wrap.querySelector('.pet-sprite');
@@ -1208,8 +1237,15 @@
       }
       function hideBubble() {
         if (!bubble) return;
+        var restorePetFocus = bubble.contains(document.activeElement);
         bubble.classList.remove('is-visible');
-        if (pet) pet.setAttribute('aria-expanded', 'false');
+        if (pet) {
+          pet.setAttribute('aria-expanded', 'false');
+          if (restorePetFocus) pet.focus();
+        }
+        clearTimeout(bubbleTimer);
+        bubbleTimer = null;
+        bubbleTimerMs = 0;
       }
       function say(html, ms) {
         if (!bubble) return;
@@ -1217,7 +1253,14 @@
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+        bubbleTimer = null;
+        if (ms) {
+          bubbleTimerMs = ms;
+          bubbleTimerStart = performance.now();
+          if (!isBubbleInteracting) {
+            bubbleTimer = setTimeout(hideBubble, ms);
+          }
+        }
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {

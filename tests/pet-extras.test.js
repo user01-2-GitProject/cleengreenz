@@ -186,4 +186,60 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('pauses auto-dismiss timer on hover/focus-within and restores focus on dismiss when focus was inside bubble', async () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document, window } = dom.window;
+      const wrap = document.querySelector('.pet-wrap');
+      const pet = wrap.querySelector('.pet');
+      const bubble = wrap.querySelector('.pet-bubble');
+
+      // Set speech bubble content with an anchor link directly
+      bubble.innerHTML = 'Want a free estimate? <a href="#estimate" data-pet-go>Let\'s do it</a>';
+      bubble.classList.add('is-visible');
+
+      const link = bubble.querySelector('a');
+      assert.ok(link, 'bubble should contain interactive link');
+
+      // Mouseenter should pause timer
+      bubble.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: true }));
+
+      // Advance clock past standard timer duration
+      await new Promise((r) => setTimeout(r, 6500));
+      assert.equal(bubble.classList.contains('is-visible'), true, 'bubble should remain visible while hovered');
+
+      // Mouseleave resumes timer
+      bubble.dispatchEvent(new window.MouseEvent('mouseleave', { bubbles: true }));
+
+      // Focus inside bubble (using a button to avoid JSDOM anchor navigation focus reset)
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.petGo = '';
+      bubble.appendChild(btn);
+
+      btn.focus();
+      assert.equal(document.activeElement, btn);
+      bubble.dispatchEvent(new window.FocusEvent('focusin', { bubbles: true }));
+
+      // Click button inside bubble which calls hideBubble()
+      btn.click();
+      assert.equal(bubble.classList.contains('is-visible'), false, 'bubble should hide on button click');
+      assert.equal(document.activeElement, pet, 'dismissing bubble while focused inside should restore focus to trigger button');
+    } finally {
+      dom.window.close();
+    }
+  });
 });
