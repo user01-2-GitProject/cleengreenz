@@ -20,3 +20,9 @@
 **Learning:** When DOM element position is updated via CSS custom properties (e.g., `wrap.style.setProperty('--x', ...)` with CSS `transform: translate3d(var(--x), ...)`), reading `wrap.style.transform` returns an empty string, causing regex matching on `style.transform` to fail and waste CPU cycles during periodic polling or animation ticks. Querying `wrap.style.getPropertyValue('--x')` directly is fast, accurate, and avoids failed regex executions.
 
 **Action:** Always inspect CSS custom properties directly via `style.getPropertyValue()` when element state/transforms are driven by custom properties rather than string parsing `style.transform`.
+
+## 2026-09-29 - Clear cached pile arrays in-place to preserve object reference equality
+
+**Learning:** Reassigning an array property on a cached container object (e.g., `ci.pile = []`) breaks reference equality with existing collections referencing that same array instance (e.g., `piles.get(el)`). Clearing the array in-place via `pile.length = 0` maintains reference identity across all references and avoids state desynchronization without allocation overhead.
+
+**Action:** When caching object references across data structures, always mutate array state in-place (`array.length = 0`) instead of reassigning new array literals.
