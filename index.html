@@ -1146,6 +1146,16 @@
           react('reacting', 650);
           say(lines[lineIndex++ % lines.length], 6000);
         });
+        wrap.addEventListener('mouseenter', function () { clearTimeout(bubbleTimer); });
+        wrap.addEventListener('mouseleave', function () {
+          if (bubble && bubble.classList.contains('is-visible')) scheduleHide(2000);
+        });
+        wrap.addEventListener('focusin', function () { clearTimeout(bubbleTimer); });
+        wrap.addEventListener('focusout', function (e) {
+          if (bubble && bubble.classList.contains('is-visible') && !wrap.contains(e.relatedTarget)) {
+            scheduleHide(2000);
+          }
+        });
         bubble.addEventListener('click', function (e) {
           if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
@@ -1208,16 +1218,23 @@
       }
       function hideBubble() {
         if (!bubble) return;
+        if (bubble.contains(document.activeElement) && pet) pet.focus();
         bubble.classList.remove('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'false');
+      }
+      function scheduleHide(ms) {
+        clearTimeout(bubbleTimer);
+        var isInteractive = wrap && (wrap.matches(':hover') || wrap.contains(document.activeElement));
+        if (ms && !isInteractive) {
+          bubbleTimer = setTimeout(hideBubble, ms);
+        }
       }
       function say(html, ms) {
         if (!bubble) return;
         bubble.innerHTML = html;
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
-        clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+        scheduleHide(ms || 6000);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
