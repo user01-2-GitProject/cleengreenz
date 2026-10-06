@@ -367,6 +367,7 @@
   .service {
     display: flex; gap: 16px; align-items: flex-start; background: var(--paper); border-radius: var(--radius);
     padding: 22px; border: 2px solid var(--cream-2); transition: transform .2s ease, border-color .2s ease;
+    text-decoration: none; color: inherit;
   }
   .service:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
   .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #e3f3d6; color: var(--forest); }
@@ -613,30 +614,30 @@
         <p class="lead">Pick one service or let us handle the whole yard, from the first mow in spring to the last snowfall.</p>
       </div>
       <div class="services-grid">
-        <div class="service reveal">
+        <a class="service reveal" href="#estimate" data-service="Weekly mowing and edging" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V10M9 20V7M13 20v-9M17 20V8M21 20v-6"/></svg></div>
           <div><h3>Weekly mowing</h3><p>Sharp blades and clean stripes, every week of the season.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Weekly mowing and edging" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 6-6"/></svg></div>
           <div><h3>Crisp edging</h3><p>Clean lines along sidewalks and driveways that make the whole yard pop.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Seeding and fertilizing" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10M12 20V10"/><path d="M12 10c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 10c3 0 5-2 5-5-3 0-5 2-5 5Z"/></svg></div>
           <div><h3>Seeding and fertilizing</h3><p>Seed, feed and weed control suited to Michigan soil and weather.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/></svg></div>
           <div><h3>Spring and fall cleanups</h3><p>Leaves, sticks and winter mess, cleared out and hauled off.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Mulch or shrub trimming" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="7"/><path d="M12 17v5M9 22h6"/></svg></div>
           <div><h3>Mulch and shrubs</h3><p>Fresh mulch in the beds and neat, healthy hedges shaped the way you like them.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Snow removal" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.9 6.5l14.2 11M19.1 6.5 4.9 17.5"/></svg></div>
           <div><h3>Snow removal</h3><p>Driveways cleared when the snow flies. Single-car driveways from $30 per visit.</p></div>
-        </div>
+        </a>
       </div>
     </div>
   </section>
