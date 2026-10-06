@@ -54,7 +54,7 @@ const SECURITY_HEADERS = {
   'x-frame-options': 'DENY',
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
-  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline';",
+  'content-security-policy': "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline';",
 };
 
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
