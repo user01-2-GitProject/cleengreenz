@@ -139,6 +139,53 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
     assert.match(mailto, /Address%3A%20123%20Main%20St/);
     assert.match(mailto, /Service%3A%20Fall%20leaf%20cleanup/);
     assert.match(mailto, /Notes%3A%20Call%20before%20coming/);
+  });
+
+  await t.test('sanitizes CRLF linebreaks in name, phone, address, and service for mailto link', async () => {
+    let resolveFetch;
+    const fetchPromise = new Promise((resolve) => { resolveFetch = resolve; });
+
+    const { window, document, getAssignedHref } = setupEnvironment({
+      fetch: () => fetchPromise,
+    });
+
+    const form = document.getElementById('estimate-form');
+    const button = form.querySelector('button[type="submit"]');
+    const originalButtonHtml = button.innerHTML;
+
+    const nameInput = form.querySelector('#f-name');
+    const phoneInput = form.querySelector('#f-phone');
+    const addressInput = form.querySelector('#f-address');
+    const serviceSelect = form.querySelector('#f-service');
+
+    nameInput.value = 'Jane';
+    phoneInput.value = '269-555-0199';
+    addressInput.value = '123 Main St';
+    serviceSelect.value = 'Fall leaf cleanup';
+
+    // Mock Object.fromEntries inside the test so d receives CRLF linebreaks
+    const originalFromEntries = Object.fromEntries;
+    Object.fromEntries = (fd) => ({
+      name: 'Jane\r\nDoe',
+      phone: '269-555-0199\nExtra',
+      address: '123 Main St\rSuite 4',
+      service: 'Fall leaf\r\ncleanup',
+    });
+
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+
+    Object.fromEntries = originalFromEntries;
+
+    resolveFetch({ ok: false, status: 500 });
+    await new Promise((r) => setTimeout(r, 20));
+
+    const mailto = getAssignedHref();
+    assert.match(mailto, /^mailto:chris@cleengreenz\.com\?/);
+    assert.match(mailto, /subject=Estimate%20request%3A%20Fall%20leaf%20cleanup%20\(Jane%20Doe\)/);
+    assert.match(mailto, /Name%3A%20Jane%20Doe/);
+    assert.match(mailto, /Phone%3A%20269-555-0199%20Extra/);
+    assert.match(mailto, /Address%3A%20123%20Main%20St%20Suite%204/);
+    assert.match(mailto, /Service%3A%20Fall%20leaf%20cleanup/);
 
     // Button state restored
     assert.equal(button.disabled, false);
