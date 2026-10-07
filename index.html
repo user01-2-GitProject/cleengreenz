@@ -1346,12 +1346,15 @@
         return null;
       }
 
+      // Performance optimization: Iterate over catcherItems directly instead of catchers.forEach + piles.get(el)
+      // Map lookup, avoiding array iteration callback and Map hash table lookup overhead every frame tick.
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(rects.get(ci.el))) { chosen = ci.el; biggest = count; }
+        }
         return chosen;
       }
 
