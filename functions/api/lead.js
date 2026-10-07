@@ -90,6 +90,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     return json({ ok: false, error: 'bad_request' }, 400);
   }
 
+  // Ensure body is a valid non-null, non-array JSON object before accessing properties
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return json({ ok: false, error: 'bad_request' }, 400);
+  }
+
   const type = body.type === 'form' ? 'form' : CLICK_TYPES.includes(body.type) ? body.type : null;
   if (!type) return json({ ok: false, error: 'bad_type' }, 400);
 
