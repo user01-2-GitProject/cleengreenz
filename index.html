@@ -299,12 +299,20 @@
   @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
   .pet-bubble {
     position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
-    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
+    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 28px 10px 14px;
     font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
     box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
     opacity: 0; visibility: hidden; transform: translateY(4px) scale(.96);
     transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
   }
+  .bubble-close {
+    position: absolute; top: 4px; right: 6px; width: 22px; height: 22px;
+    padding: 0; border: 0; background: none; color: var(--bark-soft);
+    font-size: 1.1rem; line-height: 1; cursor: pointer; border-radius: 50%;
+    display: grid; place-items: center; transition: color .15s ease, background-color .15s ease;
+  }
+  .bubble-close:hover { color: var(--pumpkin-2); background: rgba(59, 47, 36, .08); }
+  .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
   .pet-bubble.is-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
     transition: opacity .16s ease, transform .16s ease;
@@ -1148,6 +1156,11 @@
         });
         bubble.addEventListener('click', function (e) {
           if (e.target.closest('[data-pet-go]')) { hideBubble(); }
+          if (e.target.closest('.bubble-close, [data-pet-close]')) {
+            var restorePetFocus = bubble.contains(document.activeElement);
+            hideBubble();
+            if (restorePetFocus && pet) pet.focus();
+          }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
             var brandLink = document.querySelector('.brand');
@@ -1213,7 +1226,7 @@
       }
       function say(html, ms) {
         if (!bubble) return;
-        bubble.innerHTML = html;
+        bubble.innerHTML = html + '<button type="button" class="bubble-close" aria-label="Dismiss message">&times;</button>';
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
