@@ -157,6 +157,11 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       pet.click(); pet.click(); pet.click();
       const bubble = wrap.querySelector('.pet-bubble');
       assert.equal(pet.getAttribute('aria-expanded'), 'true');
+
+      const closeBtn = bubble.querySelector('.bubble-close');
+      assert.ok(closeBtn, '.bubble-close element should exist inside speech bubble');
+      assert.equal(closeBtn.getAttribute('aria-label'), 'Dismiss message');
+
       const bubbleLink = bubble.querySelector('a');
       bubbleLink.focus();
       assert.equal(document.activeElement, bubbleLink);
@@ -175,6 +180,19 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
         'Escape from a bubble link should restore focus to the trigger');
       assert.equal(pet.getAttribute('aria-expanded'), 'false',
         'Escape must also reset the trigger expanded state');
+
+      // Test explicit click on close button
+      pet.click();
+      assert.equal(pet.getAttribute('aria-expanded'), 'true');
+      const newCloseBtn = bubble.querySelector('.bubble-close');
+      assert.ok(newCloseBtn, 'New speech bubble should contain close button');
+      newCloseBtn.focus();
+      assert.equal(document.activeElement, newCloseBtn);
+
+      newCloseBtn.click();
+      assert.equal(bubble.classList.contains('is-visible'), false, 'Clicking close button dismisses speech bubble');
+      assert.equal(document.activeElement, pet, 'Clicking close button restores focus to pet trigger');
+      assert.equal(pet.getAttribute('aria-expanded'), 'false');
 
       pet.click();
       const brand = document.querySelector('.brand');
