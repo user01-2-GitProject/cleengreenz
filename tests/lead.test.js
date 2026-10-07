@@ -57,7 +57,15 @@ test('json helper function', async (t) => {
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
-    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+    assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
+    assert.equal(
+      res.headers.get('permissions-policy'),
+      'accelerometer=(), camera=(), microphone=(), geolocation=(), payment=()'
+    );
+    assert.equal(
+      res.headers.get('content-security-policy'),
+      "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    );
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -551,6 +559,11 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
+    assert.equal(
+      res.headers.get('permissions-policy'),
+      'accelerometer=(), camera=(), microphone=(), geolocation=(), payment=()'
+    );
     assert.equal(
       res.headers.get('content-security-policy'),
       "default-src 'self'; style-src 'self' 'unsafe-inline';"
@@ -599,6 +612,11 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
+    assert.equal(
+      res.headers.get('permissions-policy'),
+      'accelerometer=(), camera=(), microphone=(), geolocation=(), payment=()'
+    );
     assert.equal(
       res.headers.get('content-security-policy'),
       "default-src 'self'; style-src 'self' 'unsafe-inline';"

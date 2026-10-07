@@ -54,6 +54,8 @@ const SECURITY_HEADERS = {
   'x-frame-options': 'DENY',
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
+  'x-permitted-cross-domain-policies': 'none',
+  'permissions-policy': 'accelerometer=(), camera=(), microphone=(), geolocation=(), payment=()',
   'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline';",
 };
 
