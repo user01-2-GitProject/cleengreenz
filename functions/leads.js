@@ -106,7 +106,7 @@ ${Object.keys(monthRows)
 <div class="scroll"><table><tr><th>When (UTC)</th><th>Name</th><th>Phone</th><th>Address</th><th>Service</th><th>Notes</th><th>Emailed</th></tr>
 ${recent
   .map(
-    (r) => `<tr><td>${escapeHtml(r.created_at.replace('T', ' ').slice(0, 16))}</td><td>${escapeHtml(r.name)}</td>
+    (r) => `<tr><td>${escapeHtml((r.created_at || '').replace('T', ' ').slice(0, 16))}</td><td>${escapeHtml(r.name)}</td>
 <td><a href="tel:${encodeURIComponent(sanitizePhone(r.phone))}">${escapeHtml(r.phone)}</a></td><td>${escapeHtml(r.address)}</td>
 <td>${escapeHtml(r.service)}</td><td>${escapeHtml(r.notes)}</td><td>${r.emailed ? 'Yes' : 'No'}</td></tr>`
   )
@@ -135,24 +135,36 @@ export async function onRequestGet({ request, env }) {
     });
   }
 
-  const [totals, months, recent] = await env.DB.batch([
-    env.DB.prepare(
-      `SELECT type,
-              SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-7 days'))  AS week,
-              SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-30 days')) AS month,
-              COUNT(*) AS total
-         FROM leads GROUP BY type`
-    ),
-    env.DB.prepare(
-      `SELECT substr(created_at, 1, 7) AS month, type, COUNT(*) AS n
-         FROM leads WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-12 months')
-        GROUP BY month, type ORDER BY month DESC`
-    ),
-    env.DB.prepare(
-      `SELECT created_at, name, phone, address, service, notes, emailed
-         FROM leads WHERE type = 'form' ORDER BY id DESC LIMIT 50`
-    ),
-  ]);
+  let totals, months, recent;
+  try {
+    [totals, months, recent] = await env.DB.batch([
+      env.DB.prepare(
+        `SELECT type,
+                SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-7 days'))  AS week,
+                SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-30 days')) AS month,
+                COUNT(*) AS total
+           FROM leads GROUP BY type`
+      ),
+      env.DB.prepare(
+        `SELECT substr(created_at, 1, 7) AS month, type, COUNT(*) AS n
+           FROM leads WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-12 months')
+          GROUP BY month, type ORDER BY month DESC`
+      ),
+      env.DB.prepare(
+        `SELECT created_at, name, phone, address, service, notes, emailed
+           FROM leads WHERE type = 'form' ORDER BY id DESC LIMIT 50`
+      ),
+    ]);
+  } catch (err) {
+    console.error('D1 lead summary batch query failed', err);
+    return new Response('Unable to fetch leads', {
+      status: 500,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        ...SECURITY_HEADERS,
+      },
+    });
+  }
 
   const html = renderLeadsHtml({
     totals: totals.results,
