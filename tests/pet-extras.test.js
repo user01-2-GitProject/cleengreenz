@@ -186,4 +186,72 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('pauses speech bubble auto-dismiss on hover and focus-within', async () => {
+    let pendingCallback = null;
+
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+        window.setTimeout = (fn, delay) => {
+          pendingCallback = fn;
+          return 123;
+        };
+        window.clearTimeout = () => {
+          pendingCallback = null;
+        };
+      }
+    });
+
+    try {
+      const { document } = dom.window;
+      const pet = document.querySelector('.pet');
+      const bubble = document.querySelector('.pet-bubble');
+
+      assert.ok(pet, '.pet button exists');
+      assert.ok(bubble, '.pet-bubble exists');
+
+      // Click pet to open speech bubble with a message line containing links/buttons
+      pet.click();
+      assert.equal(bubble.classList.contains('is-visible'), true);
+      assert.ok(pendingCallback, 'auto-dismiss timeout was scheduled');
+
+      // Simulate mouse hover over bubble
+      let isHovered = true;
+      bubble.matches = (selector) => selector === ':hover' ? isHovered : false;
+
+      // Execute auto-dismiss timeout while hovered
+      const autoDismissFn = pendingCallback;
+      autoDismissFn();
+
+      assert.equal(
+        bubble.classList.contains('is-visible'),
+        true,
+        'bubble should remain visible while hovered when auto-dismiss timer fires'
+      );
+
+      // Simulate mouse leaving bubble
+      isHovered = false;
+      bubble.dispatchEvent(new dom.window.Event('mouseleave', { bubbles: true }));
+
+      // Fast-forward microtask/setTimeout(0) for mouseleave/blur handler
+      if (pendingCallback) pendingCallback();
+
+      assert.equal(
+        bubble.classList.contains('is-visible'),
+        false,
+        'bubble should hide after mouse leaves'
+      );
+    } finally {
+      dom.window.close();
+    }
+  });
 });

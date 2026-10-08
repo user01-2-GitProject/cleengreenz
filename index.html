@@ -1092,7 +1092,7 @@
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
             var restorePetFocus = bubble.contains(document.activeElement);
-            hideBubble();
+            hideBubble(true);
             if (restorePetFocus && pet) pet.focus();
           }
         });
@@ -1121,7 +1121,7 @@
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
           if (activeGrassMowing) stopGrassMowing();
           p.riding = false; p.state = 'drag'; p.t = 0; p.speed = 0;
-          hideBubble();
+          hideBubble(true);
         });
         function release(e) {
           if (!pointer || e.pointerId !== pointer.id) return;
@@ -1146,8 +1146,23 @@
           react('reacting', 650);
           say(lines[lineIndex++ % lines.length], 6000);
         });
+        var pendingHide = false;
+        function checkHoverOrFocus() {
+          if (!bubble) return false;
+          return (typeof bubble.matches === 'function' && bubble.matches(':hover')) || bubble.contains(document.activeElement);
+        }
+        function onBubbleLeaveOrBlur() {
+          setTimeout(function () {
+            if (pendingHide && !checkHoverOrFocus()) {
+              hideBubble();
+            }
+          }, 0);
+        }
+        bubble.addEventListener('mouseleave', onBubbleLeaveOrBlur);
+        bubble.addEventListener('focusout', onBubbleLeaveOrBlur);
+
         bubble.addEventListener('click', function (e) {
-          if (e.target.closest('[data-pet-go]')) { hideBubble(); }
+          if (e.target.closest('[data-pet-go]')) { hideBubble(true); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
             var brandLink = document.querySelector('.brand');
@@ -1206,18 +1221,24 @@
       function homeY() {
         return H - PET_H - 12 - barH;
       }
-      function hideBubble() {
+      function hideBubble(force) {
         if (!bubble) return;
+        if (!force && checkHoverOrFocus()) {
+          pendingHide = true;
+          return;
+        }
+        pendingHide = false;
         bubble.classList.remove('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'false');
       }
       function say(html, ms) {
         if (!bubble) return;
+        pendingHide = false;
         bubble.innerHTML = html;
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+        if (ms) bubbleTimer = setTimeout(function () { hideBubble(); }, ms);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
