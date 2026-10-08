@@ -123,7 +123,7 @@ test('authorized authentication helper function', async (t) => {
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
-  await t.test('returns 400 JSON response when Content-Type is not application/json', async () => {
+  await t.test('returns 400 JSON response with security headers when Content-Type is not application/json', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'text/plain' },
@@ -133,10 +133,14 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
     assert.equal(res.status, 400);
     assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
   });
 
-  await t.test('returns 400 JSON response on invalid JSON request body', async () => {
+  await t.test('returns 400 JSON response with security headers on invalid JSON request body', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -146,6 +150,10 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
     assert.equal(res.status, 400);
     assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
   });
 
@@ -604,6 +612,36 @@ test('onRequestGet authorization and response handling', async (t) => {
       "default-src 'self'; style-src 'self' 'unsafe-inline';"
     );
   });
+
+  await t.test('returns 500 with security headers when D1 batch query throws error', async () => {
+    const originalConsoleError = console.error;
+    console.error = () => {};
+    try {
+      const failingDb = {
+        prepare: () => ({}),
+        batch: async () => {
+          throw new Error('D1 connection failure');
+        },
+      };
+
+      const request = new Request('https://cleengreenz.com/leads', {
+        headers: { authorization: basicAuth('admin', secret) },
+      });
+      const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: failingDb } });
+
+      assert.equal(res.status, 500);
+      assert.equal(await res.text(), 'Unable to fetch leads');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(
+        res.headers.get('content-security-policy'),
+        "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      );
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
 });
 
 test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
@@ -650,6 +688,22 @@ test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
     const html = renderLeadsHtml({ months });
     assert.match(html, /2026-03&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
     assert.doesNotMatch(html, /2026-03<script>alert\(1\)<\/script>/);
+  });
+
+  await t.test('handles null or missing created_at field safely without throwing', async () => {
+    const recent = [
+      {
+        created_at: null,
+        name: 'Jane Doe',
+        phone: '269-555-0100',
+        address: '456 Oak St',
+        service: 'Lawn Mowing',
+        notes: 'Backyard only',
+        emailed: 0,
+      },
+    ];
+    const html = renderLeadsHtml({ recent });
+    assert.match(html, /<td><\/td><td>Jane Doe<\/td>/);
   });
 });
 
