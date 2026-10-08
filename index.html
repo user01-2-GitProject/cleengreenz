@@ -1208,8 +1208,13 @@
       }
       function hideBubble() {
         if (!bubble) return;
+        clearTimeout(bubbleTimer);
+        var restorePetFocus = bubble.contains(document.activeElement);
         bubble.classList.remove('is-visible');
-        if (pet) pet.setAttribute('aria-expanded', 'false');
+        if (pet) {
+          pet.setAttribute('aria-expanded', 'false');
+          if (restorePetFocus) pet.focus();
+        }
       }
       function say(html, ms) {
         if (!bubble) return;
