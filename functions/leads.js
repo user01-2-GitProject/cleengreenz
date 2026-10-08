@@ -54,7 +54,7 @@ const SECURITY_HEADERS = {
   'x-frame-options': 'DENY',
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
-  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline';",
+  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';",
 };
 
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
@@ -106,7 +106,7 @@ ${Object.keys(monthRows)
 <div class="scroll"><table><tr><th>When (UTC)</th><th>Name</th><th>Phone</th><th>Address</th><th>Service</th><th>Notes</th><th>Emailed</th></tr>
 ${recent
   .map(
-    (r) => `<tr><td>${escapeHtml(r.created_at.replace('T', ' ').slice(0, 16))}</td><td>${escapeHtml(r.name)}</td>
+    (r) => `<tr><td>${escapeHtml(String(r.created_at || '').replace('T', ' ').slice(0, 16))}</td><td>${escapeHtml(r.name)}</td>
 <td><a href="tel:${encodeURIComponent(sanitizePhone(r.phone))}">${escapeHtml(r.phone)}</a></td><td>${escapeHtml(r.address)}</td>
 <td>${escapeHtml(r.service)}</td><td>${escapeHtml(r.notes)}</td><td>${r.emailed ? 'Yes' : 'No'}</td></tr>`
   )
