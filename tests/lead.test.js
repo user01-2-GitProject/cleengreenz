@@ -57,7 +57,7 @@ test('json helper function', async (t) => {
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
-    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'");
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -175,7 +175,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: true });
   });
 
-  await t.test('sanitizes linebreaks and control characters in form fields when submitted', async () => {
+  await t.test('sanitizes linebreaks, control characters, and Cloudflare cf headers in form fields when submitted', async () => {
     let capturedBody = null;
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, options) => {
@@ -183,8 +183,25 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
     };
 
+    let boundCountry = null;
+    let boundCity = null;
+    const mockDb = {
+      prepare: (sql) => ({
+        bind: (...args) => {
+          if (sql.includes('INSERT INTO leads')) {
+            boundCountry = args[9];
+            boundCity = args[10];
+          }
+          return {
+            first: async () => ({ id: 101 }),
+            run: async () => {},
+          };
+        },
+      }),
+    };
+
     try {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const reqInit = {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -195,11 +212,16 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
           service: 'Lawn\rCare',
           notes: 'Line 1\r\nLine 2\rLine 3\x07',
         }),
-      });
+      };
+      const request = new Request('https://cleengreenz.com/api/lead', reqInit);
+      request.cf = {
+        country: 'US\r\n\x00',
+        city: 'Niles\x00' + 'a'.repeat(200),
+      };
 
       const res = await onRequestPost({
         request,
-        env: { RESEND_API_KEY: 'test-key' },
+        env: { DB: mockDb, RESEND_API_KEY: 'test-key' },
         waitUntil: () => {},
       });
 
@@ -211,6 +233,8 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       assert.match(capturedBody.text, /Service: Lawn Care/);
       assert.match(capturedBody.text, /Notes: Line 1\nLine 2\nLine 3/);
       assert.equal(capturedBody.html.includes('Line 1<br>Line 2<br>Line 3'), true);
+      assert.equal(boundCountry, 'US');
+      assert.equal(boundCity, 'Niles' + 'a'.repeat(95));
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -553,7 +577,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';"
     );
   });
 
@@ -601,7 +625,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';"
     );
   });
 });
@@ -689,7 +713,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';"
     );
     const html = await res.text();
 
