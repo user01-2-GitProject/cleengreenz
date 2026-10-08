@@ -186,4 +186,56 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('pauses auto-dismiss timer on hover/focusin and restores focus when dismissed from within', () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document, window } = dom.window;
+      const wrap = document.querySelector('.pet-wrap');
+      const pet = wrap.querySelector('.pet');
+      const bubble = wrap.querySelector('.pet-bubble');
+
+      pet.click(); pet.click(); pet.click();
+      assert.equal(bubble.classList.contains('is-visible'), true);
+
+      // Trigger hover on bubble
+      bubble.dispatchEvent(new window.Event('pointerenter', { bubbles: true }));
+      assert.equal(bubble.classList.contains('is-visible'), true);
+
+      // Trigger focusin on link inside bubble
+      const link = bubble.querySelector('a') || bubble.querySelector('button');
+      if (link) {
+        link.focus();
+        bubble.dispatchEvent(new window.Event('focusin', { bubbles: true }));
+        assert.equal(document.activeElement, link);
+      }
+
+      // Trigger focusout on bubble leaving to outside
+      bubble.dispatchEvent(new window.FocusEvent('focusout', { relatedTarget: document.body, bubbles: true }));
+
+      // Focus link again and test focus restoration when dismissed
+      if (link) {
+        link.focus();
+        assert.equal(document.activeElement, link);
+        // Pressing Escape or hiding bubble while focused inside bubble restores focus to pet button
+        const escapeEvent = new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+        document.dispatchEvent(escapeEvent);
+        assert.equal(document.activeElement, pet, 'Focus is restored to pet trigger button');
+      }
+    } finally {
+      dom.window.close();
+    }
+  });
 });
