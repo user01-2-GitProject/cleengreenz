@@ -41,3 +41,7 @@
 ## 2026-10-02 - Contextual Service Pre-Selection for Form Jump CTAs
 **Learning:** In single-page websites where multiple call-to-action buttons across different feature sections jump to a single shared estimate form (`#estimate`), leaving form dropdowns set to the default option forces users to manually re-select the service they were just reading about. Attaching `data-service` metadata to section-specific CTAs and pre-selecting matching `<select>` options on click provides smooth, contextual continuity.
 **Action:** When linking section CTAs to a unified form, pass `data-service` on the trigger element to automatically pre-select the relevant option in the form's service select dropdown.
+
+## 2026-10-02 - Speech Bubble Timer Pause on Hover/Focus & Accessible Dismiss
+**Learning:** Transient speech bubbles or popovers containing interactive links or text frustrate users when auto-dismiss timers trigger while the user is actively hovering over or keyboard-focusing inside them (violating WCAG 1.4.13 & 2.2.1). Pausing the auto-dismiss timer on `pointerenter` and `focusin` (and extending delay on `pointerleave` / `focusout`), along with providing a `.bubble-close` button (`aria-label="Dismiss message"`) that restores focus to the trigger on dismiss, creates a controllable, accessible popover experience.
+**Action:** Always pause auto-dismiss timers on popover/bubble hover and focus-within, and include an explicit dismiss button that restores focus to the trigger element when closed.

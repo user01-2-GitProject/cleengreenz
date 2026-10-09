@@ -186,4 +186,41 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('speech bubble includes close button (.bubble-close) and dismisses on click', () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document } = dom.window;
+      const wrap = document.querySelector('.pet-wrap');
+      const pet = wrap.querySelector('.pet');
+      const bubble = wrap.querySelector('.pet-bubble');
+
+      pet.click();
+      const closeBtn = bubble.querySelector('.bubble-close');
+      assert.ok(closeBtn, '.bubble-close button should exist inside .pet-bubble');
+      assert.equal(closeBtn.getAttribute('aria-label'), 'Dismiss message');
+
+      closeBtn.focus();
+      assert.equal(document.activeElement, closeBtn);
+
+      closeBtn.click();
+      assert.equal(bubble.classList.contains('is-visible'), false, 'Clicking .bubble-close dismisses bubble');
+      assert.equal(pet.getAttribute('aria-expanded'), 'false');
+      assert.equal(document.activeElement, pet, 'Dismissing bubble while focused inside restores focus to pet trigger');
+    } finally {
+      dom.window.close();
+    }
+  });
 });
