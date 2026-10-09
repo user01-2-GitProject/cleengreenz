@@ -20,6 +20,22 @@
     bubble = wrap.querySelector('.pet-bubble');
     if (!bubble) return false;
     nextFidget = Date.now() + rnd(6000, 10000);
+    if (bubble.addEventListener) {
+      bubble.addEventListener('mouseenter', function () { clearTimeout(bubbleTimer); });
+      bubble.addEventListener('mouseleave', function () {
+        if (bubble.classList.contains('is-visible') && !bubble.contains(document.activeElement)) {
+          clearTimeout(bubbleTimer);
+          bubbleTimer = setTimeout(hideBubble, 1800);
+        }
+      });
+      bubble.addEventListener('focusin', function () { clearTimeout(bubbleTimer); });
+      bubble.addEventListener('focusout', function (e) {
+        if (bubble.classList.contains('is-visible') && !bubble.contains(e.relatedTarget) && !bubble.matches(':hover')) {
+          clearTimeout(bubbleTimer);
+          bubbleTimer = setTimeout(hideBubble, 1800);
+        }
+      });
+    }
     return true;
   }
 
@@ -66,12 +82,27 @@
     if (!sleeping) setFrame(null);
   }
 
+  function hideBubble() {
+    if (!bubble) return;
+    var restoreFocus = bubble.contains(document.activeElement);
+    bubble.classList.remove('is-visible');
+    var pet = wrap ? wrap.querySelector('.pet') : null;
+    if (pet) {
+      pet.setAttribute('aria-expanded', 'false');
+      if (restoreFocus) pet.focus();
+    }
+  }
+
   function say(text, ms) {
     if (!bubble) return;
     bubble.textContent = text;
     bubble.classList.add('is-visible');
+    var pet = wrap ? wrap.querySelector('.pet') : null;
+    if (pet) pet.setAttribute('aria-expanded', 'true');
     clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(function () { bubble.classList.remove('is-visible'); }, ms);
+    if (ms && !bubble.matches(':hover') && !bubble.contains(document.activeElement)) {
+      bubbleTimer = setTimeout(hideBubble, ms);
+    }
   }
 
   function float(text, cls, dx) {
