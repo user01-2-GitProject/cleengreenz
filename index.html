@@ -324,6 +324,8 @@
   .pet-wrap.bubble-left .pet-bubble::after { left: auto; right: 26px; }
   .pet-bubble a { color: var(--pumpkin-2); }
   .pet-bubble button { font: inherit; color: var(--pumpkin-2); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+  .pet-bubble .bubble-close { position: absolute; top: 4px; right: 6px; font-size: 1rem; line-height: 1; color: var(--bark-soft); text-decoration: none; padding: 2px 5px; border-radius: 4px; }
+  .pet-bubble .bubble-close:hover { color: var(--bark); }
 
   /* ===== LEAVES + PET CHRIS: styles end ===== */
 
@@ -1092,7 +1094,7 @@
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
             var restorePetFocus = bubble.contains(document.activeElement);
-            hideBubble();
+            hideBubble(true);
             if (restorePetFocus && pet) pet.focus();
           }
         });
@@ -1147,7 +1149,13 @@
           say(lines[lineIndex++ % lines.length], 6000);
         });
         bubble.addEventListener('click', function (e) {
-          if (e.target.closest('[data-pet-go]')) { hideBubble(); }
+          if (e.target.closest('.bubble-close')) {
+            var restorePetFocus = bubble.contains(document.activeElement);
+            hideBubble(true);
+            if (restorePetFocus && pet) pet.focus();
+            return;
+          }
+          if (e.target.closest('[data-pet-go]')) { hideBubble(true); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
             var brandLink = document.querySelector('.brand');
@@ -1156,6 +1164,22 @@
             if (brandLink) brandLink.focus();
           }
         });
+        if (bubble) {
+          bubble.addEventListener('pointerenter', function () { isBubbleHoveredOrFocused = true; clearTimeout(bubbleTimer); });
+          bubble.addEventListener('pointerleave', function () {
+            isBubbleHoveredOrFocused = false;
+            clearTimeout(bubbleTimer);
+            bubbleTimer = setTimeout(hideBubble, 1500);
+          });
+          bubble.addEventListener('focusin', function () { isBubbleHoveredOrFocused = true; clearTimeout(bubbleTimer); });
+          bubble.addEventListener('focusout', function (e) {
+            if (!bubble.contains(e.relatedTarget)) {
+              isBubbleHoveredOrFocused = false;
+              clearTimeout(bubbleTimer);
+              bubbleTimer = setTimeout(hideBubble, 1500);
+            }
+          });
+        }
         document.addEventListener('cg:lead', function (e) {
           if (!wrap || !e.detail || !/^(form|call|email)$/.test(e.detail.lead_type)) return;
           wake(); react('cheering', 800);
@@ -1206,14 +1230,16 @@
       function homeY() {
         return H - PET_H - 12 - barH;
       }
-      function hideBubble() {
+      var isBubbleHoveredOrFocused = false;
+      function hideBubble(force) {
         if (!bubble) return;
+        if (isBubbleHoveredOrFocused && !force) return;
         bubble.classList.remove('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'false');
       }
       function say(html, ms) {
         if (!bubble) return;
-        bubble.innerHTML = html;
+        bubble.innerHTML = html + '<button type="button" class="bubble-close" aria-label="Dismiss message" title="Dismiss message">&times;</button>';
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
