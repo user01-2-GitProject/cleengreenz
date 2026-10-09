@@ -22,4 +22,18 @@ test('contact and in-page navigation accessibility', () => {
     assert.equal(document.getElementById(id)?.getAttribute('tabindex'), '-1', id);
   }
   assert.match(html, /section\[id\]\s*\{\s*scroll-margin-top:\s*84px;/);
+
+  const formNotePhoneLink = document.querySelector('.form-note a[href^="tel:"]');
+  assert.ok(formNotePhoneLink, 'Form note contains accessible tel: link');
+  assert.equal(formNotePhoneLink.getAttribute('data-lead'), 'call');
+  assert.equal(formNotePhoneLink.getAttribute('data-lead-location'), 'form-note');
+
+  const formDonePhoneLink = document.querySelector('.form-done a[href^="tel:"]:not(.btn)');
+  assert.ok(formDonePhoneLink, 'Form completion view contains accessible tel: link');
+  assert.equal(formDonePhoneLink.getAttribute('data-lead'), 'call');
+  assert.equal(formDonePhoneLink.getAttribute('data-lead-location'), 'form-done');
+
+  const ribbonEmoji = document.querySelector('.ribbon span[aria-hidden="true"]');
+  assert.ok(ribbonEmoji, 'Ribbon decorative emoji is hidden from screen readers');
+  assert.equal(ribbonEmoji.textContent.trim(), '🍂');
 });
