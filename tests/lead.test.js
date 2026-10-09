@@ -136,6 +136,22 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
   });
 
+  await t.test('returns 400 JSON response on null or non-object JSON request body', async () => {
+    const invalidBodies = ['null', '123', '"string"', 'true', 'false', '[1, 2, 3]'];
+    for (const bodyStr of invalidBodies) {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: bodyStr,
+      });
+      const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 400, `Expected status 400 for JSON body: ${bodyStr}`);
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
+    }
+  });
+
   await t.test('returns 400 JSON response on invalid JSON request body', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
