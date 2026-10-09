@@ -20,3 +20,9 @@
 **Learning:** When DOM element position is updated via CSS custom properties (e.g., `wrap.style.setProperty('--x', ...)` with CSS `transform: translate3d(var(--x), ...)`), reading `wrap.style.transform` returns an empty string, causing regex matching on `style.transform` to fail and waste CPU cycles during periodic polling or animation ticks. Querying `wrap.style.getPropertyValue('--x')` directly is fast, accurate, and avoids failed regex executions.
 
 **Action:** Always inspect CSS custom properties directly via `style.getPropertyValue()` when element state/transforms are driven by custom properties rather than string parsing `style.transform`.
+
+## 2026-10-09 - Store direct object references to bypass Map hash lookups on high-frequency animation loops
+
+**Learning:** When an animation loop iterates over particle/leaf objects that belong to a parent container object, calling `map.get(particle.host)` on every frame generates hash lookup overhead in hot loops. Storing a direct object reference (`particle.hostItem = container`) when the relationship is established allows direct property access (`particle.hostItem.r`), reducing Map lookup overhead in 60fps animation loops.
+
+**Action:** Attach direct container object references to child objects when associations are formed to avoid Map hash lookups inside `requestAnimationFrame` loops.
