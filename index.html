@@ -458,7 +458,11 @@
   textarea { min-height: 96px; resize: vertical; }
   form.estimate .btn { width: 100%; margin-top: 8px; }
   .form-note { font-size: .88rem; color: var(--bark-soft); text-align: center; margin: 14px 0 0; }
+  .form-note a { color: var(--pumpkin-2); font-weight: 700; text-decoration: underline; }
+  .form-note a:hover { color: var(--pumpkin); }
   .form-done { display: none; text-align: center; padding: 24px 0 8px; }
+  .form-done a:not(.btn) { color: var(--pumpkin-2); font-weight: 700; text-decoration: underline; }
+  .form-done a:not(.btn):hover { color: var(--pumpkin); }
   .form-done.show { display: block; }
   .form-done .btn { margin-top: 10px; }
   @media (max-width: 900px) {
@@ -509,7 +513,7 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <!-- Seasonal ribbon: swap this line each season -->
-<div class="ribbon">🍂 Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate" data-service="Fall leaf cleanup" data-lead-location="ribbon">Save your spot</a></div>
+<div class="ribbon"><span aria-hidden="true">🍂</span> Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate" data-service="Fall leaf cleanup" data-lead-location="ribbon">Save your spot</a></div>
 
 <header class="site">
   <div class="header-town-media" aria-hidden="true">
@@ -764,12 +768,12 @@
           </div>
           <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
-          <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
+          <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
         </div>
         <div class="form-done" role="status" aria-live="polite">
           <h3 tabindex="-1">Thanks, got it!</h3>
           <p>Chris has your request and will be in touch soon.</p>
-          <p>Need him sooner? Call or text <strong>(269) 362-8286</strong>.</p>
+          <p>Need him sooner? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-done" aria-label="Call or text (269) 362-8286"><strong>(269) 362-8286</strong></a>.</p>
           <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="form-fallback" aria-label="Call Chris at (269) 362-8286">Call Chris instead</a>
           <button type="button" class="btn btn-ghost" id="form-reset-btn">Send another request</button>
         </div>
