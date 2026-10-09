@@ -12,7 +12,8 @@ test('pet-extras setup DOM element caching', async (t) => {
 
     const mockBubble = {
       textContent: '',
-      classList: { add() {}, remove() {}, contains() { return false; } }
+      classList: { add() {}, remove() {}, contains() { return false; } },
+      addEventListener() {}
     };
 
     const mockWrap = {
@@ -84,7 +85,7 @@ test('pet-extras setup DOM element caching', async (t) => {
         transform: ''
       },
       querySelector() {
-        return { textContent: '', classList: { add() {}, remove() {}, contains() { return false; } } };
+        return { textContent: '', classList: { add() {}, remove() {}, contains() { return false; } }, addEventListener() {} };
       }
     };
 
@@ -182,6 +183,46 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       assert.equal(document.activeElement, brand,
         'Escape must not steal focus from outside the bubble');
+    } finally {
+      dom.window.close();
+    }
+  });
+
+  await t.test('pauses speech bubble auto-dismiss timer on mouseenter/focusin and restores focus on hide', () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document, window } = dom.window;
+      const pet = document.querySelector('.pet');
+      const bubble = document.querySelector('.pet-bubble');
+
+      pet.click(); pet.click(); pet.click();
+      assert.equal(bubble.classList.contains('is-visible'), true);
+
+      const link = bubble.querySelector('a') || bubble.querySelector('button');
+      assert.ok(link, 'Bubble contains interactive element');
+
+      link.focus();
+      assert.equal(document.activeElement, link);
+
+      bubble.dispatchEvent(new window.Event('focusin', { bubbles: true }));
+
+      const hideEvent = new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(hideEvent);
+
+      assert.equal(bubble.classList.contains('is-visible'), false, 'Bubble is hidden');
+      assert.equal(document.activeElement, pet, 'Focus restored to button.pet');
     } finally {
       dom.window.close();
     }
