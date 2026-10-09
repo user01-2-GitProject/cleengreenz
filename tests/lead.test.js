@@ -553,8 +553,9 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; style-src 'self' 'sha256-nnmhsW+PD6dOzA3sJ2sc2gUbiRSRAlPO4uoz9DJ2yJ4=';"
     );
+    assert.ok(!res.headers.get('content-security-policy').includes("'unsafe-inline'"));
   });
 
   await t.test('returns 401 when authorization header is missing', async () => {
@@ -601,8 +602,9 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; style-src 'self' 'sha256-nnmhsW+PD6dOzA3sJ2sc2gUbiRSRAlPO4uoz9DJ2yJ4=';"
     );
+    assert.ok(!res.headers.get('content-security-policy').includes("'unsafe-inline'"));
   });
 });
 
@@ -689,8 +691,9 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; style-src 'self' 'sha256-nnmhsW+PD6dOzA3sJ2sc2gUbiRSRAlPO4uoz9DJ2yJ4=';"
     );
+    assert.ok(!res.headers.get('content-security-policy').includes("'unsafe-inline'"));
     const html = await res.text();
 
     assert.match(html, /href="tel:269-555-0199%20\(1\)"/);
