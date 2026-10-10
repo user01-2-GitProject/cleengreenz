@@ -78,6 +78,12 @@ async function emailChris(env, lead) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
+  // Reject oversized payloads to prevent buffer/memory exhaustion attacks (DoS)
+  const contentLength = request.headers.get('content-length');
+  if (contentLength && parseInt(contentLength, 10) > 65536) {
+    return json({ ok: false, error: 'payload_too_large' }, 413);
+  }
+
   const contentType = request.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     return json({ ok: false, error: 'bad_request' }, 400);
