@@ -41,3 +41,7 @@
 ## 2026-10-02 - Contextual Service Pre-Selection for Form Jump CTAs
 **Learning:** In single-page websites where multiple call-to-action buttons across different feature sections jump to a single shared estimate form (`#estimate`), leaving form dropdowns set to the default option forces users to manually re-select the service they were just reading about. Attaching `data-service` metadata to section-specific CTAs and pre-selecting matching `<select>` options on click provides smooth, contextual continuity.
 **Action:** When linking section CTAs to a unified form, pass `data-service` on the trigger element to automatically pre-select the relevant option in the form's service select dropdown.
+
+## 2026-10-03 - Accessible Timed Speech Bubbles and Focus Restoration
+**Learning:** Auto-dismissing floating speech bubbles on a timer while users are hovering or focusing on links inside them causes unexpected content removal and traps/resets keyboard focus. Pausing the dismissal timer on `:hover` or focus-within and restoring focus to the trigger button when the bubble is dismissed while focused inside ensures predictable keyboard navigation and WCAG timing compliance.
+**Action:** Always pause auto-dismiss timers when popovers are hovered or focused, and restore focus to the trigger element if focus was inside the popover when dismissed.

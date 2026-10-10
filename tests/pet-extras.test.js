@@ -186,4 +186,42 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('dismisses speech bubble on .bubble-close click and restores focus if focused inside', () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document } = dom.window;
+      const pet = document.querySelector('.pet');
+      pet.click(); // opens bubble
+
+      const bubble = document.querySelector('.pet-bubble');
+      assert.equal(bubble.classList.contains('is-visible'), true);
+
+      const closeBtn = bubble.querySelector('.bubble-close');
+      assert.ok(closeBtn, '.bubble-close button should be rendered in speech bubble');
+      assert.equal(closeBtn.getAttribute('aria-label'), 'Dismiss message');
+
+      closeBtn.focus();
+      assert.equal(document.activeElement, closeBtn);
+
+      closeBtn.click();
+      assert.equal(bubble.classList.contains('is-visible'), false, 'Bubble should be hidden on close button click');
+      assert.equal(document.activeElement, pet, 'Focus should be restored to pet trigger button when dismissed');
+      assert.equal(pet.getAttribute('aria-expanded'), 'false');
+    } finally {
+      dom.window.close();
+    }
+  });
 });

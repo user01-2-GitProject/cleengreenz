@@ -298,13 +298,20 @@
   /* The sheet is drawn at .81 on phones; nearest-neighbour at a fractional scale makes pixels uneven. */
   @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
   .pet-bubble {
-    position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
-    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
+    position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 230px;
+    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 28px 10px 14px;
     font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
     box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
     opacity: 0; visibility: hidden; transform: translateY(4px) scale(.96);
     transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
   }
+  .pet-bubble .bubble-close {
+    position: absolute; top: 6px; right: 8px; width: 20px; height: 20px; padding: 0; border: 0;
+    background: none; color: var(--bark-soft); font-size: 1.1rem; line-height: 1; border-radius: 50%;
+    display: grid; place-items: center; cursor: pointer; text-decoration: none; transition: color .15s ease, background .15s ease;
+  }
+  .pet-bubble .bubble-close:hover { color: var(--pumpkin-2); background: rgba(59, 47, 36, .08); }
+  .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
   .pet-bubble.is-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
     transition: opacity .16s ease, transform .16s ease;
@@ -1091,9 +1098,7 @@
 
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape' && bubble && bubble.classList.contains('is-visible')) {
-            var restorePetFocus = bubble.contains(document.activeElement);
             hideBubble();
-            if (restorePetFocus && pet) pet.focus();
           }
         });
         sprite = wrap.querySelector('.pet-sprite');
@@ -1147,6 +1152,7 @@
           say(lines[lineIndex++ % lines.length], 6000);
         });
         bubble.addEventListener('click', function (e) {
+          if (e.target.closest('.bubble-close')) { hideBubble(); return; }
           if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
@@ -1208,16 +1214,30 @@
       }
       function hideBubble() {
         if (!bubble) return;
+        clearTimeout(bubbleTimer);
+        var restoreFocus = bubble.contains(document.activeElement);
         bubble.classList.remove('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'false');
+        if (restoreFocus && pet) pet.focus();
       }
       function say(html, ms) {
         if (!bubble) return;
-        bubble.innerHTML = html;
+        bubble.innerHTML = html + '<button type="button" class="bubble-close" aria-label="Dismiss message">&times;</button>';
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+        if (ms) {
+          var schedule = function (delay) {
+            bubbleTimer = setTimeout(function () {
+              if ((bubble.matches && bubble.matches(':hover')) || bubble.contains(document.activeElement)) {
+                schedule(2000);
+              } else {
+                hideBubble();
+              }
+            }, delay);
+          };
+          schedule(ms);
+        }
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
