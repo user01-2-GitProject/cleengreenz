@@ -162,10 +162,49 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_type' });
   });
 
-  await t.test('returns 200 JSON response on valid click event', async () => {
+  await t.test('returns 403 JSON response when sec-fetch-site is cross-site', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'sec-fetch-site': 'cross-site' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+  });
+
+  await t.test('returns 403 JSON response when Origin does not match request origin', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'https://evil-attacker.com' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+  });
+
+  await t.test('returns 403 JSON response when Referer does not match request origin', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'referer': 'https://evil-attacker.com/phishing' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+  });
+
+  await t.test('returns 200 JSON response on valid click event with same origin', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'https://cleengreenz.com' },
       body: JSON.stringify({ type: 'call' }),
     });
     const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
