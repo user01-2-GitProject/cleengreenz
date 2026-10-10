@@ -1020,6 +1020,7 @@
         if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
         l.lastRx = l.lastRy = l.lastRrot = null;
         l.host = null;
+        l.hostItem = null;
       }
       function blowPile(host, dir) {
         var pile = piles.get(host);
@@ -1339,19 +1340,22 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.sec, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
         return null;
       }
 
+      // Optimize readyPile: iterate catcherItems with a simple for loop to avoid per-frame .forEach closures
+      // and Map lookups (piles.get / rects.get) in the animation tick.
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci.el; biggest = count; }
+        }
         return chosen;
       }
 
@@ -1361,11 +1365,11 @@
         last = now;
         // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
         if (rectsDirty) {
-          catchers.forEach(function (el, idx) {
-            var r = el.getBoundingClientRect();
-            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
-            rects.set(el, valid);
+          for (var idx = 0; idx < catcherItems.length; idx++) {
             var ci = catcherItems[idx];
+            var r = ci.el.getBoundingClientRect();
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(ci.el, valid);
             ci.r = valid;
             if (valid) {
               ci.top = valid.top;
@@ -1373,11 +1377,14 @@
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
             }
-          });
-          grassPatches.forEach(function (gp) {
-            var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
-          });
+          }
+          for (var gidx = 0; gidx < grassPatches.length; gidx++) {
+            var gp = grassPatches[gidx];
+            var gr = gp.el.getBoundingClientRect();
+            var gvalid = gr.width > 0 && gr.bottom > 0 && gr.top < H ? gr : null;
+            gp.r = gvalid;
+            rects.set(gp.el, gvalid);
+          }
           rectsDirty = false;
         }
 
@@ -1398,6 +1405,7 @@
                 if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
                   l.host = ci.el;
+                  l.hostItem = ci;
                   // Gather toward the middle and stack in a low mound, not a flat row.
                   l.ox = Math.max(12, Math.min(r.width - 12,
                     r.width / 2 + (cx - r.left - r.width / 2) * .62));
@@ -1411,7 +1419,8 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            var hr = rects.get(l.host);
+            // Direct property lookup on l.hostItem avoids Map lookup overhead on every animation frame
+            var hr = l.hostItem ? l.hostItem.r : null;
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;
