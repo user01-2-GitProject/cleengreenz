@@ -298,13 +298,20 @@
   /* The sheet is drawn at .81 on phones; nearest-neighbour at a fractional scale makes pixels uneven. */
   @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
   .pet-bubble {
-    position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 220px;
-    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 14px;
+    position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 230px;
+    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 30px 10px 14px;
     font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
     box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
     opacity: 0; visibility: hidden; transform: translateY(4px) scale(.96);
     transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
   }
+  .pet-bubble .bubble-close {
+    position: absolute; top: 6px; right: 8px; background: none; border: 0; padding: 0;
+    width: 20px; height: 20px; font-size: .85rem; line-height: 20px; text-align: center; color: var(--bark-soft);
+    cursor: pointer; border-radius: 50%; opacity: .7; transition: opacity .15s ease, color .15s ease;
+  }
+  .pet-bubble .bubble-close:hover { opacity: 1; color: var(--pumpkin-2); }
+  .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; opacity: 1; }
   .pet-bubble.is-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
     transition: opacity .16s ease, transform .16s ease;
@@ -1076,7 +1083,7 @@
         'Fall is the best time to seed. Your lawn will thank you in spring.',
         'Getting tired of me? <button type="button" data-pet-hide aria-label="Hide Pet Chris mascot">Hide me</button>'
       ];
-      var lineIndex = 0, bubbleTimer = null;
+      var lineIndex = 0, bubbleTimer = null, remainingMs = 0, timerStart = 0, isPaused = false;
       if (!hidePet) {
         wrap = document.createElement('div');
         wrap.className = 'pet-wrap';
@@ -1084,7 +1091,7 @@
           '<button class="pet" type="button" aria-expanded="false" aria-controls="pet-bubble" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
           '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>' +
-          '<div class="pet-bubble" role="status" id="pet-bubble"></div>';
+          '<div class="pet-bubble" role="status" id="pet-bubble"><button class="bubble-close" type="button" aria-label="Dismiss message">✕</button></div>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
         bubble = wrap.querySelector('.pet-bubble');
@@ -1146,7 +1153,40 @@
           react('reacting', 650);
           say(lines[lineIndex++ % lines.length], 6000);
         });
+        function isHoveredOrFocused() {
+          return bubble && (bubble.matches(':hover') || bubble.contains(document.activeElement));
+        }
+        function pauseBubbleTimer() {
+          if (bubbleTimer && !isPaused && remainingMs > 0) {
+            clearTimeout(bubbleTimer);
+            bubbleTimer = null;
+            var elapsed = performance.now() - timerStart;
+            remainingMs = Math.max(500, remainingMs - elapsed);
+            isPaused = true;
+          }
+        }
+        function resumeBubbleTimer() {
+          if (isPaused && remainingMs > 0 && !isHoveredOrFocused()) {
+            isPaused = false;
+            timerStart = performance.now();
+            bubbleTimer = setTimeout(hideBubble, remainingMs);
+          }
+        }
+        bubble.addEventListener('mouseenter', pauseBubbleTimer);
+        bubble.addEventListener('mouseleave', resumeBubbleTimer);
+        bubble.addEventListener('focusin', pauseBubbleTimer);
+        bubble.addEventListener('focusout', function () {
+          setTimeout(function () {
+            if (!bubble.contains(document.activeElement)) resumeBubbleTimer();
+          }, 0);
+        });
         bubble.addEventListener('click', function (e) {
+          if (e.target.closest('.bubble-close')) {
+            var restorePetFocus = bubble.contains(document.activeElement);
+            hideBubble();
+            if (restorePetFocus && pet) pet.focus();
+            return;
+          }
           if (e.target.closest('[data-pet-go]')) { hideBubble(); }
           if (e.target.closest('[data-pet-hide]')) {
             try { localStorage.setItem('cg-hide-pet', '1'); } catch (err) {}
@@ -1210,14 +1250,23 @@
         if (!bubble) return;
         bubble.classList.remove('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'false');
+        clearTimeout(bubbleTimer);
+        bubbleTimer = null;
+        remainingMs = 0;
+        isPaused = false;
       }
       function say(html, ms) {
         if (!bubble) return;
-        bubble.innerHTML = html;
+        bubble.innerHTML = html + '<button class="bubble-close" type="button" aria-label="Dismiss message">✕</button>';
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
         clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+        remainingMs = ms || 0;
+        timerStart = performance.now();
+        isPaused = false;
+        if (remainingMs > 0 && !isHoveredOrFocused()) {
+          bubbleTimer = setTimeout(hideBubble, remainingMs);
+        }
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {
