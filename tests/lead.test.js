@@ -149,6 +149,19 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
   });
 
+  await t.test('returns 413 JSON response when Content-Length exceeds 64KB limit', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': '70000' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 413);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'payload_too_large' });
+  });
+
   await t.test('returns 400 JSON response on invalid lead type', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
