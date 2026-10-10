@@ -20,3 +20,9 @@
 **Learning:** When DOM element position is updated via CSS custom properties (e.g., `wrap.style.setProperty('--x', ...)` with CSS `transform: translate3d(var(--x), ...)`), reading `wrap.style.transform` returns an empty string, causing regex matching on `style.transform` to fail and waste CPU cycles during periodic polling or animation ticks. Querying `wrap.style.getPropertyValue('--x')` directly is fast, accurate, and avoids failed regex executions.
 
 **Action:** Always inspect CSS custom properties directly via `style.getPropertyValue()` when element state/transforms are driven by custom properties rather than string parsing `style.transform`.
+
+## 2026-10-02 - Direct Catcher References & In-Place Array Resets in 60 FPS Loops
+
+**Learning:** Querying `Map` collections (`rects.get(host)`, `piles.get(el)`) inside a 60 FPS `requestAnimationFrame` tick handler incurs non-trivial lookup overhead on every frame across many active objects (e.g. falling leaves). Storing direct references (e.g. `leaf.catcher = catcherItem`) on active particles eliminates `Map.get()` hash lookups during animation ticks. Furthermore, using `pile.length = 0` instead of reallocating new arrays (`piles.set(host, [])`) prevents unnecessary garbage collection allocations in high-frequency events.
+
+**Action:** Direct object pointer references and in-place array truncation (`arr.length = 0`) should be preferred over `Map.get()` lookups and array re-allocations in 60 FPS animation/physics loops.
