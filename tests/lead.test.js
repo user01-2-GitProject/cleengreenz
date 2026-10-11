@@ -57,7 +57,7 @@ test('json helper function', async (t) => {
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
-    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'; base-uri 'none';");
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -582,7 +582,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
     );
   });
 
@@ -630,7 +630,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
     );
   });
 });
@@ -718,7 +718,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
     );
     const html = await res.text();
 
