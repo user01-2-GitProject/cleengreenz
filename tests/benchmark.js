@@ -68,3 +68,62 @@ test('Leaf transform performance benchmark', () => {
 
   assert.ok(durationOptimized < durationBaseline, 'Optimized version should be faster than baseline');
 });
+
+test('Catcher and grass patch Map lookup vs direct property caching benchmark', () => {
+  const catchers = [];
+  const catcherItemsBaseline = [];
+  const catcherItemsOptimized = [];
+  const pilesMap = new Map();
+  const rectsMap = new Map();
+
+  for (let i = 0; i < 10; i++) {
+    const el = { id: 'btn-' + i };
+    catchers.push(el);
+    const rect = { left: 100 * i, top: 200, width: 120, height: 40 };
+    pilesMap.set(el, []);
+    rectsMap.set(el, rect);
+
+    catcherItemsBaseline.push({ el, top: 200, topMax: 210, leftMin: 100 * i - 18, rightMax: 100 * i + 138 });
+    catcherItemsOptimized.push({ el, pile: [], r: rect, top: 200, topMax: 210, leftMin: 100 * i - 18, rightMax: 100 * i + 138 });
+  }
+
+  const iterations = 5000000;
+
+  // Baseline: querying Map.get() and forEach inside frame processing
+  const startBaseline = performance.now();
+  let baselineChecksum = 0;
+  for (let frame = 0; frame < iterations; frame++) {
+    catchers.forEach((el) => {
+      const pile = pilesMap.get(el);
+      const r = rectsMap.get(el);
+      if (r && pile) {
+        baselineChecksum += r.top + pile.length;
+      }
+    });
+  }
+  const durationBaseline = performance.now() - startBaseline;
+
+  // Optimized: direct property access (ci.pile, ci.r) and standard for loop
+  const startOptimized = performance.now();
+  let optimizedChecksum = 0;
+  for (let frame = 0; frame < iterations; frame++) {
+    for (let i = 0; i < catcherItemsOptimized.length; i++) {
+      const ci = catcherItemsOptimized[i];
+      const pile = ci.pile;
+      const r = ci.r;
+      if (r && pile) {
+        optimizedChecksum += r.top + pile.length;
+      }
+    }
+  }
+  const durationOptimized = performance.now() - startOptimized;
+
+  console.log(`\n--- MAP LOOKUP VS DIRECT PROPERTY BENCHMARK ---`);
+  console.log(`Baseline Map.get() + forEach: ${durationBaseline.toFixed(2)} ms`);
+  console.log(`Optimized direct ci.r + for:  ${durationOptimized.toFixed(2)} ms`);
+  console.log(`Speedup factor:                ${(durationBaseline / durationOptimized).toFixed(2)}x`);
+  console.log(`-----------------------------------------------\n`);
+
+  assert.equal(baselineChecksum, optimizedChecksum);
+  assert.ok(durationOptimized < durationBaseline, 'Direct property access should be faster than Map.get() + forEach');
+});
