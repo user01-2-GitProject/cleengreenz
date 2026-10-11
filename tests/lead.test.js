@@ -136,17 +136,46 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
   });
 
-  await t.test('returns 400 JSON response on invalid JSON request body', async () => {
+  await t.test('returns 413 JSON response when Content-Length exceeds 64KB limit', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': '70000' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 413);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'payload_too_large' });
+  });
+
+  await t.test('returns 400 JSON response on invalid JSON request body or non-object payload', async () => {
+    const invalidJsonRequest = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: 'invalid-json-{',
     });
-    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+    const res1 = await onRequestPost({ request: invalidJsonRequest, env: {}, waitUntil: () => {} });
+    assert.equal(res1.status, 400);
+    assert.deepEqual(await res1.json(), { ok: false, error: 'bad_request' });
 
-    assert.equal(res.status, 400);
-    assert.equal(res.headers.get('content-type'), 'application/json');
-    assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
+    const nullRequest = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: 'null',
+    });
+    const res2 = await onRequestPost({ request: nullRequest, env: {}, waitUntil: () => {} });
+    assert.equal(res2.status, 400);
+    assert.deepEqual(await res2.json(), { ok: false, error: 'bad_request' });
+
+    const arrayRequest = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(['call', 'form']),
+    });
+    const res3 = await onRequestPost({ request: arrayRequest, env: {}, waitUntil: () => {} });
+    assert.equal(res3.status, 400);
+    assert.deepEqual(await res3.json(), { ok: false, error: 'bad_request' });
   });
 
   await t.test('returns 400 JSON response on invalid lead type', async () => {
