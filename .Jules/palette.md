@@ -41,3 +41,7 @@
 ## 2026-10-02 - Contextual Service Pre-Selection for Form Jump CTAs
 **Learning:** In single-page websites where multiple call-to-action buttons across different feature sections jump to a single shared estimate form (`#estimate`), leaving form dropdowns set to the default option forces users to manually re-select the service they were just reading about. Attaching `data-service` metadata to section-specific CTAs and pre-selecting matching `<select>` options on click provides smooth, contextual continuity.
 **Action:** When linking section CTAs to a unified form, pass `data-service` on the trigger element to automatically pre-select the relevant option in the form's service select dropdown.
+
+## 2026-10-02 - Actionable Phone Links in Secondary Text & Decorative Emoji Hiding
+**Learning:** Plain-text phone numbers in secondary form notes (`.form-note`) or submission completion views (`.form-done`) create friction for mobile users who expect tap-to-call functionality. Converting them into semantic `<a href="tel:...">` links with `aria-label` and lead tracking metadata improves usability. Furthermore, decorative emojis in banner text should be wrapped in `<span aria-hidden="true">` to prevent screen reader clutter.
+**Action:** Always wrap plain-text phone numbers in form microcopy with `tel:` links and hide decorative text emojis with `aria-hidden="true"`.

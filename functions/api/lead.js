@@ -32,7 +32,7 @@ export function json(body, status = 200) {
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
-      'content-security-policy': "default-src 'none'",
+      'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none';",
     },
   });
 }
@@ -106,6 +106,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
   }
 
+  const contentLength = parseInt(request.headers.get('content-length') || '0', 10);
+  if (contentLength > 65536) {
+    return json({ ok: false, error: 'payload_too_large' }, 413);
+  }
+
   const contentType = request.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     return json({ ok: false, error: 'bad_request' }, 400);
@@ -115,6 +120,10 @@ export async function onRequestPost({ request, env, waitUntil }) {
   try {
     body = await request.json();
   } catch {
+    return json({ ok: false, error: 'bad_request' }, 400);
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
     return json({ ok: false, error: 'bad_request' }, 400);
   }
 
