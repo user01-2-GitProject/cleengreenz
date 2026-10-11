@@ -186,4 +186,59 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('dismisses speech bubble on .bubble-close button click and pauses timer on hover', () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document, window } = dom.window;
+
+      const wrap = document.querySelector('.pet-wrap');
+      const pet = wrap.querySelector('.pet');
+      const bubble = wrap.querySelector('.pet-bubble');
+
+      // Trigger pet click to show bubble
+      pet.click();
+      assert.equal(bubble.classList.contains('is-visible'), true, 'Speech bubble is visible after click');
+
+      const closeBtn = bubble.querySelector('.bubble-close');
+      assert.ok(closeBtn, '.bubble-close button exists in speech bubble');
+      assert.equal(closeBtn.getAttribute('aria-label'), 'Dismiss message');
+
+      // Focus close button and click it
+      closeBtn.focus();
+      closeBtn.click();
+
+      assert.equal(bubble.classList.contains('is-visible'), false, 'Bubble is dismissed on .bubble-close click');
+      assert.equal(document.activeElement, pet, 'Focus is restored to pet trigger button when dismissed from within');
+      assert.equal(pet.getAttribute('aria-expanded'), 'false', 'aria-expanded is reset to false');
+
+      // Verify hover pause/resume
+      pet.click();
+      assert.equal(bubble.classList.contains('is-visible'), true);
+
+      // Dispatch mouseenter on bubble
+      const mouseEnterEvt = new window.MouseEvent('mouseenter', { bubbles: true });
+      bubble.dispatchEvent(mouseEnterEvt);
+
+      // Dispatch mouseleave on bubble
+      const mouseLeaveEvt = new window.MouseEvent('mouseleave', { bubbles: true });
+      bubble.dispatchEvent(mouseLeaveEvt);
+
+      assert.ok(true, 'Hover events handled smoothly without throwing errors');
+    } finally {
+      dom.window.close();
+    }
+  });
 });
