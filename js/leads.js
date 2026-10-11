@@ -123,20 +123,24 @@
   }
 
   function openEmail(d) {
+    // Sanitize single-line fields to remove linebreaks that could inject mail headers or corrupt text
+    var cleanName = (d.name || '').replace(/[\r\n]+/g, ' ');
+    var cleanPhone = (d.phone || '').replace(/[\r\n]+/g, ' ');
+    var cleanAddress = (d.address || '').replace(/[\r\n]+/g, ' ');
+    var cleanService = (d.service || 'lawn care').replace(/[\r\n]+/g, ' ');
+
     var body = [
       'Hi Chris, I would like a free estimate.',
       '',
-      'Name: ' + d.name,
-      'Phone: ' + d.phone,
-      'Address: ' + d.address,
-      'Service: ' + d.service,
+      'Name: ' + cleanName,
+      'Phone: ' + cleanPhone,
+      'Address: ' + cleanAddress,
+      'Service: ' + cleanService,
       d.notes ? 'Notes: ' + d.notes : ''
     ].join('\n');
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
     showDone();
-    var cleanService = (d.service || 'lawn care').replace(/\r?\n|\r/g, ' ');
-    var cleanName = (d.name || '').replace(/\r?\n|\r/g, ' ');
     window.location.href = 'mailto:chris@cleengreenz.com?subject=' +
       encodeURIComponent('Estimate request: ' + cleanService + ' (' + cleanName + ')') +
       '&body=' + encodeURIComponent(body);

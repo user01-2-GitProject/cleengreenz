@@ -57,7 +57,7 @@ test('json helper function', async (t) => {
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
-    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'; base-uri 'none';");
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -123,7 +123,7 @@ test('authorized authentication helper function', async (t) => {
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
-  await t.test('returns 400 JSON response when Content-Type is not application/json', async () => {
+  await t.test('returns 400 JSON response with security headers when Content-Type is not application/json', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'text/plain' },
@@ -133,20 +133,53 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
     assert.equal(res.status, 400);
     assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'; base-uri 'none';");
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
   });
 
-  await t.test('returns 400 JSON response on invalid JSON request body', async () => {
+  await t.test('returns 413 JSON response when Content-Length exceeds 64KB limit', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': '70000' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 413);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'payload_too_large' });
+  });
+
+  await t.test('returns 400 JSON response on invalid JSON request body or non-object payload', async () => {
+    const invalidJsonRequest = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: 'invalid-json-{',
     });
-    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+    const res1 = await onRequestPost({ request: invalidJsonRequest, env: {}, waitUntil: () => {} });
+    assert.equal(res1.status, 400);
+    assert.deepEqual(await res1.json(), { ok: false, error: 'bad_request' });
 
-    assert.equal(res.status, 400);
-    assert.equal(res.headers.get('content-type'), 'application/json');
-    assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' });
+    const nullRequest = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: 'null',
+    });
+    const res2 = await onRequestPost({ request: nullRequest, env: {}, waitUntil: () => {} });
+    assert.equal(res2.status, 400);
+    assert.deepEqual(await res2.json(), { ok: false, error: 'bad_request' });
+
+    const arrayRequest = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(['call', 'form']),
+    });
+    const res3 = await onRequestPost({ request: arrayRequest, env: {}, waitUntil: () => {} });
+    assert.equal(res3.status, 400);
+    assert.deepEqual(await res3.json(), { ok: false, error: 'bad_request' });
   });
 
   await t.test('returns 400 JSON response on invalid lead type', async () => {
@@ -162,10 +195,49 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'bad_type' });
   });
 
-  await t.test('returns 200 JSON response on valid click event', async () => {
+  await t.test('returns 403 JSON response when sec-fetch-site is cross-site', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'sec-fetch-site': 'cross-site' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+  });
+
+  await t.test('returns 403 JSON response when Origin does not match request origin', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'https://evil-attacker.com' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+  });
+
+  await t.test('returns 403 JSON response when Referer does not match request origin', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'referer': 'https://evil-attacker.com/phishing' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+  });
+
+  await t.test('returns 200 JSON response on valid click event with same origin', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'https://cleengreenz.com' },
       body: JSON.stringify({ type: 'call' }),
     });
     const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
@@ -553,7 +625,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
     );
   });
 
@@ -601,8 +673,38 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
     );
+  });
+
+  await t.test('returns 500 with security headers when D1 batch query throws error', async () => {
+    const originalConsoleError = console.error;
+    console.error = () => {};
+    try {
+      const failingDb = {
+        prepare: () => ({}),
+        batch: async () => {
+          throw new Error('D1 connection failure');
+        },
+      };
+
+      const request = new Request('https://cleengreenz.com/leads', {
+        headers: { authorization: basicAuth('admin', secret) },
+      });
+      const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: failingDb } });
+
+      assert.equal(res.status, 500);
+      assert.equal(await res.text(), 'Unable to fetch leads');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(
+        res.headers.get('content-security-policy'),
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      );
+    } finally {
+      console.error = originalConsoleError;
+    }
   });
 });
 
@@ -651,6 +753,22 @@ test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
     assert.match(html, /2026-03&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
     assert.doesNotMatch(html, /2026-03<script>alert\(1\)<\/script>/);
   });
+
+  await t.test('handles null or missing created_at field safely without throwing', async () => {
+    const recent = [
+      {
+        created_at: null,
+        name: 'Jane Doe',
+        phone: '269-555-0100',
+        address: '456 Oak St',
+        service: 'Lawn Mowing',
+        notes: 'Backyard only',
+        emailed: 0,
+      },
+    ];
+    const html = renderLeadsHtml({ recent });
+    assert.match(html, /<td><\/td><td>Jane Doe<\/td>/);
+  });
 });
 
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
@@ -689,7 +807,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; style-src 'self' 'unsafe-inline';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
     );
     const html = await res.text();
 

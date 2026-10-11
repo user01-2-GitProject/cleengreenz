@@ -42,6 +42,10 @@
 **Learning:** In single-page websites where multiple call-to-action buttons across different feature sections jump to a single shared estimate form (`#estimate`), leaving form dropdowns set to the default option forces users to manually re-select the service they were just reading about. Attaching `data-service` metadata to section-specific CTAs and pre-selecting matching `<select>` options on click provides smooth, contextual continuity.
 **Action:** When linking section CTAs to a unified form, pass `data-service` on the trigger element to automatically pre-select the relevant option in the form's service select dropdown.
 
+## 2026-10-02 - Actionable Phone Links in Secondary Text & Decorative Emoji Hiding
+**Learning:** Plain-text phone numbers in secondary form notes (`.form-note`) or submission completion views (`.form-done`) create friction for mobile users who expect tap-to-call functionality. Converting them into semantic `<a href="tel:...">` links with `aria-label` and lead tracking metadata improves usability. Furthermore, decorative emojis in banner text should be wrapped in `<span aria-hidden="true">` to prevent screen reader clutter.
+**Action:** Always wrap plain-text phone numbers in form microcopy with `tel:` links and hide decorative text emojis with `aria-hidden="true"`.
+
 ## 2026-10-03 - Accessible Popover Auto-Dismiss Hover Pause & Explicit Close Action
 **Learning:** Auto-dismissing speech bubbles or toast popovers can frustrate users when content disappears before they finish reading or while attempting to click internal links. Providing an explicit `.bubble-close` button (`aria-label="Dismiss message"`) alongside pausing auto-dismiss timers on hover (`mouseenter`/`mouseleave`) and focus-within (`focusin`/`focusout`) satisfies WCAG 2.2.1 / 1.4.13 guidelines and gives users total control over popover visibility.
 **Action:** Always pair auto-dismissing popovers with an explicit close button, pause timers on hover and focus-within, and restore focus to the trigger button when dismissed while focus is inside the popover.
