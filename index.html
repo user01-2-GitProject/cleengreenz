@@ -1024,7 +1024,7 @@
       function blowPile(host, dir) {
         var pile = piles.get(host);
         var hr = rects.get(host);
-        if (!hr) return;
+        if (!hr || !pile) return;
         pile.forEach(function (l) {
           l.state = 'blown';
           l.x = hr.left + l.ox - l.size / 2;
@@ -1033,7 +1033,7 @@
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
         });
-        piles.set(host, []);
+        pile.length = 0;
       }
 
       // Pet
@@ -1255,6 +1255,7 @@
       }
       function targetRect(target, type) {
         var el = type === 'grass' ? target && target.el : target;
+        if (type === 'grass' && target && target.r) return target.r;
         return el ? rects.get(el) : null;
       }
       // Grass Patches on .green sections representing lawn
@@ -1348,10 +1349,12 @@
 
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
+        // Optimization: Use a standard for loop to avoid closure allocations during frequent idle checks
+        for (var i = 0; i < catchers.length; i++) {
+          var el = catchers[i];
           var count = piles.get(el).length;
           if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        }
         return chosen;
       }
 
@@ -1376,7 +1379,9 @@
           });
           grassPatches.forEach(function (gp) {
             var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(gp.el, valid);
+            gp.r = valid;
           });
           rectsDirty = false;
         }
