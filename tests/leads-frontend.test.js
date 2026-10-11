@@ -503,6 +503,23 @@ test('Accessibility attributes & focus management enhancements', async (t) => {
       'typing must retain the permanent character count description');
   });
 
+  await t.test('service grid cards are interactive links that pre-select service dropdown on click', async () => {
+    const { document } = setupEnvironment();
+    const serviceCards = document.querySelectorAll('.services-grid a.service[href="#estimate"]');
+    assert.ok(serviceCards.length >= 6, 'services grid should contain at least 6 anchor links');
+
+    const serviceSelect = document.getElementById('f-service');
+    assert.ok(serviceSelect, 'service select dropdown should exist');
+
+    const snowCard = Array.from(serviceCards).find((card) => card.getAttribute('data-service') === 'Snow removal');
+    assert.ok(snowCard, 'snow removal service card should exist');
+
+    serviceSelect.value = 'Fall leaf cleanup';
+    snowCard.click();
+
+    assert.equal(serviceSelect.value, 'Snow removal');
+  });
+
   await t.test('Pet Chris hide button shifts focus to brand link before removing container', () => {
     const dom = new JSDOM(htmlTemplate, {
       runScripts: 'dangerously',
