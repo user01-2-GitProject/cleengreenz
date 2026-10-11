@@ -1156,6 +1156,22 @@
             if (brandLink) brandLink.focus();
           }
         });
+        var bubbleHoveredOrFocused = false;
+        var onBubbleEnter = function () {
+          bubbleHoveredOrFocused = true;
+          clearTimeout(bubbleTimer);
+        };
+        var onBubbleLeave = function (e) {
+          if (e && e.type === 'focusout' && bubble.contains(e.relatedTarget)) return;
+          bubbleHoveredOrFocused = false;
+          if (bubble.classList.contains('is-visible')) {
+            scheduleHide(3000);
+          }
+        };
+        bubble.addEventListener('mouseenter', onBubbleEnter);
+        bubble.addEventListener('mouseleave', onBubbleLeave);
+        bubble.addEventListener('focusin', onBubbleEnter);
+        bubble.addEventListener('focusout', onBubbleLeave);
         document.addEventListener('cg:lead', function (e) {
           if (!wrap || !e.detail || !/^(form|call|email)$/.test(e.detail.lead_type)) return;
           wake(); react('cheering', 800);
@@ -1208,16 +1224,26 @@
       }
       function hideBubble() {
         if (!bubble) return;
+        var restoreFocus = bubble.contains(document.activeElement);
         bubble.classList.remove('is-visible');
-        if (pet) pet.setAttribute('aria-expanded', 'false');
+        if (pet) {
+          pet.setAttribute('aria-expanded', 'false');
+          if (restoreFocus) pet.focus();
+        }
+      }
+      var bubbleHoveredOrFocused = false;
+      function scheduleHide(ms) {
+        clearTimeout(bubbleTimer);
+        if (!bubbleHoveredOrFocused && ms) {
+          bubbleTimer = setTimeout(hideBubble, ms);
+        }
       }
       function say(html, ms) {
         if (!bubble) return;
         bubble.innerHTML = html;
         bubble.classList.add('is-visible');
         if (pet) pet.setAttribute('aria-expanded', 'true');
-        clearTimeout(bubbleTimer);
-        if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+        scheduleHide(ms || 6000);
       }
       function visible(r) { return r && r.width > 0 && r.top > 90 && r.bottom < H - 8; }
       function moveToward(gx, gy, dt, vmax) {

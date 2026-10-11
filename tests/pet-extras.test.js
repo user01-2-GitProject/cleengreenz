@@ -186,4 +186,47 @@ test('Pet Chris accessibility and Escape key handling in index.html', async (t) 
       dom.window.close();
     }
   });
+
+  await t.test('pauses speech bubble auto-dismiss on hover/focus and restores focus on dismissal', () => {
+    const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      url: 'https://cleengreenz.com',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    try {
+      const { document } = dom.window;
+      const wrap = document.querySelector('.pet-wrap');
+      const pet = wrap.querySelector('.pet');
+      const bubble = wrap.querySelector('.pet-bubble');
+
+      // Click pet to open speech bubble with a link
+      pet.click(); pet.click(); pet.click();
+      assert.equal(bubble.classList.contains('is-visible'), true);
+
+      // Focus link inside bubble
+      const bubbleLink = bubble.querySelector('a');
+      assert.ok(bubbleLink, 'a tag should exist in speech bubble');
+      bubbleLink.focus();
+      assert.equal(document.activeElement, bubbleLink);
+
+      // Trigger focusin / mouseenter on bubble to pause timer
+      bubble.dispatchEvent(new dom.window.Event('mouseenter', { bubbles: true }));
+
+      // Simulate hideBubble while focused inside bubble (e.g. clicking data-pet-go link)
+      bubbleLink.click();
+
+      assert.equal(bubble.classList.contains('is-visible'), false);
+      assert.equal(document.activeElement, pet, 'Hiding bubble while focused inside should restore focus to button.pet');
+    } finally {
+      dom.window.close();
+    }
+  });
 });
