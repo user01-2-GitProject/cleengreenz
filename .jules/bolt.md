@@ -20,3 +20,9 @@
 **Learning:** When DOM element position is updated via CSS custom properties (e.g., `wrap.style.setProperty('--x', ...)` with CSS `transform: translate3d(var(--x), ...)`), reading `wrap.style.transform` returns an empty string, causing regex matching on `style.transform` to fail and waste CPU cycles during periodic polling or animation ticks. Querying `wrap.style.getPropertyValue('--x')` directly is fast, accurate, and avoids failed regex executions.
 
 **Action:** Always inspect CSS custom properties directly via `style.getPropertyValue()` when element state/transforms are driven by custom properties rather than string parsing `style.transform`.
+
+## 2026-09-29 - Reset arrays in-place with length = 0 to avoid breaking references and GC pressure
+
+**Learning:** Reassigning a Map value to a new array (`map.set(key, [])`) creates garbage collector churn in animation loops and breaks any cached references holding onto the original array. Clearing the array in-place (`pile.length = 0`) preserves object references and eliminates array re-allocation overhead.
+
+**Action:** Always clear arrays in-place (`array.length = 0`) when clearing collections in hot paths or animation frame loops.
