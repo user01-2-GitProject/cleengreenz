@@ -78,6 +78,34 @@ async function emailChris(env, lead) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
+  // CSRF Protection: Block cross-site requests to prevent unauthorized lead submissions/spam.
+  const secFetchSite = request.headers.get('sec-fetch-site');
+  if (secFetchSite === 'cross-site') {
+    return json({ ok: false, error: 'forbidden' }, 403);
+  }
+
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const reqUrl = new URL(request.url);
+
+  if (origin) {
+    try {
+      if (new URL(origin).origin !== reqUrl.origin) {
+        return json({ ok: false, error: 'forbidden' }, 403);
+      }
+    } catch {
+      return json({ ok: false, error: 'forbidden' }, 403);
+    }
+  } else if (referer) {
+    try {
+      if (new URL(referer).origin !== reqUrl.origin) {
+        return json({ ok: false, error: 'forbidden' }, 403);
+      }
+    } catch {
+      return json({ ok: false, error: 'forbidden' }, 403);
+    }
+  }
+
   const contentLength = parseInt(request.headers.get('content-length') || '0', 10);
   if (contentLength > 65536) {
     return json({ ok: false, error: 'payload_too_large' }, 413);
