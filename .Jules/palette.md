@@ -45,3 +45,7 @@
 ## 2026-10-02 - Actionable Phone Links in Secondary Text & Decorative Emoji Hiding
 **Learning:** Plain-text phone numbers in secondary form notes (`.form-note`) or submission completion views (`.form-done`) create friction for mobile users who expect tap-to-call functionality. Converting them into semantic `<a href="tel:...">` links with `aria-label` and lead tracking metadata improves usability. Furthermore, decorative emojis in banner text should be wrapped in `<span aria-hidden="true">` to prevent screen reader clutter.
 **Action:** Always wrap plain-text phone numbers in form microcopy with `tel:` links and hide decorative text emojis with `aria-hidden="true"`.
+
+## 2026-10-03 - Accessible Popover Auto-Dismiss Hover Pause & Explicit Close Action
+**Learning:** Auto-dismissing speech bubbles or toast popovers can frustrate users when content disappears before they finish reading or while attempting to click internal links. Providing an explicit `.bubble-close` button (`aria-label="Dismiss message"`) alongside pausing auto-dismiss timers on hover (`mouseenter`/`mouseleave`) and focus-within (`focusin`/`focusout`) satisfies WCAG 2.2.1 / 1.4.13 guidelines and gives users total control over popover visibility.
+**Action:** Always pair auto-dismissing popovers with an explicit close button, pause timers on hover and focus-within, and restore focus to the trigger button when dismissed while focus is inside the popover.
