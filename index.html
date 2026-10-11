@@ -367,6 +367,7 @@
   .service {
     display: flex; gap: 16px; align-items: flex-start; background: var(--paper); border-radius: var(--radius);
     padding: 22px; border: 2px solid var(--cream-2); transition: transform .2s ease, border-color .2s ease;
+    text-decoration: none; color: inherit;
   }
   .service:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
   .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #e3f3d6; color: var(--forest); }
@@ -458,7 +459,11 @@
   textarea { min-height: 96px; resize: vertical; }
   form.estimate .btn { width: 100%; margin-top: 8px; }
   .form-note { font-size: .88rem; color: var(--bark-soft); text-align: center; margin: 14px 0 0; }
+  .form-note a { color: var(--pumpkin-2); font-weight: 700; text-decoration: underline; }
+  .form-note a:hover { color: var(--pumpkin); }
   .form-done { display: none; text-align: center; padding: 24px 0 8px; }
+  .form-done a:not(.btn) { color: var(--pumpkin-2); font-weight: 700; text-decoration: underline; }
+  .form-done a:not(.btn):hover { color: var(--pumpkin); }
   .form-done.show { display: block; }
   .form-done .btn { margin-top: 10px; }
   @media (max-width: 900px) {
@@ -509,7 +514,7 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <!-- Seasonal ribbon: swap this line each season -->
-<div class="ribbon">🍂 Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate" data-service="Fall leaf cleanup" data-lead-location="ribbon">Save your spot</a></div>
+<div class="ribbon"><span aria-hidden="true">🍂</span> Fall cleanup spots are filling up, and snow removal sign-ups are open. <a href="#estimate" data-service="Fall leaf cleanup" data-lead-location="ribbon">Save your spot</a></div>
 
 <header class="site">
   <div class="header-town-media" aria-hidden="true">
@@ -613,30 +618,30 @@
         <p class="lead">Pick one service or let us handle the whole yard, from the first mow in spring to the last snowfall.</p>
       </div>
       <div class="services-grid">
-        <div class="service reveal">
+        <a class="service reveal" href="#estimate" data-service="Weekly mowing and edging" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V10M9 20V7M13 20v-9M17 20V8M21 20v-6"/></svg></div>
           <div><h3>Weekly mowing</h3><p>Sharp blades and clean stripes, every week of the season.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Weekly mowing and edging" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 6-6"/></svg></div>
           <div><h3>Crisp edging</h3><p>Clean lines along sidewalks and driveways that make the whole yard pop.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Seeding and fertilizing" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10M12 20V10"/><path d="M12 10c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 10c3 0 5-2 5-5-3 0-5 2-5 5Z"/></svg></div>
           <div><h3>Seeding and fertilizing</h3><p>Seed, feed and weed control suited to Michigan soil and weather.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/></svg></div>
           <div><h3>Spring and fall cleanups</h3><p>Leaves, sticks and winter mess, cleared out and hauled off.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Mulch or shrub trimming" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="7"/><path d="M12 17v5M9 22h6"/></svg></div>
           <div><h3>Mulch and shrubs</h3><p>Fresh mulch in the beds and neat, healthy hedges shaped the way you like them.</p></div>
-        </div>
-        <div class="service reveal">
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Snow removal" data-lead-location="services">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.9 6.5l14.2 11M19.1 6.5 4.9 17.5"/></svg></div>
           <div><h3>Snow removal</h3><p>Driveways cleared when the snow flies. Single-car driveways from $30 per visit.</p></div>
-        </div>
+        </a>
       </div>
     </div>
   </section>
@@ -706,23 +711,23 @@
       </div>
       <div class="faq reveal">
         <details>
-          <summary aria-controls="faq-ans-1">What happens if it rains?</summary>
+          <summary aria-controls="faq-ans-1" aria-expanded="false">What happens if it rains?</summary>
           <p id="faq-ans-1">We shift our route and come as soon as the grass is dry, usually the next day. We'll text you so you're never left wondering.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-2">How do I pay?</summary>
+          <summary aria-controls="faq-ans-2" aria-expanded="false">How do I pay?</summary>
           <p id="faq-ans-2">We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-3">Do I need to be home?</summary>
+          <summary aria-controls="faq-ans-3" aria-expanded="false">Do I need to be home?</summary>
           <p id="faq-ans-3">Nope. As long as the gates are unlocked and pets are inside, we'll take care of everything and let you know when we're done.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-4">Do you do snow removal?</summary>
+          <summary aria-controls="faq-ans-4" aria-expanded="false">Do you do snow removal?</summary>
           <p id="faq-ans-4">Yes! Snow removal is new this winter. Single-car driveways start at $30 per visit, and bigger driveways are quoted by size. Send us your address and we'll get you on the list before the first snowfall.</p>
         </details>
         <details>
-          <summary aria-controls="faq-ans-5">Do I have to sign a contract?</summary>
+          <summary aria-controls="faq-ans-5" aria-expanded="false">Do I have to sign a contract?</summary>
           <p id="faq-ans-5">No. We earn your business every week. If you ever want to pause or stop, just let us know.</p>
         </details>
       </div>
@@ -764,12 +769,12 @@
           </div>
           <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="polite"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
-          <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text (269) 362-8286.</p>
+          <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
         </div>
         <div class="form-done" role="status" aria-live="polite">
           <h3 tabindex="-1">Thanks, got it!</h3>
           <p>Chris has your request and will be in touch soon.</p>
-          <p>Need him sooner? Call or text <strong>(269) 362-8286</strong>.</p>
+          <p>Need him sooner? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-done" aria-label="Call or text (269) 362-8286"><strong>(269) 362-8286</strong></a>.</p>
           <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="form-fallback" aria-label="Call Chris at (269) 362-8286">Call Chris instead</a>
           <button type="button" class="btn btn-ghost" id="form-reset-btn">Send another request</button>
         </div>
@@ -867,6 +872,17 @@
     document.addEventListener('click', function (e) {
       var a = e.target.closest('a[data-lead]');
       if (a) trackLead(a.dataset.lead, a.dataset.leadLocation);
+    });
+
+    // Sync aria-expanded state on FAQ disclosure summaries on toggle.
+    var faqDetails = document.querySelectorAll('.faq details');
+    faqDetails.forEach(function (det) {
+      det.addEventListener('toggle', function () {
+        var summary = det.querySelector('summary');
+        if (summary) {
+          summary.setAttribute('aria-expanded', det.open ? 'true' : 'false');
+        }
+      });
     });
 
     // The estimate form is handled in js/leads.js.
@@ -1024,7 +1040,7 @@
       function blowPile(host, dir) {
         var pile = piles.get(host);
         var hr = rects.get(host);
-        if (!hr) return;
+        if (!hr || !pile) return;
         pile.forEach(function (l) {
           l.state = 'blown';
           l.x = hr.left + l.ox - l.size / 2;
@@ -1033,7 +1049,7 @@
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
         });
-        piles.set(host, []);
+        pile.length = 0;
       }
 
       // Pet
@@ -1255,6 +1271,7 @@
       }
       function targetRect(target, type) {
         var el = type === 'grass' ? target && target.el : target;
+        if (type === 'grass' && target && target.r) return target.r;
         return el ? rects.get(el) : null;
       }
       // Grass Patches on .green sections representing lawn
@@ -1348,10 +1365,12 @@
 
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        catchers.forEach(function (el) {
+        // Optimization: Use a standard for loop to avoid closure allocations during frequent idle checks
+        for (var i = 0; i < catchers.length; i++) {
+          var el = catchers[i];
           var count = piles.get(el).length;
           if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
-        });
+        }
         return chosen;
       }
 
@@ -1376,7 +1395,9 @@
           });
           grassPatches.forEach(function (gp) {
             var r = gp.el.getBoundingClientRect();
-            rects.set(gp.el, r.width > 0 && r.bottom > 0 && r.top < H ? r : null);
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
+            rects.set(gp.el, valid);
+            gp.r = valid;
           });
           rectsDirty = false;
         }

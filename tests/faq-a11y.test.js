@@ -23,4 +23,35 @@ test('FAQ details/summary accessibility attributes', async (t) => {
       assert.equal(targetEl.tagName.toLowerCase(), 'p', `Controlled element is a <p> tag`);
     });
   });
+
+  await t.test('FAQ summary elements have initial aria-expanded="false" and toggle to "true" on details open', () => {
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    const { document, Event } = dom.window;
+
+    const detailsList = document.querySelectorAll('.faq details');
+    assert.ok(detailsList.length > 0, 'FAQ details exist');
+
+    detailsList.forEach((details, index) => {
+      const summary = details.querySelector('summary');
+      assert.equal(summary.getAttribute('aria-expanded'), 'false', `Summary ${index + 1} initially has aria-expanded="false"`);
+
+      details.open = true;
+      details.dispatchEvent(new Event('toggle'));
+      assert.equal(summary.getAttribute('aria-expanded'), 'true', `Summary ${index + 1} has aria-expanded="true" when details open`);
+
+      details.open = false;
+      details.dispatchEvent(new Event('toggle'));
+      assert.equal(summary.getAttribute('aria-expanded'), 'false', `Summary ${index + 1} returns to aria-expanded="false" when details closed`);
+    });
+  });
 });
