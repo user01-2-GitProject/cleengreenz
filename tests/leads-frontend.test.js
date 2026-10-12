@@ -407,6 +407,45 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(nameInput.hasAttribute('aria-describedby'), false);
     assert.equal(document.querySelector('#f-name-err').classList.contains('show'), false);
   });
+
+  await t.test('formats phone number on input event into (XXX) XXX-XXXX structure', async () => {
+    const { window, document } = setupEnvironment();
+    const phoneInput = document.getElementById('f-phone');
+
+    phoneInput.value = '269';
+    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(phoneInput.value, '(269');
+
+    phoneInput.value = '269362';
+    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(phoneInput.value, '(269) 362');
+
+    phoneInput.value = '2693628286';
+    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(phoneInput.value, '(269) 362-8286');
+  });
+
+  await t.test('rejects phone number with fewer than 7 digits on submit and marks field as invalid', async () => {
+    let fetchCalled = false;
+    const { window, document } = setupEnvironment({
+      fetch: () => {
+        fetchCalled = true;
+        return Promise.resolve({ ok: true });
+      },
+    });
+
+    const form = document.getElementById('estimate-form');
+    form.querySelector('#f-name').value = 'Jane Doe';
+    form.querySelector('#f-phone').value = '123'; // Incomplete phone
+    form.querySelector('#f-address').value = '123 Main St';
+
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+
+    assert.equal(fetchCalled, false, 'fetch should not be called with an invalid phone number');
+    const phoneInput = form.querySelector('#f-phone');
+    assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(document.querySelector('#f-phone-err').classList.contains('show'), true);
+  });
 });
 
 test('Form initialization, honeypot field, and lead tracking events', async (t) => {
