@@ -353,8 +353,10 @@
   .season-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .season-card {
     background: var(--paper); color: var(--bark); border-radius: var(--radius); padding: 28px;
-    box-shadow: var(--shadow); position: relative;
+    box-shadow: var(--shadow); position: relative; text-decoration: none; display: block;
+    border: 2px solid var(--cream-2); transition: transform .2s ease, border-color .2s ease;
   }
+  .season-card:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
   .season-card h3 { color: var(--forest); }
   .season-card p { color: var(--bark-soft); margin: 0; }
   .season-card .icon {
@@ -591,23 +593,23 @@
         <p class="lead">Fall is the busiest few weeks of the year for us. Book your cleanup early, give the lawn a head start for spring, and get on the snow list before the first flakes.</p>
       </div>
       <div class="season-grid">
-        <article class="season-card reveal">
+        <a class="season-card reveal" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="season">
           <span class="tag">Most booked</span>
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/></svg></div>
           <h3>Leaf cleanup</h3>
           <p>We rake, blow and haul away the leaves so they don't smother your grass over the winter.</p>
-        </article>
-        <article class="season-card reveal">
+        </a>
+        <a class="season-card reveal" href="#estimate" data-service="Seeding and fertilizing" data-lead-location="season">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10M12 20V10"/><path d="M12 10c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 10c3 0 5-2 5-5-3 0-5 2-5 5Z"/></svg></div>
           <h3>Seeding and fertilizing</h3>
           <p>Fall is the best time to fill in thin spots. We seed and feed now so your lawn comes back thick and green in spring.</p>
-        </article>
-        <article class="season-card reveal">
+        </a>
+        <a class="season-card reveal" href="#estimate" data-service="Snow removal" data-lead-location="season">
           <span class="tag">New this winter</span>
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.9 6.5l14.2 11M19.1 6.5 4.9 17.5"/><path d="m9 3 3 2 3-2M9 21l3-2 3 2M3 9.5l3.2.4-1 3M21 14.5l-3.2-.4 1-3M3 14.5l3.2-.4-1-3M21 9.5l-3.2.4 1 3"/></svg></div>
           <h3>Snow removal</h3>
           <p>Same crew, same reliability, all winter long. Single-car driveways start at <strong>$30 per visit</strong>. Get on the list now and we'll keep you dug out.</p>
-        </article>
+        </a>
       </div>
       <div class="season-cta reveal">
         <a class="btn btn-primary" href="#estimate" data-lead-location="season" data-service="Fall leaf cleanup">Book fall or winter service</a>
