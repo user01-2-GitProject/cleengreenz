@@ -58,6 +58,10 @@ test('json helper function', async (t) => {
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'; base-uri 'none';");
+    assert.equal(
+      res.headers.get('permissions-policy'),
+      'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+    );
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -626,6 +630,10 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(
       res.headers.get('content-security-policy'),
       "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+    );
+    assert.equal(
+      res.headers.get('permissions-policy'),
+      'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
     );
   });
 

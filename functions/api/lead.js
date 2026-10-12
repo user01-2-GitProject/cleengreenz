@@ -33,6 +33,7 @@ export function json(body, status = 200) {
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
       'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none';",
+      'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
     },
   });
 }
