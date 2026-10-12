@@ -26,3 +26,9 @@
 **Learning:** Reassigning a Map value to a new array (`map.set(key, [])`) creates garbage collector churn in animation loops and breaks any cached references holding onto the original array. Clearing the array in-place (`pile.length = 0`) preserves object references and eliminates array re-allocation overhead.
 
 **Action:** Always clear arrays in-place (`array.length = 0`) when clearing collections in hot paths or animation frame loops.
+
+## 2026-09-30 - Store cached bounding rects and arrays directly on item objects instead of Map instances
+
+**Learning:** Using `Map` instances (`rects.get(el)`, `piles.get(el)`) to associate DOM elements with cached bounding rectangles or child arrays in high-frequency `requestAnimationFrame` loops introduces hash table lookup overhead on every frame render. Storing `.r` and `.pile` properties directly on item wrapper objects (`catcherItem`, `grassPatch`) allows O(1) direct property reads and eliminates `Map` allocations and lookups entirely.
+
+**Action:** Store cached layout measurements and child collection arrays directly on item wrapper objects rather than maintaining auxiliary `Map` instances for lookups in 60fps animation frame loops.
