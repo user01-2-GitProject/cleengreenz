@@ -6,7 +6,7 @@
 // emailed, it answers 503 and the page falls back to opening an email.
 
 const CLICK_TYPES = ['call', 'email', 'estimate_click'];
-const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, location: 40, page: 300, referrer: 300 };
+const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, location: 40, page: 300, referrer: 300, country: 10, city: 100 };
 // Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -15,11 +15,13 @@ function clean(value, field) {
   // Strip non-printable ASCII control characters (excluding tab and newline).
   let val = value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   if (field !== 'notes') {
+    // Strip CRLF linebreaks to prevent email header injection, log pollution, or response split attacks.
     val = val.replace(/[\r\n]+/g, ' ');
   } else {
     val = val.replace(/\r\n?/g, '\n');
   }
-  const s = val.trim().slice(0, LIMITS[field]);
+  const maxLen = LIMITS[field] || 300;
+  const s = val.trim().slice(0, maxLen);
   return s || null;
 }
 
@@ -138,8 +140,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     location: clean(body.location, 'location'),
     page: clean(body.page, 'page'),
     referrer: clean(body.referrer, 'referrer'),
-    country: request.cf?.country || null,
-    city: request.cf?.city || null,
+    country: clean(request.cf?.country, 'country'),
+    city: clean(request.cf?.city, 'city'),
   };
 
   if (type === 'form') {
