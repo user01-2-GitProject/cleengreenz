@@ -251,12 +251,33 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: true });
   });
 
-  await t.test('sanitizes linebreaks and control characters in form fields when submitted', async () => {
+  await t.test('sanitizes linebreaks and control characters in form, page, and referrer fields when submitted', async () => {
     let capturedBody = null;
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, options) => {
       capturedBody = JSON.parse(options.body);
       return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    let boundLeadParams = null;
+    const mockDb = {
+      prepare: (sql) => {
+        if (sql && sql.includes('UPDATE leads SET emailed = 1')) {
+          return {
+            bind: () => ({
+              run: async () => {},
+            }),
+          };
+        }
+        return {
+          bind: (...args) => {
+            boundLeadParams = args;
+            return {
+              first: async () => ({ id: 101 }),
+            };
+          },
+        };
+      },
     };
 
     try {
@@ -265,6 +286,9 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           type: 'form',
+          location: 'hero\r\nlocation',
+          page: '/estimate\r\nSet-Cookie:admin=1',
+          referrer: 'https://cleengreenz.com/ref\nHeaderInjection',
           name: 'Jane\x00\x08\r\nDoe\x1F',
           phone: '269-555-0199\n',
           address: '123\r\nMain\nSt',
@@ -275,7 +299,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
       const res = await onRequestPost({
         request,
-        env: { RESEND_API_KEY: 'test-key' },
+        env: { DB: mockDb, RESEND_API_KEY: 'test-key' },
         waitUntil: () => {},
       });
 
@@ -287,6 +311,11 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       assert.match(capturedBody.text, /Service: Lawn Care/);
       assert.match(capturedBody.text, /Notes: Line 1\nLine 2\nLine 3/);
       assert.equal(capturedBody.html.includes('Line 1<br>Line 2<br>Line 3'), true);
+
+      // Verify page and referrer bound to DB insert have CRLF removed
+      assert.equal(boundLeadParams[1], 'hero location');
+      assert.equal(boundLeadParams[7], '/estimate Set-Cookie:admin=1');
+      assert.equal(boundLeadParams[8], 'https://cleengreenz.com/ref HeaderInjection');
     } finally {
       globalThis.fetch = originalFetch;
     }
