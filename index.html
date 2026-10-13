@@ -1414,11 +1414,12 @@
 
       function readyPile(atLeast) {
         var chosen = null, biggest = atLeast - 1;
-        // Optimization: Use a standard for loop to avoid closure allocations during frequent idle checks
-        for (var i = 0; i < catchers.length; i++) {
-          var el = catchers[i];
-          var count = piles.get(el).length;
-          if (count > biggest && visible(rects.get(el))) { chosen = el; biggest = count; }
+        // Optimization: Iterate over pre-structured `catcherItems` directly to access `ci.pile.length` and
+        // cached bounding rect `ci.r` without repeatedly calling Map lookups (`piles.get()` and `rects.get()`).
+        for (var i = 0; i < catcherItems.length; i++) {
+          var ci = catcherItems[i];
+          var count = ci.pile.length;
+          if (count > biggest && visible(ci.r)) { chosen = ci.el; biggest = count; }
         }
         return chosen;
       }
