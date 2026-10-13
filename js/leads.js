@@ -74,6 +74,25 @@
     updateNotesCount();
   }
 
+  var phoneInput = form.querySelector('#f-phone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', function () {
+      var digits = phoneInput.value.replace(/\D/g, '');
+      if (!digits) {
+        phoneInput.value = '';
+        return;
+      }
+      if (digits.length > 10) digits = digits.slice(0, 10);
+      if (digits.length <= 3) {
+        phoneInput.value = '(' + digits;
+      } else if (digits.length <= 6) {
+        phoneInput.value = '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
+      } else {
+        phoneInput.value = '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+      }
+    });
+  }
+
   // Hidden field only bots fill in.
   var trap = document.createElement('input');
   trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
@@ -173,7 +192,14 @@
     for (var i = 0; i < requiredFields.length; i++) {
       var field = requiredFields[i];
       var errEl = errorFor(field);
-      if (!field.value.trim()) {
+      var isInvalid = !field.value.trim();
+      if (field.id === 'f-phone' && !isInvalid) {
+        var phoneDigits = field.value.replace(/\D/g, '');
+        if (phoneDigits.length < 7) {
+          isInvalid = true;
+        }
+      }
+      if (isInvalid) {
         field.setAttribute('aria-invalid', 'true');
         if (errEl) {
           errEl.classList.add('show');
