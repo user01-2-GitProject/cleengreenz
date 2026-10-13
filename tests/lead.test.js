@@ -153,6 +153,39 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'payload_too_large' });
   });
 
+  await t.test('returns 413 JSON response when Content-Length is invalid or negative', async () => {
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': 'invalid' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 413);
+    assert.deepEqual(await resInvalid.json(), { ok: false, error: 'payload_too_large' });
+
+    const reqNegative = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': '-10' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resNegative = await onRequestPost({ request: reqNegative, env: {}, waitUntil: () => {} });
+    assert.equal(resNegative.status, 413);
+    assert.deepEqual(await resNegative.json(), { ok: false, error: 'payload_too_large' });
+  });
+
+  await t.test('returns 413 JSON response when body length exceeds 64KB even if Content-Length header is omitted', async () => {
+    const largeBody = JSON.stringify({ type: 'call', padding: 'x'.repeat(70000) });
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: largeBody,
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 413);
+    assert.deepEqual(await res.json(), { ok: false, error: 'payload_too_large' });
+  });
+
   await t.test('returns 400 JSON response on invalid JSON request body or non-object payload', async () => {
     const invalidJsonRequest = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',

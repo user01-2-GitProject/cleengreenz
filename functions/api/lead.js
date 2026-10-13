@@ -106,9 +106,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
   }
 
-  const contentLength = parseInt(request.headers.get('content-length') || '0', 10);
-  if (contentLength > 65536) {
-    return json({ ok: false, error: 'payload_too_large' }, 413);
+  const rawContentLength = request.headers.get('content-length');
+  if (rawContentLength !== null) {
+    const contentLength = parseInt(rawContentLength, 10);
+    if (isNaN(contentLength) || contentLength < 0 || contentLength > 65536) {
+      return json({ ok: false, error: 'payload_too_large' }, 413);
+    }
   }
 
   const contentType = request.headers.get('content-type') || '';
@@ -116,9 +119,20 @@ export async function onRequestPost({ request, env, waitUntil }) {
     return json({ ok: false, error: 'bad_request' }, 400);
   }
 
+  let rawBody;
+  try {
+    rawBody = await request.text();
+  } catch {
+    return json({ ok: false, error: 'bad_request' }, 400);
+  }
+
+  if (rawBody.length > 65536) {
+    return json({ ok: false, error: 'payload_too_large' }, 413);
+  }
+
   let body;
   try {
-    body = await request.json();
+    body = JSON.parse(rawBody);
   } catch {
     return json({ ok: false, error: 'bad_request' }, 400);
   }
