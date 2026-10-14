@@ -123,6 +123,7 @@
         var errEl = errorFor(field);
         if (errEl) {
           errEl.classList.remove('show');
+          if (field.id === 'f-phone') errEl.textContent = 'Please enter your phone number';
           var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
             .filter(function (id) { return id && id !== errEl.id; }).join(' ');
           if (descriptions) field.setAttribute('aria-describedby', descriptions);
@@ -193,10 +194,13 @@
       var field = requiredFields[i];
       var errEl = errorFor(field);
       var isInvalid = !field.value.trim();
-      if (field.id === 'f-phone' && !isInvalid) {
+      if (field.id === 'f-phone') {
         var phoneDigits = field.value.replace(/\D/g, '');
-        if (phoneDigits.length < 7) {
+        if (!isInvalid && phoneDigits.length < 7) {
           isInvalid = true;
+          if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
+        } else if (errEl) {
+          errEl.textContent = 'Please enter your phone number';
         }
       }
       if (isInvalid) {

@@ -444,7 +444,9 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(fetchCalled, false, 'fetch should not be called with an invalid phone number');
     const phoneInput = form.querySelector('#f-phone');
     assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
-    assert.equal(document.querySelector('#f-phone-err').classList.contains('show'), true);
+    const phoneErr = document.querySelector('#f-phone-err');
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
   });
 });
 
