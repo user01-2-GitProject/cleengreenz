@@ -401,7 +401,7 @@
   @media (max-width: 900px) { .meet-grid { grid-template-columns: 1fr; gap: 40px; } }
 
   /* Steps */
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; counter-reset: step; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; counter-reset: step; list-style: none; padding: 0; margin: 0; }
   .step { text-align: center; padding: 0 12px; }
   .step .num {
     width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center;
@@ -684,11 +684,11 @@
         <div class="eyebrow">Easy as 1, 2, 3</div>
         <h2>How it works</h2>
       </div>
-      <div class="steps">
-        <div class="step reveal"><div class="num">1</div><h3>Tell us about your yard</h3><p>Fill out the quick form or give Chris a call. It takes about a minute.</p></div>
-        <div class="step reveal"><div class="num">2</div><h3>Get a fair quote</h3><p>We take a look and send you a clear price. No contracts and no surprises.</p></div>
-        <div class="step reveal"><div class="num">3</div><h3>Enjoy your weekends</h3><p>We show up on your day, do great work, and you get your Saturdays back.</p></div>
-      </div>
+      <ol class="steps" aria-label="How it works steps">
+        <li class="step reveal"><div class="num">1</div><h3>Tell us about your yard</h3><p>Fill out the quick form or give Chris a call. It takes about a minute.</p></li>
+        <li class="step reveal"><div class="num">2</div><h3>Get a fair quote</h3><p>We take a look and send you a clear price. No contracts and no surprises.</p></li>
+        <li class="step reveal"><div class="num">3</div><h3>Enjoy your weekends</h3><p>We show up on your day, do great work, and you get your Saturdays back.</p></li>
+      </ol>
     </div>
   </section>
 
