@@ -361,6 +361,8 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       { body: { type: 'form', name: 'John Doe', address: '123 Main St' }, missing: 'phone' },
       { body: { type: 'form', name: 'John Doe', phone: '269-555-0100' }, missing: 'address' },
       { body: { type: 'form', name: '   ', phone: '269-555-0100', address: '123 Main St' }, missing: 'whitespace name' },
+      { body: { type: 'form', name: 'John Doe', phone: '123456', address: '123 Main St' }, missing: 'fewer than 7 digit phone' },
+      { body: { type: 'form', name: 'John Doe', phone: 'invalid-phone-no-digits', address: '123 Main St' }, missing: 'non-numeric phone' },
     ];
 
     for (const { body, missing } of testCases) {

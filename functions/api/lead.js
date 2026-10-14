@@ -162,6 +162,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (type === 'form') {
     for (const f of ['name', 'phone', 'address', 'service', 'notes']) lead[f] = clean(body[f], f);
     if (!lead.name || !lead.phone || !lead.address) return json({ ok: false, error: 'missing_fields' }, 400);
+    // Validate phone number has at least 7 numeric digits to prevent garbage or invalid contact numbers
+    const phoneDigits = sanitizePhone(lead.phone).replace(/\D/g, '');
+    if (phoneDigits.length < 7) return json({ ok: false, error: 'missing_fields' }, 400);
   }
 
   let id = null;
