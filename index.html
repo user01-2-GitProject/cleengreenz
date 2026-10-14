@@ -1411,7 +1411,7 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.sec, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
@@ -1603,7 +1603,8 @@
                   p.target.mowed = true;
                   p.target.mowedAt = now;
                   p.target.el.classList.add('mowed');
-                } else if (p.targetType === 'leaf' && piles.get(p.target).length) {
+                } else if (p.targetType === 'leaf' && p.target.pile.length) {
+                  // Direct property read avoids Map.get lookup and avoids TypeError when p.target is a catcherItem
                   blowPile(p.target, p.face);
                 }
               }
