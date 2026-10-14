@@ -129,6 +129,8 @@
           else field.removeAttribute('aria-describedby');
         }
       }
+      var phoneErr = form.querySelector('#f-phone-err');
+      if (phoneErr) phoneErr.textContent = 'Please enter your phone number';
       done.classList.remove('show');
       fieldsBox.style.display = '';
       var heading = done.querySelector('h3');
@@ -193,10 +195,17 @@
       var field = requiredFields[i];
       var errEl = errorFor(field);
       var isInvalid = !field.value.trim();
-      if (field.id === 'f-phone' && !isInvalid) {
-        var phoneDigits = field.value.replace(/\D/g, '');
-        if (phoneDigits.length < 7) {
-          isInvalid = true;
+      if (field.id === 'f-phone') {
+        if (!isInvalid) {
+          var phoneDigits = field.value.replace(/\D/g, '');
+          if (phoneDigits.length < 7) {
+            isInvalid = true;
+            if (errEl) errEl.textContent = 'Please enter a complete phone number';
+          } else if (errEl) {
+            errEl.textContent = 'Please enter your phone number';
+          }
+        } else if (errEl) {
+          errEl.textContent = 'Please enter your phone number';
         }
       }
       if (isInvalid) {

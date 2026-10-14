@@ -1,0 +1,3 @@
+## 2026-03-28 - Dynamic Form Field Error Guidance
+**Learning:** For inputs with formatting rules or length minimums (such as phone inputs requiring at least 7 digits), static error text like "Please enter your phone number" is confusing when a user has already typed partial input. Dynamically updating the error element's text to explain the specific failure condition (e.g., "Please enter a complete phone number") provides actionable feedback without requiring extra DOM elements or layout shifts.
+**Action:** When validating form fields with custom requirements beyond non-empty check, update the existing error element's text content dynamically upon form submission and reset it when appropriate.

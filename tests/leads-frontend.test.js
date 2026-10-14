@@ -425,7 +425,7 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneInput.value, '(269) 362-8286');
   });
 
-  await t.test('rejects phone number with fewer than 7 digits on submit and marks field as invalid', async () => {
+  await t.test('rejects phone number with fewer than 7 digits on submit and updates error text', async () => {
     let fetchCalled = false;
     const { window, document } = setupEnvironment({
       fetch: () => {
@@ -435,16 +435,29 @@ test('Estimate form field validation & user input handling', async (t) => {
     });
 
     const form = document.getElementById('estimate-form');
+    const phoneInput = form.querySelector('#f-phone');
+    const phoneErr = document.querySelector('#f-phone-err');
+
+    // Case 1: Empty phone submission
     form.querySelector('#f-name').value = 'Jane Doe';
-    form.querySelector('#f-phone').value = '123'; // Incomplete phone
+    phoneInput.value = '';
     form.querySelector('#f-address').value = '123 Main St';
 
     form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
 
-    assert.equal(fetchCalled, false, 'fetch should not be called with an invalid phone number');
-    const phoneInput = form.querySelector('#f-phone');
+    assert.equal(fetchCalled, false, 'fetch should not be called with an empty phone number');
     assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
-    assert.equal(document.querySelector('#f-phone-err').classList.contains('show'), true);
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.textContent, 'Please enter your phone number');
+
+    // Case 2: Incomplete phone submission (< 7 digits)
+    phoneInput.value = '123';
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+
+    assert.equal(fetchCalled, false, 'fetch should not be called with an incomplete phone number');
+    assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.textContent, 'Please enter a complete phone number');
   });
 });
 
