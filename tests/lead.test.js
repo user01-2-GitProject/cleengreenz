@@ -686,6 +686,7 @@ test('onRequestGet authorization and response handling', async (t) => {
       res.headers.get('www-authenticate'),
       'Basic realm="Cleen Greenz leads", charset="UTF-8"'
     );
+    assert.equal(res.headers.get('cache-control'), 'no-store');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
@@ -738,6 +739,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     // Should pass authorization check and hit DB missing check (503)
     assert.equal(res.status, 503);
     assert.equal(await res.text(), 'Lead database is not connected yet.');
+    assert.equal(res.headers.get('cache-control'), 'no-store');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
@@ -765,6 +767,7 @@ test('onRequestGet authorization and response handling', async (t) => {
 
       assert.equal(res.status, 500);
       assert.equal(await res.text(), 'Unable to fetch leads');
+      assert.equal(res.headers.get('cache-control'), 'no-store');
       assert.equal(res.headers.get('x-frame-options'), 'DENY');
       assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
       assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');

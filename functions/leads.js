@@ -51,6 +51,7 @@ const LABELS = { form: 'Estimate forms', call: 'Call taps', email: 'Email taps',
 const TYPES = Object.keys(LABELS);
 
 const SECURITY_HEADERS = {
+  'cache-control': 'no-store',
   'x-frame-options': 'DENY',
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
@@ -176,7 +177,6 @@ export async function onRequestGet({ request, env }) {
   return new Response(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'no-store',
       ...SECURITY_HEADERS,
     },
   });
