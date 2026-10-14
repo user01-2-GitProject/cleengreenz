@@ -34,6 +34,7 @@ export function json(body, status = 200) {
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains', // Enforce HTTPS to protect against SSL stripping and HTTP downgrade attacks
       'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none';",
       'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
     },
