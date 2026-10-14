@@ -1411,7 +1411,9 @@
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.sec, gp.slot);
             }
-          } else if (visible(rects.get(gp.el))) {
+          // Performance optimization: Use cached bounding rect property gp.r directly
+          // to eliminate Map lookup overhead (rects.get(gp.el)) during animation ticks.
+          } else if (visible(gp.r)) {
             return gp;
           }
         }
@@ -1603,7 +1605,9 @@
                   p.target.mowed = true;
                   p.target.mowedAt = now;
                   p.target.el.classList.add('mowed');
-                } else if (p.targetType === 'leaf' && piles.get(p.target).length) {
+                // Performance optimization: Access p.target.pile directly on the catcherItem object
+                // to avoid Map lookup overhead (piles.get(p.target)) during animation ticks.
+                } else if (p.targetType === 'leaf' && p.target.pile.length) {
                   blowPile(p.target, p.face);
                 }
               }
