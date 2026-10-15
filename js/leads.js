@@ -28,6 +28,30 @@
     return;
   }
 
+  // Copy phone number functionality
+  document.addEventListener('click', function (e) {
+    var copyBtn = e.target.closest('.copy-phone-btn');
+    if (copyBtn) {
+      var phoneNum = copyBtn.dataset.phone || '(269) 362-8286';
+      var container = copyBtn.parentElement;
+      var feedback = container ? container.querySelector('.copy-feedback') : null;
+      var writePromise;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        writePromise = navigator.clipboard.writeText(phoneNum);
+      } else {
+        writePromise = Promise.resolve();
+      }
+      writePromise.then(function () {
+        if (feedback) {
+          feedback.textContent = 'Copied!';
+          setTimeout(function () {
+            feedback.textContent = '';
+          }, 2000);
+        }
+      }).catch(function () {});
+    }
+  });
+
   // Call and email taps. Form requests are recorded by the server when submitted.
   document.addEventListener('cg:lead', function (e) {
     var d = e.detail || {};
