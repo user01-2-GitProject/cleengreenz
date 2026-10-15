@@ -1227,6 +1227,18 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
   });
 });
 
+test('_headers configuration file for static routes', async (t) => {
+  await t.test('exists in repo root and specifies required security headers', async () => {
+    const headersContent = fs.readFileSync(new URL('../_headers', import.meta.url), 'utf8');
+    assert.match(headersContent, /^\/\*/m);
+    assert.match(headersContent, /X-Frame-Options:\s*DENY/i);
+    assert.match(headersContent, /X-Content-Type-Options:\s*nosniff/i);
+    assert.match(headersContent, /Referrer-Policy:\s*strict-origin-when-cross-origin/i);
+    assert.match(headersContent, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i);
+    assert.match(headersContent, /Permissions-Policy:/i);
+  });
+});
+
 test('buildPayload helper function in js/leads.js', async (t) => {
   await t.test('enriches lead payload with location.pathname and document.referrer', async () => {
     globalThis.location = { pathname: '/estimate-page' };
