@@ -341,7 +341,7 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
     assert.equal(phoneInput.value, '');
     assert.equal(addressInput.value, '');
     assert.equal(notesInput.value, '');
-    assert.equal(notesCount.textContent, '· 500 chars left');
+    assert.equal(notesCount.textContent, '· 500 characters remaining');
     assert.equal(nameInput.hasAttribute('aria-invalid'), false);
     assert.equal(document.querySelector('#f-name-err').classList.contains('show'), false);
     assert.equal(document.activeElement, nameInput);
@@ -459,12 +459,12 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(notesInput, 'notes input should exist');
     assert.ok(notesCount, 'notes count element should exist');
     assert.equal(notesInput.getAttribute('maxlength'), '500');
-    assert.equal(notesCount.textContent, '· 500 chars left');
+    assert.equal(notesCount.textContent, '· 500 characters remaining');
 
     notesInput.value = 'Hello world!';
     notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
 
-    assert.equal(notesCount.textContent, '· 488 chars left');
+    assert.equal(notesCount.textContent, '· 488 characters remaining');
   });
 
   await t.test('appends a hidden honeypot website field to the form on script load', async () => {
