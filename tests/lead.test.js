@@ -845,6 +845,21 @@ test('renderLeadsHtml helper function in functions/leads.js', async (t) => {
   });
 });
 
+test('Cloudflare Pages _headers configuration file validation', async (t) => {
+  await t.test('verifies _headers file exists and contains essential security headers', async () => {
+    assert.equal(fs.existsSync('_headers'), true, '_headers file must exist in repo root');
+    const content = fs.readFileSync('_headers', 'utf8');
+
+    assert.match(content, /^\/\*/m, '_headers must target all routes /*');
+    assert.match(content, /X-Frame-Options:\s*DENY/i, 'X-Frame-Options must be DENY');
+    assert.match(content, /X-Content-Type-Options:\s*nosniff/i, 'X-Content-Type-Options must be nosniff');
+    assert.match(content, /Referrer-Policy:\s*strict-origin-when-cross-origin/i, 'Referrer-Policy must be strict-origin-when-cross-origin');
+    assert.match(content, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i, 'Strict-Transport-Security HSTS header required');
+    assert.match(content, /Permissions-Policy:\s*/i, 'Permissions-Policy header required');
+    assert.match(content, /Content-Security-Policy:\s*/i, 'Content-Security-Policy header required');
+  });
+});
+
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
   await t.test('strips HTML attribute injection in phone numbers for tel: links', async () => {
     const mockDb = {
