@@ -1033,6 +1033,7 @@
       }
       function resetLeaf(l, anywhere) {
         l.state = 'fall';
+        l.landedDirty = false;
         l.bx = rnd(0, W);
         l.y = anywhere ? rnd(-H * 0.3, H) : rnd(-120, -30);
         l.vy = rnd(48, 88);
@@ -1433,6 +1434,7 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
+        var isRectsDirty = rectsDirty;
         // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
         if (rectsDirty) {
           catchers.forEach(function (el, idx) {
@@ -1473,6 +1475,7 @@
                 if (!r || pile.length >= MAX_PILE) continue;
                 if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
                   l.state = 'land';
+                  l.landedDirty = true;
                   l.host = ci.el;
                   l.hostCi = ci;
                   // Gather toward the middle and stack in a low mound, not a flat row.
@@ -1488,15 +1491,20 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            // Optimization: Prefer cached hostCi bounding rect to avoid Map lookups on landed leaves every frame
+            // Optimization: Stationary landed leaves remain at fixed button offsets.
+            // Bypass position recalculations and DOM style checks when neither layout shifts
+            // (isRectsDirty) nor initial landing (l.landedDirty) occurred.
+            if (!isRectsDirty && !l.landedDirty) continue;
             var hr = l.hostCi ? l.hostCi.r : rects.get(l.host);
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
+              l.landedDirty = false;
               continue;
             }
             if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
             x = hr.left + l.ox - l.size / 2;
             y = hr.top - l.size * 0.75 - l.lift;
+            l.landedDirty = false;
           }
           if (l.state === 'blown') {
             l.vy += 260 * dt;

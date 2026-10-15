@@ -32,3 +32,9 @@
 **Learning:** When data structures store references to target objects (such as `catcherItem` or `grassPatch`), retrieving properties directly from the object (e.g. `p.target.pile` or `gp.r`) is faster than querying a `Map` (e.g. `piles.get(target)` or `rects.get(gp.el)`). It also avoids runtime errors when the target object type differs from the `Map` key type.
 
 **Action:** Store direct references to cached metadata/collections on the parent object where possible to eliminate `Map.get()` overhead in high-frequency animation loops.
+
+## 2026-10-01 - Bypass frame position calculations for stationary landed elements until layout shifts occur
+
+**Learning:** In animation loops where particle elements land on DOM host containers, recalculating host-relative offsets and rounding coordinates for stationary landed elements on every frame tick wastes CPU cycles. Flagging newly landed elements (`landedDirty`) and tracking frame layout dirty states (`isRectsDirty`) allows skipping per-frame calculations for stationary landed elements until a scroll/resize or initial landing event occurs (~2.7x speedup).
+
+**Action:** Check frame layout dirty flags (`isRectsDirty`) and element landing flags (`landedDirty`) before executing coordinate math and style transform checks for stationary landed objects in high-frequency animation loops.
