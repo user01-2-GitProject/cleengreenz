@@ -998,11 +998,9 @@
       });
       window.addEventListener('scroll', updateRects, { passive: true });
       var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
-      var piles = new Map();
-      catchers.forEach(function (el) { piles.set(el, []); });
-      var rects = new Map();
+      // Direct property reference on catcherItem eliminates Map.get overhead in animation frame loop
       var catcherItems = catchers.map(function (el) {
-        return { el: el, pile: piles.get(el), r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0 };
+        return { el: el, pile: [], r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0 };
       });
       var MAX_PILE = 12, CLEAR_AT = 6;
       function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -1047,12 +1045,19 @@
         l.host = null;
         l.hostCi = null;
       }
+      function catcherItemFor(host) {
+        if (!host) return null;
+        if (host.pile) return host;
+        for (var i = 0; i < catcherItems.length; i++) {
+          if (catcherItems[i].el === host) return catcherItems[i];
+        }
+        return null;
+      }
       function blowPile(host, dir) {
-        // Optimization: Support both catcherItem object (ci) or DOM element (host)
-        // to avoid Map lookups and array closure allocations in animation frame handler
-        var ci = (host && host.pile) ? host : null;
-        var pile = ci ? ci.pile : piles.get(host);
-        var hr = ci ? ci.r : rects.get(host);
+        // Direct property read on catcherItem (ci) eliminates Map lookups and closure allocations
+        var ci = catcherItemFor(host);
+        if (!ci) return;
+        var pile = ci.pile, hr = ci.r;
         if (!hr || !pile) return;
         for (var i = 0; i < pile.length; i++) {
           var l = pile[i];
@@ -1433,13 +1438,12 @@
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
-        // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
+        // Batch DOM layout reads: update cached element bounding rects using direct property storage on objects
         if (rectsDirty) {
-          catchers.forEach(function (el, idx) {
-            var r = el.getBoundingClientRect();
-            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
-            rects.set(el, valid);
+          for (var idx = 0; idx < catcherItems.length; idx++) {
             var ci = catcherItems[idx];
+            var r = ci.el.getBoundingClientRect();
+            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
             ci.r = valid;
             if (valid) {
               ci.top = valid.top;
@@ -1447,13 +1451,12 @@
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
             }
-          });
-          grassPatches.forEach(function (gp) {
-            var r = gp.el.getBoundingClientRect();
-            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
-            rects.set(gp.el, valid);
-            gp.r = valid;
-          });
+          }
+          for (var gIdx = 0; gIdx < grassPatches.length; gIdx++) {
+            var gp = grassPatches[gIdx];
+            var gr = gp.el.getBoundingClientRect();
+            gp.r = gr.width > 0 && gr.bottom > 0 && gr.top < H ? gr : null;
+          }
           rectsDirty = false;
         }
 
@@ -1488,8 +1491,9 @@
             if (y > H + 40) resetLeaf(l, false);
           }
           if (l.state === 'land') {
-            // Optimization: Prefer cached hostCi bounding rect to avoid Map lookups on landed leaves every frame
-            var hr = l.hostCi ? l.hostCi.r : rects.get(l.host);
+            // Optimization: Prefer cached hostCi bounding rect directly from catcherItem object
+            var ci = l.hostCi || catcherItemFor(l.host);
+            var hr = ci ? ci.r : null;
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
               continue;

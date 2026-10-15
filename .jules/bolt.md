@@ -32,3 +32,9 @@
 **Learning:** When data structures store references to target objects (such as `catcherItem` or `grassPatch`), retrieving properties directly from the object (e.g. `p.target.pile` or `gp.r`) is faster than querying a `Map` (e.g. `piles.get(target)` or `rects.get(gp.el)`). It also avoids runtime errors when the target object type differs from the `Map` key type.
 
 **Action:** Store direct references to cached metadata/collections on the parent object where possible to eliminate `Map.get()` overhead in high-frequency animation loops.
+
+## 2026-10-01 - Replace Map instances with direct object properties and indexed loops in animation frame rect updates
+
+**Learning:** Using `Map` instances (`rects`, `piles`) to map DOM elements to cached metadata forces hash lookups on every animation frame and event handler. Furthermore, using `.forEach()` inside `requestAnimationFrame` or `scroll` invalidation blocks allocates unnecessary closure callbacks on every invocation. Replacing `Map` instances with direct property storage on item wrappers (`ci.r`, `ci.pile`) and using indexed `for` loops eliminates garbage collection pressure and hash table overhead completely.
+
+**Action:** Store metadata directly on item objects instead of parallel `Map` collections, and use indexed `for` loops rather than `.forEach()` in high-frequency animation and DOM update paths.
