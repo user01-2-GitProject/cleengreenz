@@ -37,6 +37,8 @@ export function json(body, status = 200) {
       'strict-transport-security': 'max-age=31536000; includeSubDomains', // Enforce HTTPS to protect against SSL stripping and HTTP downgrade attacks
       'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none';",
       'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+      'cross-origin-resource-policy': 'same-origin',
+      'x-permitted-cross-domain-policies': 'none',
     },
   });
 }
@@ -70,8 +72,8 @@ async function emailChris(env, lead) {
     method: 'POST',
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
-      from: env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>',
-      to: (env.LEAD_TO || 'chris@cleengreenz.com').split(',').map((s) => s.trim()),
+      from: (env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>').replace(/[\r\n]/g, ''),
+      to: (env.LEAD_TO || 'chris@cleengreenz.com').split(',').map((s) => s.trim()).filter(Boolean),
       subject: `Estimate request: ${cleanSubjectService} (${cleanSubjectName})`,
       text,
       html,
