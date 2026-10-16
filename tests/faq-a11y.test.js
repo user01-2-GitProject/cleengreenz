@@ -54,4 +54,32 @@ test('FAQ details/summary accessibility attributes', async (t) => {
       assert.equal(summary.getAttribute('aria-expanded'), 'false', `Summary ${index + 1} returns to aria-expanded="false" when details closed`);
     });
   });
+
+  await t.test('pressing Escape key on an open FAQ details element closes it and focuses summary', () => {
+    const dom = new JSDOM(htmlTemplate, {
+      runScripts: 'dangerously',
+      beforeParse(window) {
+        window.matchMedia = window.matchMedia || function () {
+          return { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+        };
+        window.requestAnimationFrame = () => {};
+        window.HTMLMediaElement.prototype.pause = () => {};
+        window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+      }
+    });
+    const { document, KeyboardEvent } = dom.window;
+
+    const details = document.querySelector('.faq details');
+    const summary = details.querySelector('summary');
+
+    details.open = true;
+    details.dispatchEvent(new dom.window.Event('toggle'));
+    assert.equal(details.open, true);
+
+    const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    details.dispatchEvent(escapeEvent);
+
+    assert.equal(details.open, false);
+    assert.equal(document.activeElement, summary);
+  });
 });
