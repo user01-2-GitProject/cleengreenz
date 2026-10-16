@@ -225,7 +225,7 @@
         var phoneDigits = field.value.replace(/\D/g, '');
         if (!isInvalid && phoneDigits.length < 7) {
           isInvalid = true;
-          if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
+          if (errEl) errEl.textContent = 'Please enter a complete phone number';
         } else if (errEl) {
           errEl.textContent = 'Please enter your phone number';
         }
