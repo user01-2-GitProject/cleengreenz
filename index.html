@@ -980,13 +980,16 @@
       try { hidePet = localStorage.getItem('cg-hide-pet') === '1'; } catch (e) {}
 
       var W = window.innerWidth, H = window.innerHeight;
+      var PET_W = W < 700 ? 68 : 84, PET_H = W < 700 ? 160 : 198;
       var rectsDirty = true;
       function updateRects() { rectsDirty = true; }
       var mobileBar = document.querySelector('.mobile-bar');
       // Cache barH on init and window resize to avoid calling getComputedStyle / offsetHeight on scroll reflows
       var barH = 0;
+      var cachedHomeY = 0;
       function updateBarH() {
         barH = mobileBar && getComputedStyle(mobileBar).display !== 'none' ? mobileBar.offsetHeight : 0;
+        cachedHomeY = H - PET_H - 12 - barH;
       }
       updateBarH();
 
@@ -1267,8 +1270,11 @@
         if (p.state === 'away') { p.state = 'home'; p.t = 0; }
       }
       function homeY() {
-        return H - PET_H - 12 - barH;
+        return cachedHomeY;
       }
+
+      var GRASS_SAYINGS = ['Time for a trim!', 'Keeping the lawn looking sharp.', 'Fresh stripes coming right up!'];
+      var LEAF_SAYINGS = ['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'];
       function hideBubble() {
         if (!bubble) return;
         bubble.classList.remove('is-visible');
@@ -1400,13 +1406,13 @@
         gp.el.classList.add('mowing');
       }
 
-      function readyGrassPatch() {
-        var now = performance.now();
+      function readyGrassPatch(now) {
+        var t = now || performance.now();
         for (var i = 0; i < grassPatches.length; i++) {
           var gp = grassPatches[i];
           if (gp.mowed) {
             // Regrow grass patch after 18 seconds
-            if (now - gp.mowedAt > 18000) {
+            if (t - gp.mowedAt > 18000) {
               gp.mowed = false;
               gp.el.classList.remove('mowed');
               placeGrass(gp.el, gp.sec, gp.slot);
@@ -1532,7 +1538,7 @@
             }
             if (p.cooldown <= 0 && !reduceMotion) {
               var ready = readyPile(CLEAR_AT);
-              var readyGrass = readyGrassPatch();
+                var readyGrass = readyGrassPatch(now);
               if (p.stay > STAY_FOR && !document.hidden && !bubble.classList.contains('is-visible')) {
                 // He has been around a while: off the left edge he goes, and the leaves pile up.
                 p.state = 'leave'; p.t = 0;
@@ -1550,7 +1556,7 @@
             // Off stage. He comes back when a pile or grass patch has built up
             p.y = hy;
             var big = p.t > AWAY_MIN ? readyPile(AWAY_PILE) : null;
-            var bigGrass = (p.t > AWAY_MIN && !big) ? readyGrassPatch() : null;
+            var bigGrass = (p.t > AWAY_MIN && !big) ? readyGrassPatch(now) : null;
             if (big) {
               var br = big.r, fromRight = br.left + br.width / 2 > W / 2;
               p.x = fromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(br).y;
@@ -1574,9 +1580,9 @@
                 p.face = g.face; p.state = 'clear'; p.t = 0;
                 if (p.targetType === 'grass') {
                   startGrassMowing(p.target);
-                  say(['Time for a trim!', 'Keeping the lawn looking sharp.', 'Fresh stripes coming right up!'][Math.floor(Math.random() * 3)], 2200);
+                  say(GRASS_SAYINGS[Math.floor(Math.random() * GRASS_SAYINGS.length)], 2200);
                 } else {
-                  say(['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'][Math.floor(Math.random() * 3)], 2200);
+                  say(LEAF_SAYINGS[Math.floor(Math.random() * LEAF_SAYINGS.length)], 2200);
                 }
               }
             }
