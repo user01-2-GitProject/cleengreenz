@@ -883,13 +883,22 @@
       if (a) trackLead(a.dataset.lead, a.dataset.leadLocation);
     });
 
-    // Sync aria-expanded state on FAQ disclosure summaries on toggle.
+    // Sync aria-expanded state on FAQ disclosure summaries on toggle and close on Escape key.
     var faqDetails = document.querySelectorAll('.faq details');
     faqDetails.forEach(function (det) {
+      var summary = det.querySelector('summary');
       det.addEventListener('toggle', function () {
-        var summary = det.querySelector('summary');
         if (summary) {
           summary.setAttribute('aria-expanded', det.open ? 'true' : 'false');
+        }
+      });
+      det.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && det.open) {
+          det.open = false;
+          if (summary) {
+            summary.setAttribute('aria-expanded', 'false');
+            summary.focus();
+          }
         }
       });
     });
