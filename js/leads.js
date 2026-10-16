@@ -68,7 +68,7 @@
     var maxLen = notesInput.maxLength > 0 ? notesInput.maxLength : 500;
     function updateNotesCount() {
       var remaining = maxLen - notesInput.value.length;
-      notesCount.textContent = '· ' + remaining + ' char' + (remaining === 1 ? '' : 's') + ' left';
+      notesCount.textContent = '· ' + remaining + ' character' + (remaining === 1 ? '' : 's') + ' remaining';
     }
     notesInput.addEventListener('input', updateNotesCount);
     updateNotesCount();
