@@ -572,6 +572,32 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.equal(mobileCallBtn.getAttribute('aria-label'), 'Call Chris at (269) 362-8286');
     assert.ok(mobileCallBtn.querySelector('svg'), 'mobile bar call link includes phone icon svg');
   });
+
+  await t.test('copy phone button copies phone number to clipboard and displays feedback', async () => {
+    let copiedText = '';
+    const { window, document } = setupEnvironment();
+
+    // Mock navigator.clipboard
+    window.navigator.clipboard = {
+      writeText: async (text) => {
+        copiedText = text;
+      },
+    };
+
+    const copyBtn = document.querySelector('.copy-phone-btn');
+    const feedback = document.querySelector('.copy-feedback');
+
+    assert.ok(copyBtn, 'copy phone button exists');
+    assert.ok(feedback, 'copy feedback element exists');
+    assert.equal(copyBtn.getAttribute('aria-label'), 'Copy phone number (269) 362-8286');
+
+    copyBtn.click();
+
+    await new Promise((r) => setTimeout(r, 20));
+
+    assert.equal(copiedText, '(269) 362-8286');
+    assert.equal(feedback.textContent, 'Copied!');
+  });
 });
 
 test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
