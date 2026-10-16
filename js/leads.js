@@ -28,7 +28,8 @@
     return;
   }
 
-  // Copy phone number functionality
+  // Copy phone number functionality with debounced clearing timer and fallback handling
+  var copyTimeout = null;
   document.addEventListener('click', function (e) {
     var copyBtn = e.target.closest('.copy-phone-btn');
     if (copyBtn) {
@@ -43,12 +44,23 @@
       }
       writePromise.then(function () {
         if (feedback) {
+          if (copyTimeout) clearTimeout(copyTimeout);
           feedback.textContent = 'Copied!';
-          setTimeout(function () {
+          copyTimeout = setTimeout(function () {
             feedback.textContent = '';
+            copyTimeout = null;
           }, 2000);
         }
-      }).catch(function () {});
+      }).catch(function () {
+        if (feedback) {
+          if (copyTimeout) clearTimeout(copyTimeout);
+          feedback.textContent = 'Failed to copy';
+          copyTimeout = setTimeout(function () {
+            feedback.textContent = '';
+            copyTimeout = null;
+          }, 2000);
+        }
+      });
     }
   });
 

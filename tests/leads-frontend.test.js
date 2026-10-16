@@ -598,6 +598,25 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.equal(copiedText, '(269) 362-8286');
     assert.equal(feedback.textContent, 'Copied!');
   });
+
+  await t.test('copy phone button displays error feedback when clipboard write rejects', async () => {
+    const { window, document } = setupEnvironment();
+
+    window.navigator.clipboard = {
+      writeText: async () => {
+        throw new Error('Clipboard access denied');
+      },
+    };
+
+    const copyBtn = document.querySelector('.copy-phone-btn');
+    const feedback = document.querySelector('.copy-feedback');
+
+    copyBtn.click();
+
+    await new Promise((r) => setTimeout(r, 20));
+
+    assert.equal(feedback.textContent, 'Failed to copy');
+  });
 });
 
 test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
