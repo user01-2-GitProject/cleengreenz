@@ -896,13 +896,20 @@
       if (a) trackLead(a.dataset.lead, a.dataset.leadLocation);
     });
 
-    // Sync aria-expanded state on FAQ disclosure summaries on toggle.
+    // Sync aria-expanded state on FAQ disclosure summaries on toggle and allow Escape key dismissal.
     var faqDetails = document.querySelectorAll('.faq details');
     faqDetails.forEach(function (det) {
       det.addEventListener('toggle', function () {
         var summary = det.querySelector('summary');
         if (summary) {
           summary.setAttribute('aria-expanded', det.open ? 'true' : 'false');
+        }
+      });
+      det.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && det.open) {
+          det.open = false;
+          var summary = det.querySelector('summary');
+          if (summary) summary.focus();
         }
       });
     });
