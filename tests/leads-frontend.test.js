@@ -423,6 +423,15 @@ test('Estimate form field validation & user input handling', async (t) => {
     phoneInput.value = '2693628286';
     phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
     assert.equal(phoneInput.value, '(269) 362-8286');
+
+    // Handles 11-digit numbers with leading country code 1 or +1
+    phoneInput.value = '12693628286';
+    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(phoneInput.value, '(269) 362-8286');
+
+    phoneInput.value = '+1 (269) 362-8286';
+    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(phoneInput.value, '(269) 362-8286');
   });
 
   await t.test('rejects phone number with fewer than 7 digits on submit and marks field as invalid', async () => {

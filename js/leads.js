@@ -82,6 +82,9 @@
         phoneInput.value = '';
         return;
       }
+      if (digits.length >= 11 && digits[0] === '1') {
+        digits = digits.slice(1);
+      }
       if (digits.length > 10) digits = digits.slice(0, 10);
       if (digits.length <= 3) {
         phoneInput.value = '(' + digits;
