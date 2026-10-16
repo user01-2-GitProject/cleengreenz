@@ -57,6 +57,8 @@ const SECURITY_HEADERS = {
   'strict-transport-security': 'max-age=31536000; includeSubDomains', // Enforce HTTPS to protect against SSL stripping and HTTP downgrade attacks
   'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';",
   'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+  'cross-origin-resource-policy': 'same-origin',
+  'x-permitted-cross-domain-policies': 'none',
 };
 
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
@@ -84,7 +86,7 @@ export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) 
   .card span { color: #6b5a48; font-size: .9rem; }
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee3cc; vertical-align: top; font-size: .95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee3cc; vertical-align: top; font-size: .95rem; word-break: break-word; }
   th { background: #1f4d2b; color: #fff; font-weight: 600; }
   .num { text-align: right; }
 </style></head><body><main>

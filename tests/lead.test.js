@@ -63,6 +63,8 @@ test('json helper function', async (t) => {
       res.headers.get('permissions-policy'),
       'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
     );
+    assert.equal(res.headers.get('cross-origin-resource-policy'), 'same-origin');
+    assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
   });
 
   await t.test('serializes object body correctly into valid JSON', async () => {
@@ -563,7 +565,12 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
       const res = await onRequestPost({
         request,
-        env: { RESEND_API_KEY: 'test-key', DB: mockDb },
+        env: {
+          RESEND_API_KEY: 'test-key',
+          LEAD_FROM: 'Cleen Greenz <leads@cleengreenz.com>\r\n',
+          LEAD_TO: 'chris@cleengreenz.com, , team@cleengreenz.com',
+          DB: mockDb,
+        },
         waitUntil: (promise) => {
           waitUntilPromise = promise;
         },
@@ -572,6 +579,10 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       assert.equal(res.status, 200);
       assert.deepEqual(await res.json(), { ok: true });
       assert.equal(fetchCalledWith.url, 'https://api.resend.com/emails');
+
+      const parsedPayload = JSON.parse(fetchCalledWith.options.body);
+      assert.equal(parsedPayload.from, 'Cleen Greenz <leads@cleengreenz.com>');
+      assert.deepEqual(parsedPayload.to, ['chris@cleengreenz.com', 'team@cleengreenz.com']);
 
       if (waitUntilPromise) {
         await waitUntilPromise;
@@ -701,6 +712,8 @@ test('onRequestGet authorization and response handling', async (t) => {
       res.headers.get('permissions-policy'),
       'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
     );
+    assert.equal(res.headers.get('cross-origin-resource-policy'), 'same-origin');
+    assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
   });
 
   await t.test('returns 401 when authorization header is missing', async () => {
