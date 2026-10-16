@@ -994,6 +994,9 @@
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
         updateBarH();
+        document.querySelectorAll('section.green').forEach(function (sec) {
+          sec.cachedHeight = sec.clientHeight;
+        });
         updateRects();
       });
       window.addEventListener('scroll', updateRects, { passive: true });
@@ -1345,7 +1348,9 @@
 
       function placeGrass(el, sec, slot) {
         // Spread patches across the full section; choose a new height when a mowed patch regrows.
-        var maxBottom = Math.max(24, sec.clientHeight - 58);
+        // Performance optimization: Use cached section height to avoid synchronous layout reads during animation frame ticks when regrowing grass.
+        var secH = sec.cachedHeight || sec.clientHeight;
+        var maxBottom = Math.max(24, secH - 58);
         el.style.left = (4 + slot * 31 + Math.random() * 10) + '%';
         el.style.bottom = (12 + Math.random() * maxBottom) + 'px';
         el.style.setProperty('--grass-scale', (0.8 + Math.random() * 0.45).toFixed(2));
@@ -1354,6 +1359,7 @@
       function setupGrassPatches() {
         var greenSections = document.querySelectorAll('section.green');
         greenSections.forEach(function (sec) {
+          sec.cachedHeight = sec.clientHeight;
           var layer = sec.querySelector('.lawn-grass-layer');
           if (!layer) {
             layer = document.createElement('div');
@@ -1434,8 +1440,10 @@
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
         // Batch DOM layout reads: update cached element bounding rects only when dirty (scroll/resize/initial)
+        // Performance optimization: Use indexed for loops instead of .forEach callbacks to prevent closure allocations on every scroll frame
         if (rectsDirty) {
-          catchers.forEach(function (el, idx) {
+          for (var idx = 0; idx < catchers.length; idx++) {
+            var el = catchers[idx];
             var r = el.getBoundingClientRect();
             var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
             rects.set(el, valid);
@@ -1447,13 +1455,14 @@
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
             }
-          });
-          grassPatches.forEach(function (gp) {
-            var r = gp.el.getBoundingClientRect();
-            var valid = r.width > 0 && r.bottom > 0 && r.top < H ? r : null;
-            rects.set(gp.el, valid);
-            gp.r = valid;
-          });
+          }
+          for (var gidx = 0; gidx < grassPatches.length; gidx++) {
+            var gp = grassPatches[gidx];
+            var gr = gp.el.getBoundingClientRect();
+            var gValid = gr.width > 0 && gr.bottom > 0 && gr.top < H ? gr : null;
+            rects.set(gp.el, gValid);
+            gp.r = gValid;
+          }
           rectsDirty = false;
         }
 

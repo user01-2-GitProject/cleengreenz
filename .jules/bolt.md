@@ -32,3 +32,9 @@
 **Learning:** When data structures store references to target objects (such as `catcherItem` or `grassPatch`), retrieving properties directly from the object (e.g. `p.target.pile` or `gp.r`) is faster than querying a `Map` (e.g. `piles.get(target)` or `rects.get(gp.el)`). It also avoids runtime errors when the target object type differs from the `Map` key type.
 
 **Action:** Store direct references to cached metadata/collections on the parent object where possible to eliminate `Map.get()` overhead in high-frequency animation loops.
+
+## 2026-10-01 - Cache container heights and avoid array forEach closures in frame handlers
+
+**Learning:** Reading container layout dimensions (such as `sec.clientHeight`) inside element repositioning or regrow functions during animation frame ticks forces synchronous layout recalculation (reflow). Caching `sec.cachedHeight` on initialization and window resize prevents forced reflows during frame execution. Additionally, using indexed `for` loops in scroll-invalidated frame handlers instead of Array `.forEach()` avoids allocating iterator closure functions on every frame during scrolling.
+
+**Action:** Cache element/section layout dimensions on DOM setup and resize listeners, and use indexed `for` loops for DOM batching inside high-frequency animation frame handlers.

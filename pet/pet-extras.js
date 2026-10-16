@@ -98,7 +98,10 @@
       c.style.setProperty('--dx', Math.round(Math.cos(a) * d / 4) * 4 + 'px');
       c.style.setProperty('--dy', Math.round(Math.sin(a) * d / 4) * 4 + 'px');
       fragment.appendChild(c);
-      setTimeout(function (el) { el.remove(); }.bind(null, c), 1200);
+      // Performance optimization: Pass element to closure directly to avoid Function.prototype.bind allocations
+      (function (el) {
+        setTimeout(function () { el.remove(); }, 1200);
+      })(c);
     }
     wrap.appendChild(fragment);
   }
