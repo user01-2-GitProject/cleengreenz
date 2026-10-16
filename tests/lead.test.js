@@ -1292,3 +1292,18 @@ test('buildPayload helper function in js/leads.js', async (t) => {
     });
   });
 });
+
+test('Cloudflare Pages _headers configuration file', async (t) => {
+  await t.test('exists and defines required security response headers for all static routes', async () => {
+    const headersPath = new URL('../_headers', import.meta.url);
+    assert.equal(fs.existsSync(headersPath), true, '_headers file must exist in root directory');
+
+    const content = fs.readFileSync(headersPath, 'utf8');
+    assert.match(content, /\/\*/, 'Must include global route rule /*');
+    assert.match(content, /X-Frame-Options:\s*DENY/i, 'Must set X-Frame-Options: DENY');
+    assert.match(content, /X-Content-Type-Options:\s*nosniff/i, 'Must set X-Content-Type-Options: nosniff');
+    assert.match(content, /Referrer-Policy:\s*strict-origin-when-cross-origin/i, 'Must set Referrer-Policy');
+    assert.match(content, /Strict-Transport-Security:\s*max-age=31536000/i, 'Must set Strict-Transport-Security');
+    assert.match(content, /Permissions-Policy:\s*/i, 'Must set Permissions-Policy');
+  });
+});
