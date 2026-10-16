@@ -993,6 +993,8 @@
       window.addEventListener('resize', function () {
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
+        WALK.step = 54 * (W < 700 ? .81 : 1);
+        WALK.lead = WALK.start / WALK.frames * 2 * WALK.step;
         updateBarH();
         updateRects();
       });
@@ -1002,7 +1004,7 @@
       catchers.forEach(function (el) { piles.set(el, []); });
       var rects = new Map();
       var catcherItems = catchers.map(function (el) {
-        return { el: el, pile: piles.get(el), r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0 };
+        return { el: el, pile: piles.get(el), r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0, width: 0, left: 0 };
       });
       var MAX_PILE = 12, CLEAR_AT = 6;
       function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -1083,6 +1085,8 @@
       // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together
       // (the frame half a cycle later is the same stance on the other foot).
       var WALK = { first: 12, firstLeft: 29, frames: 16, step: 54 * (W < 700 ? .81 : 1), start: 4, settle: 140 };
+      // Optimization: Pre-compute lead stride phase offset once to avoid division & multiplication on every frame
+      WALK.lead = WALK.start / WALK.frames * 2 * WALK.step;
       // Poses 0-11 facing left use the copies from LEFT_POSES on, whose logo reads right mirrored.
       // They switch over only once the turn-around squeeze has passed zero width (FLIP_AT ms; the
       // 150ms flip eases, so zero width comes a little after halfway).
@@ -1309,7 +1313,7 @@
         p.x += dx / d * step; p.y += dy / d * step;
         // Land the last step on a boots-together frame so he stops standing, not mid-stride: aim the
         // stride count at the nearest such frame at the goal and let it run a little long or short.
-        var half = WALK.step, lead = WALK.start / WALK.frames * 2 * WALK.step;
+        var half = WALK.step, lead = WALK.lead;
         var end = lead + Math.round((p.stride + d - lead) / half) * half;
         var k = Math.max(.8, Math.min(1.25, (end - p.stride) / d));
         p.stride += step * k;
@@ -1446,6 +1450,8 @@
               ci.topMax = valid.top + 10;
               ci.leftMin = valid.left - 18;
               ci.rightMax = valid.right + 18;
+              ci.width = valid.width;
+              ci.left = valid.left;
             }
           });
           grassPatches.forEach(function (gp) {
@@ -1476,8 +1482,9 @@
                   l.host = ci.el;
                   l.hostCi = ci;
                   // Gather toward the middle and stack in a low mound, not a flat row.
-                  l.ox = Math.max(12, Math.min(r.width - 12,
-                    r.width / 2 + (cx - r.left - r.width / 2) * .62));
+                  // Optimization: Access cached width and left directly on ci to avoid r property lookups
+                  l.ox = Math.max(12, Math.min(ci.width - 12,
+                    ci.width / 2 + (cx - ci.left - ci.width / 2) * .62));
                   l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
                   l.rot = rnd(-50, 50);
                   pile.push(l);

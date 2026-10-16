@@ -32,3 +32,9 @@
 **Learning:** When data structures store references to target objects (such as `catcherItem` or `grassPatch`), retrieving properties directly from the object (e.g. `p.target.pile` or `gp.r`) is faster than querying a `Map` (e.g. `piles.get(target)` or `rects.get(gp.el)`). It also avoids runtime errors when the target object type differs from the `Map` key type.
 
 **Action:** Store direct references to cached metadata/collections on the parent object where possible to eliminate `Map.get()` overhead in high-frequency animation loops.
+
+## 2026-09-30 - Precompute invariant phase offsets in animation loops
+
+**Learning:** Calculating invariant expressions like `WALK.start / WALK.frames * 2 * WALK.step` inside high-frequency animation frame handlers (`moveToward`) wastes CPU floating-point operations on every frame. Pre-computing invariant values as object properties (`WALK.lead`) on setup and resize reduces animation frame loop overhead.
+
+**Action:** Always hoist or precompute invariant arithmetic expressions into constant properties outside requestAnimationFrame loops.
