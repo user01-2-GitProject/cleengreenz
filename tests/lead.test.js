@@ -568,7 +568,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
         env: {
           RESEND_API_KEY: 'test-key',
           LEAD_FROM: 'Cleen Greenz <leads@cleengreenz.com>\r\n',
-          LEAD_TO: 'chris@cleengreenz.com, , team@cleengreenz.com',
+          LEAD_TO: 'chris@cleengreenz.com\r\n, , team@cleengreenz.com\n',
           DB: mockDb,
         },
         waitUntil: (promise) => {
