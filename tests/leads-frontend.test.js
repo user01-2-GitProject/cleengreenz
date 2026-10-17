@@ -460,7 +460,7 @@ test('Estimate form field validation & user input handling', async (t) => {
 });
 
 test('Form initialization, honeypot field, and lead tracking events', async (t) => {
-  await t.test('initializes and updates notes character counter live on input', async () => {
+  await t.test('initializes and updates notes character counter live on input and toggles near-limit class when remaining <= 20', async () => {
     const { window, document } = setupEnvironment();
     const notesInput = document.getElementById('f-notes');
     const notesCount = document.getElementById('f-notes-count');
@@ -469,11 +469,27 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(notesCount, 'notes count element should exist');
     assert.equal(notesInput.getAttribute('maxlength'), '500');
     assert.equal(notesCount.textContent, '· 500 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), false);
 
     notesInput.value = 'Hello world!';
     notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
 
     assert.equal(notesCount.textContent, '· 488 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), false);
+
+    // Type 485 characters so 15 remain (<= 20)
+    notesInput.value = 'a'.repeat(485);
+    notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(notesCount.textContent, '· 15 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), true, 'should add near-limit class when <= 20 characters remain');
+
+    // Delete characters so 25 remain (> 20)
+    notesInput.value = 'a'.repeat(475);
+    notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(notesCount.textContent, '· 25 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), false, 'should remove near-limit class when > 20 characters remain');
   });
 
   await t.test('appends a hidden honeypot website field to the form on script load', async () => {
