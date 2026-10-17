@@ -38,3 +38,9 @@
 **Learning:** Using `Map` instances (`rects`, `piles`) to map DOM elements to cached metadata forces hash lookups on every animation frame and event handler. Furthermore, using `.forEach()` inside `requestAnimationFrame` or `scroll` invalidation blocks allocates unnecessary closure callbacks on every invocation. Replacing `Map` instances with direct property storage on item wrappers (`ci.r`, `ci.pile`) and using indexed `for` loops eliminates garbage collection pressure and hash table overhead completely.
 
 **Action:** Store metadata directly on item objects instead of parallel `Map` collections, and use indexed `for` loops rather than `.forEach()` in high-frequency animation and DOM update paths.
+
+## 2026-10-02 - Bypass transcendental Math.exp physics calculations when animation state has settled
+
+**Learning:** Evaluating exponential decay (`Math.exp()`) and spring physics in every `requestAnimationFrame` tick even when variables (`grab`, `tilt`, `lean`) have settled at zero wastes CPU cycles on every frame (up to 87% overhead in physics calculation blocks). Skipping `Math.exp()` calls when physics state has settled at zero eliminates unnecessary floating point math during idle and normal animation frames.
+
+**Action:** Guard exponential decay and spring calculation blocks by checking if the physics properties are already zero before calling `Math.exp()`.
