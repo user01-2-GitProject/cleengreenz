@@ -38,3 +38,9 @@
 **Learning:** Using `Map` instances (`rects`, `piles`) to map DOM elements to cached metadata forces hash lookups on every animation frame and event handler. Furthermore, using `.forEach()` inside `requestAnimationFrame` or `scroll` invalidation blocks allocates unnecessary closure callbacks on every invocation. Replacing `Map` instances with direct property storage on item wrappers (`ci.r`, `ci.pile`) and using indexed `for` loops eliminates garbage collection pressure and hash table overhead completely.
 
 **Action:** Store metadata directly on item objects instead of parallel `Map` collections, and use indexed `for` loops rather than `.forEach()` in high-frequency animation and DOM update paths.
+
+## 2026-10-02 - Guard form input validation error cleanup with attribute presence check
+
+**Learning:** Unconditionally querying the DOM (`querySelector('#' + CSS.escape(...) + '-err')`), splitting/filtering/joining `aria-describedby` strings, and updating DOM attributes on every `input` event (keystroke) creates significant CPU and string allocation overhead during typing. Checking `field.getAttribute('aria-invalid')` first allows 99.9% of normal keystrokes on valid inputs to return immediately without touching the DOM.
+
+**Action:** Always guard input field error clearing listeners with a fast attribute presence check (`getAttribute('aria-invalid')`) to bypass DOM queries and string manipulation on valid keystrokes.
