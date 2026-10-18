@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
-import { authorized, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
+import { json, onRequestGet as apiOnRequestGet, onRequestOptions as apiOnRequestOptions, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { authorized, onRequestGet, onRequestOptions as leadsOnRequestOptions, renderLeadsHtml } from '../functions/leads.js';
 
 // js/leads.js is a classic browser script (loaded via <script src>), so it
 // cannot use ESM export syntax. It assigns module.exports when a CommonJS-style
@@ -33,6 +33,38 @@ test('sanitizePhone helper function', async (t) => {
     assert.equal(sanitizePhone(''), '');
     assert.equal(sanitizePhone(null), '');
     assert.equal(sanitizePhone(undefined), '');
+  });
+});
+
+test('onRequestOptions and onRequestGet method handling for endpoints', async (t) => {
+  await t.test('api/lead onRequestOptions returns 204 No Content with security and allow headers', async () => {
+    const res = apiOnRequestOptions();
+    assert.equal(res.status, 204);
+    assert.equal(res.headers.get('allow'), 'POST, OPTIONS');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
+  });
+
+  await t.test('api/lead onRequestGet returns 405 Method Not Allowed with JSON error and allow header', async () => {
+    const res = apiOnRequestGet();
+    assert.equal(res.status, 405);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.equal(res.headers.get('allow'), 'POST, OPTIONS');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.deepEqual(await res.json(), { ok: false, error: 'method_not_allowed' });
+  });
+
+  await t.test('leads onRequestOptions returns 204 No Content with security and allow headers', async () => {
+    const res = leadsOnRequestOptions();
+    assert.equal(res.status, 204);
+    assert.equal(res.headers.get('allow'), 'GET, OPTIONS');
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
   });
 });
 

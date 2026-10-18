@@ -25,7 +25,7 @@ function clean(value, field) {
   return s || null;
 }
 
-export function json(body, status = 200) {
+export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -39,8 +39,31 @@ export function json(body, status = 200) {
       'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
       'cross-origin-resource-policy': 'same-origin',
       'x-permitted-cross-domain-policies': 'none',
+      ...extraHeaders,
     },
   });
+}
+
+export function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'allow': 'POST, OPTIONS',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
+      'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none';",
+      'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+      'cross-origin-resource-policy': 'same-origin',
+      'x-permitted-cross-domain-policies': 'none',
+    },
+  });
+}
+
+export function onRequestGet() {
+  return json({ ok: false, error: 'method_not_allowed' }, 405, { allow: 'POST, OPTIONS' });
 }
 
 function escapeHtml(s) {

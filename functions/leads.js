@@ -62,6 +62,16 @@ const SECURITY_HEADERS = {
   'x-permitted-cross-domain-policies': 'none',
 };
 
+export function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'allow': 'GET, OPTIONS',
+      ...SECURITY_HEADERS,
+    },
+  });
+}
+
 export function renderLeadsHtml({ totals = [], months = [], recent = [] } = {}) {
   // Populate byType directly to avoid creating intermediate 2-tuple arrays with Object.fromEntries.
   const byType = {};
