@@ -928,38 +928,36 @@
     }
 
     // Active navigation highlighting for header nav links.
+    // Optimization: Store direct _navLink and _isIntersecting properties on section elements to eliminate Map/Set
+    // allocations and .forEach callback closures in high-frequency scroll IntersectionObserver entries.
     var navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
     if (navLinks.length && 'IntersectionObserver' in window) {
-      var linkMap = new Map();
       var sections = [];
-      navLinks.forEach(function (link) {
+      for (var i = 0; i < navLinks.length; i++) {
+        var link = navLinks[i];
         var id = link.getAttribute('href').slice(1);
         var sec = document.getElementById(id);
         if (sec) {
-          linkMap.set(sec, link);
+          sec._navLink = link;
+          sec._isIntersecting = false;
           sections.push(sec);
         }
-      });
-      var visibleSections = new Set();
+      }
       var currentActiveLink = null;
       var navObserver = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            visibleSections.add(entry.target);
-          } else {
-            visibleSections.delete(entry.target);
-          }
-        });
+        for (var e = 0; e < entries.length; e++) {
+          entries[e].target._isIntersecting = entries[e].isIntersecting;
+        }
         // Pick the uppermost section currently in view among those tracked.
         var activeSection = null;
-        for (var i = 0; i < sections.length; i++) {
-          if (visibleSections.has(sections[i])) {
-            activeSection = sections[i];
+        for (var s = 0; s < sections.length; s++) {
+          if (sections[s]._isIntersecting) {
+            activeSection = sections[s];
             break;
           }
         }
         // Optimize DOM mutations: only update aria-current attribute when active link changes
-        var newActiveLink = activeSection ? linkMap.get(activeSection) : null;
+        var newActiveLink = activeSection ? activeSection._navLink : null;
         if (newActiveLink !== currentActiveLink) {
           if (currentActiveLink) {
             currentActiveLink.removeAttribute('aria-current');
@@ -970,7 +968,9 @@
           currentActiveLink = newActiveLink;
         }
       }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
-      sections.forEach(function (sec) { navObserver.observe(sec); });
+      for (var s = 0; s < sections.length; s++) {
+        navObserver.observe(sections[s]);
+      }
     }
 
     // Mascot videos: respect reduced motion, and only play while on screen.

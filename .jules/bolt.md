@@ -38,3 +38,9 @@
 **Learning:** Using `Map` instances (`rects`, `piles`) to map DOM elements to cached metadata forces hash lookups on every animation frame and event handler. Furthermore, using `.forEach()` inside `requestAnimationFrame` or `scroll` invalidation blocks allocates unnecessary closure callbacks on every invocation. Replacing `Map` instances with direct property storage on item wrappers (`ci.r`, `ci.pile`) and using indexed `for` loops eliminates garbage collection pressure and hash table overhead completely.
 
 **Action:** Store metadata directly on item objects instead of parallel `Map` collections, and use indexed `for` loops rather than `.forEach()` in high-frequency animation and DOM update paths.
+
+## 2026-10-02 - Eliminate Map/Set instances and closure allocations in scroll IntersectionObserver callbacks
+
+**Learning:** Storing relationships between observed sections and target elements using `Map` (`linkMap`) and `Set` (`visibleSections`) instances causes unnecessary hash table lookups and object mutations in scroll `IntersectionObserver` handlers. Furthermore, iterating entries with `.forEach()` allocates callback closures during high-frequency scroll events. Attaching target references directly to element objects (e.g. `sec._navLink` and `sec._isIntersecting`) and using indexed `for` loops eliminates collection allocations and speeds up active item evaluation on scroll.
+
+**Action:** Attach direct properties on DOM element references instead of parallel `Map`/`Set` collections, and use indexed `for` loops in `IntersectionObserver` callbacks.
