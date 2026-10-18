@@ -120,6 +120,20 @@ ${recent
 </main></body></html>`;
 }
 
+export async function onRequest(context) {
+  if (context.request.method === 'GET') {
+    return onRequestGet(context);
+  }
+  return new Response('Method Not Allowed', {
+    status: 405,
+    headers: {
+      'allow': 'GET',
+      'content-type': 'text/plain; charset=utf-8',
+      ...SECURITY_HEADERS,
+    },
+  });
+}
+
 export async function onRequestGet({ request, env }) {
   if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
     return new Response('Password required', {
