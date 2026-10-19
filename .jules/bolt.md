@@ -38,3 +38,9 @@
 **Learning:** Using `Map` instances (`rects`, `piles`) to map DOM elements to cached metadata forces hash lookups on every animation frame and event handler. Furthermore, using `.forEach()` inside `requestAnimationFrame` or `scroll` invalidation blocks allocates unnecessary closure callbacks on every invocation. Replacing `Map` instances with direct property storage on item wrappers (`ci.r`, `ci.pile`) and using indexed `for` loops eliminates garbage collection pressure and hash table overhead completely.
 
 **Action:** Store metadata directly on item objects instead of parallel `Map` collections, and use indexed `for` loops rather than `.forEach()` in high-frequency animation and DOM update paths.
+
+## 2026-10-02 - Avoid micro-optimizing low-frequency event handlers like IntersectionObserver
+
+**Learning:** Optimizing low-frequency event handlers (e.g. `IntersectionObserver` callbacks for 4 navigation links) by replacing clean `Map`/`Set` structures with custom properties attached to DOM elements (`sec._navLink`) and replacing `.forEach` with indexed `for` loops is a micro-optimization with zero measurable impact. It pollutes DOM objects, degrades code readability, and adds maintenance complexity without real performance benefits.
+
+**Action:** Focus performance optimizations strictly on hot paths (e.g. `requestAnimationFrame` loops, scroll/resize handlers, high-volume DOM rendering). Never compromise code readability or pollute DOM instances for low-frequency events.
