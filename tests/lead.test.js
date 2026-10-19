@@ -872,6 +872,8 @@ test('Cloudflare Pages _headers configuration file validation', async (t) => {
     assert.match(content, /Referrer-Policy:\s*strict-origin-when-cross-origin/i, 'Referrer-Policy must be strict-origin-when-cross-origin');
     assert.match(content, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i, 'Strict-Transport-Security HSTS header required');
     assert.match(content, /Permissions-Policy:\s*/i, 'Permissions-Policy header required');
+    assert.match(content, /Cross-Origin-Resource-Policy:\s*same-origin/i, 'Cross-Origin-Resource-Policy header required');
+    assert.match(content, /X-Permitted-Cross-Domain-Policies:\s*none/i, 'X-Permitted-Cross-Domain-Policies header required');
     assert.match(content, /Content-Security-Policy:\s*/i, 'Content-Security-Policy header required');
   });
 });
@@ -1267,6 +1269,8 @@ test('_headers configuration file for static routes', async (t) => {
     assert.match(headersContent, /Referrer-Policy:\s*strict-origin-when-cross-origin/i);
     assert.match(headersContent, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i);
     assert.match(headersContent, /Permissions-Policy:/i);
+    assert.match(headersContent, /Cross-Origin-Resource-Policy:\s*same-origin/i);
+    assert.match(headersContent, /X-Permitted-Cross-Domain-Policies:\s*none/i);
   });
 });
 
@@ -1333,5 +1337,7 @@ test('Cloudflare Pages _headers configuration file', async (t) => {
     assert.match(content, /Referrer-Policy:\s*strict-origin-when-cross-origin/i, 'Must set Referrer-Policy');
     assert.match(content, /Strict-Transport-Security:\s*max-age=31536000/i, 'Must set Strict-Transport-Security');
     assert.match(content, /Permissions-Policy:\s*/i, 'Must set Permissions-Policy');
+    assert.match(content, /Cross-Origin-Resource-Policy:\s*same-origin/i, 'Must set Cross-Origin-Resource-Policy');
+    assert.match(content, /X-Permitted-Cross-Domain-Policies:\s*none/i, 'Must set X-Permitted-Cross-Domain-Policies');
   });
 });
