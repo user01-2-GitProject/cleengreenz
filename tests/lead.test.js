@@ -707,7 +707,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
     );
     assert.equal(
       res.headers.get('permissions-policy'),
@@ -762,7 +762,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
     );
   });
 
@@ -790,7 +790,7 @@ test('onRequestGet authorization and response handling', async (t) => {
       assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
       assert.equal(
         res.headers.get('content-security-policy'),
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
       );
     } finally {
       console.error = originalConsoleError;
@@ -873,6 +873,9 @@ test('Cloudflare Pages _headers configuration file validation', async (t) => {
     assert.match(content, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i, 'Strict-Transport-Security HSTS header required');
     assert.match(content, /Permissions-Policy:\s*/i, 'Permissions-Policy header required');
     assert.match(content, /Content-Security-Policy:\s*/i, 'Content-Security-Policy header required');
+    assert.match(content, /form-action 'self'/i, 'form-action directive in CSP required');
+    assert.match(content, /Cross-Origin-Resource-Policy:\s*same-origin/i, 'Cross-Origin-Resource-Policy required');
+    assert.match(content, /X-Permitted-Cross-Domain-Policies:\s*none/i, 'X-Permitted-Cross-Domain-Policies required');
   });
 });
 
@@ -912,7 +915,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
     );
     const html = await res.text();
 
@@ -1333,5 +1336,8 @@ test('Cloudflare Pages _headers configuration file', async (t) => {
     assert.match(content, /Referrer-Policy:\s*strict-origin-when-cross-origin/i, 'Must set Referrer-Policy');
     assert.match(content, /Strict-Transport-Security:\s*max-age=31536000/i, 'Must set Strict-Transport-Security');
     assert.match(content, /Permissions-Policy:\s*/i, 'Must set Permissions-Policy');
+    assert.match(content, /form-action 'self'/i, 'Must set form-action in Content-Security-Policy');
+    assert.match(content, /Cross-Origin-Resource-Policy:\s*same-origin/i, 'Must set Cross-Origin-Resource-Policy');
+    assert.match(content, /X-Permitted-Cross-Domain-Policies:\s*none/i, 'Must set X-Permitted-Cross-Domain-Policies');
   });
 });
