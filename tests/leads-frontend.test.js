@@ -474,6 +474,21 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
 
     assert.equal(notesCount.textContent, '· 488 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), false);
+
+    // Type 480 characters so 20 remain
+    notesInput.value = 'a'.repeat(480);
+    notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(notesCount.textContent, '· 20 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), true);
+
+    // Delete back to 479 characters so 21 remain
+    notesInput.value = 'a'.repeat(479);
+    notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(notesCount.textContent, '· 21 characters remaining');
+    assert.equal(notesCount.classList.contains('near-limit'), false);
   });
 
   await t.test('appends a hidden honeypot website field to the form on script load', async () => {
