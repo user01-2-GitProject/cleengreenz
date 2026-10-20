@@ -56,7 +56,7 @@ const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'strict-transport-security': 'max-age=31536000; includeSubDomains', // Enforce HTTPS to protect against SSL stripping and HTTP downgrade attacks
-  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';",
+  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';",
   'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
   'cross-origin-resource-policy': 'same-origin',
   'x-permitted-cross-domain-policies': 'none',
@@ -118,6 +118,20 @@ ${recent
   .join('') || '<tr><td colspan="7">No requests yet.</td></tr>'}
 </table></div>
 </main></body></html>`;
+}
+
+export async function onRequest(context) {
+  if (context.request.method === 'GET') {
+    return onRequestGet(context);
+  }
+  return new Response('Method Not Allowed', {
+    status: 405,
+    headers: {
+      'allow': 'GET',
+      'content-type': 'text/plain; charset=utf-8',
+      ...SECURITY_HEADERS,
+    },
+  });
 }
 
 export async function onRequestGet({ request, env }) {

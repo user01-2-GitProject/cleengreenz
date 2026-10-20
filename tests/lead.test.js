@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
-import { authorized, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
+import { json, onRequest, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { authorized, onRequest as onRequestLeads, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 // js/leads.js is a classic browser script (loaded via <script src>), so it
 // cannot use ESM export syntax. It assigns module.exports when a CommonJS-style
@@ -84,6 +84,62 @@ test('json helper function', async (t) => {
 
     const nullRes = json(null);
     assert.equal(await nullRes.json(), null);
+  });
+});
+
+test('onRequest method restrictions and 405 responses in functions/api/lead.js', async (t) => {
+  await t.test('dispatches POST request to onRequestPost successfully', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'https://cleengreenz.com' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequest({ request, env: {}, waitUntil: () => {} });
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), { ok: true });
+  });
+
+  await t.test('returns 405 Method Not Allowed with Allow header and security headers for non-POST methods', async () => {
+    const methods = ['GET', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'];
+    for (const method of methods) {
+      const request = new Request('https://cleengreenz.com/api/lead', { method });
+      const res = await onRequest({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 405, `Expected 405 for HTTP method ${method}`);
+      assert.equal(res.headers.get('allow'), 'POST');
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
+      assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'; base-uri 'none';");
+      assert.deepEqual(await res.json(), { ok: false, error: 'method_not_allowed' });
+    }
+  });
+});
+
+test('onRequest method restrictions and 405 responses in functions/leads.js', async (t) => {
+  await t.test('dispatches GET request to onRequestGet', async () => {
+    const request = new Request('https://cleengreenz.com/leads', { method: 'GET' });
+    const res = await onRequestLeads({ request, env: {} });
+    assert.equal(res.status, 401);
+  });
+
+  await t.test('returns 405 Method Not Allowed with Allow header and security headers for non-GET methods', async () => {
+    const methods = ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'];
+    for (const method of methods) {
+      const request = new Request('https://cleengreenz.com/leads', { method });
+      const res = await onRequestLeads({ request, env: {} });
+
+      assert.equal(res.status, 405, `Expected 405 for HTTP method ${method}`);
+      assert.equal(res.headers.get('allow'), 'GET');
+      assert.equal(res.headers.get('content-type'), 'text/plain; charset=utf-8');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
+      assert.equal(await res.text(), 'Method Not Allowed');
+    }
   });
 });
 
@@ -707,7 +763,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
     );
     assert.equal(
       res.headers.get('permissions-policy'),
@@ -762,7 +818,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
     );
   });
 
@@ -790,7 +846,7 @@ test('onRequestGet authorization and response handling', async (t) => {
       assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
       assert.equal(
         res.headers.get('content-security-policy'),
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
       );
     } finally {
       console.error = originalConsoleError;
@@ -873,6 +929,9 @@ test('Cloudflare Pages _headers configuration file validation', async (t) => {
     assert.match(content, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i, 'Strict-Transport-Security HSTS header required');
     assert.match(content, /Permissions-Policy:\s*/i, 'Permissions-Policy header required');
     assert.match(content, /Content-Security-Policy:\s*/i, 'Content-Security-Policy header required');
+    assert.match(content, /form-action 'self'/i, 'form-action directive in CSP required');
+    assert.match(content, /Cross-Origin-Resource-Policy:\s*same-origin/i, 'Cross-Origin-Resource-Policy required');
+    assert.match(content, /X-Permitted-Cross-Domain-Policies:\s*none/i, 'X-Permitted-Cross-Domain-Policies required');
   });
 });
 
@@ -912,7 +971,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
     assert.equal(
       res.headers.get('content-security-policy'),
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
     );
     const html = await res.text();
 
@@ -1333,5 +1392,8 @@ test('Cloudflare Pages _headers configuration file', async (t) => {
     assert.match(content, /Referrer-Policy:\s*strict-origin-when-cross-origin/i, 'Must set Referrer-Policy');
     assert.match(content, /Strict-Transport-Security:\s*max-age=31536000/i, 'Must set Strict-Transport-Security');
     assert.match(content, /Permissions-Policy:\s*/i, 'Must set Permissions-Policy');
+    assert.match(content, /form-action 'self'/i, 'Must set form-action in Content-Security-Policy');
+    assert.match(content, /Cross-Origin-Resource-Policy:\s*same-origin/i, 'Must set Cross-Origin-Resource-Policy');
+    assert.match(content, /X-Permitted-Cross-Domain-Policies:\s*none/i, 'Must set X-Permitted-Cross-Domain-Policies');
   });
 });

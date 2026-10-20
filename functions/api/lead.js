@@ -10,22 +10,30 @@ const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, l
 // Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
+// Pre-compiled module-scoped RegExp instances to avoid re-compilation and garbage collection overhead per API request.
+const CONTROL_CHARS_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+const CRLF_REGEX = /[\r\n]+/g;
+const CRLF_SINGLE_REGEX = /\r\n?/g;
+const CRLF_RAW_REGEX = /[\r\n]/g;
+const HTML_CHARS_REGEX = /[&<>"']/g;
+const SAN_PHONE_REGEX = /[^0-9+() -]/g;
+
 function clean(value, field) {
   if (typeof value !== 'string') return null;
   // Strip non-printable ASCII control characters (excluding tab and newline).
-  let val = value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  let val = value.replace(CONTROL_CHARS_REGEX, '');
   if (field !== 'notes') {
     // Strip CRLF linebreaks to prevent email header injection, log pollution, or response split attacks.
-    val = val.replace(/[\r\n]+/g, ' ');
+    val = val.replace(CRLF_REGEX, ' ');
   } else {
-    val = val.replace(/\r\n?/g, '\n');
+    val = val.replace(CRLF_SINGLE_REGEX, '\n');
   }
   const maxLen = LIMITS[field] || 300;
   const s = val.trim().slice(0, maxLen);
   return s || null;
 }
 
-export function json(body, status = 200) {
+export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -39,16 +47,24 @@ export function json(body, status = 200) {
       'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
       'cross-origin-resource-policy': 'same-origin',
       'x-permitted-cross-domain-policies': 'none',
+      ...extraHeaders,
     },
   });
 }
 
+export async function onRequest(context) {
+  if (context.request.method === 'POST') {
+    return onRequestPost(context);
+  }
+  return json({ ok: false, error: 'method_not_allowed' }, 405, { allow: 'POST' });
+}
+
 function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
+  return String(s ?? '').replace(HTML_CHARS_REGEX, (c) => ESCAPE_MAP[c]);
 }
 
 export function sanitizePhone(phone) {
-  return String(phone || '').replace(/[^0-9+() -]/g, '');
+  return String(phone || '').replace(SAN_PHONE_REGEX, '');
 }
 
 async function emailChris(env, lead) {
@@ -66,16 +82,16 @@ async function emailChris(env, lead) {
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0"><b>${k}</b></td><td>${escapeHtml(v).replace(/\n/g, '<br>')}</td></tr>`)
     .join('')}</table><p><a href="tel:${encodeURIComponent(safePhone)}">Call ${escapeHtml(lead.name || 'Customer')}</a></p>`;
 
-  const cleanSubjectService = (lead.service || 'lawn care').replace(/[\r\n]/g, ' ');
-  const cleanSubjectName = (lead.name || '').replace(/[\r\n]/g, ' ');
+  const cleanSubjectService = (lead.service || 'lawn care').replace(CRLF_RAW_REGEX, ' ');
+  const cleanSubjectName = (lead.name || '').replace(CRLF_RAW_REGEX, ' ');
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
-      from: (env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>').replace(/[\r\n]/g, ''),
+      from: (env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>').replace(CRLF_RAW_REGEX, ''),
       to: (env.LEAD_TO || 'chris@cleengreenz.com')
         .split(',')
-        .map((s) => s.trim().replace(/[\r\n]/g, ''))
+        .map((s) => s.trim().replace(CRLF_RAW_REGEX, ''))
         .filter(Boolean),
       subject: `Estimate request: ${cleanSubjectService} (${cleanSubjectName})`,
       text,

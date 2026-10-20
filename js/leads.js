@@ -105,6 +105,7 @@
     function updateNotesCount() {
       var remaining = maxLen - notesInput.value.length;
       notesCount.textContent = '· ' + remaining + ' character' + (remaining === 1 ? '' : 's') + ' remaining';
+      notesCount.classList.toggle('near-limit', remaining <= 20);
     }
     notesInput.addEventListener('input', updateNotesCount);
     updateNotesCount();
@@ -210,9 +211,12 @@
     return field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
   }
 
+  // Performance optimization: check field.getAttribute('aria-invalid') first
+  // to avoid redundant DOM queries, string parsing, and attribute manipulation on every keystroke
+  // when the field is already valid.
   form.addEventListener('input', function (e) {
     var field = e.target;
-    if (field && field.removeAttribute) {
+    if (field && field.getAttribute && field.getAttribute('aria-invalid')) {
       field.removeAttribute('aria-invalid');
       var errEl = errorFor(field);
       if (errEl) {
