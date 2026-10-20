@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { json, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
-import { authorized, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
+import { json, onRequest, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { authorized, onRequest as onRequestLeads, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 // js/leads.js is a classic browser script (loaded via <script src>), so it
 // cannot use ESM export syntax. It assigns module.exports when a CommonJS-style
@@ -84,6 +84,62 @@ test('json helper function', async (t) => {
 
     const nullRes = json(null);
     assert.equal(await nullRes.json(), null);
+  });
+});
+
+test('onRequest method restrictions and 405 responses in functions/api/lead.js', async (t) => {
+  await t.test('dispatches POST request to onRequestPost successfully', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'https://cleengreenz.com' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequest({ request, env: {}, waitUntil: () => {} });
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), { ok: true });
+  });
+
+  await t.test('returns 405 Method Not Allowed with Allow header and security headers for non-POST methods', async () => {
+    const methods = ['GET', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'];
+    for (const method of methods) {
+      const request = new Request('https://cleengreenz.com/api/lead', { method });
+      const res = await onRequest({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 405, `Expected 405 for HTTP method ${method}`);
+      assert.equal(res.headers.get('allow'), 'POST');
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
+      assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'; base-uri 'none';");
+      assert.deepEqual(await res.json(), { ok: false, error: 'method_not_allowed' });
+    }
+  });
+});
+
+test('onRequest method restrictions and 405 responses in functions/leads.js', async (t) => {
+  await t.test('dispatches GET request to onRequestGet', async () => {
+    const request = new Request('https://cleengreenz.com/leads', { method: 'GET' });
+    const res = await onRequestLeads({ request, env: {} });
+    assert.equal(res.status, 401);
+  });
+
+  await t.test('returns 405 Method Not Allowed with Allow header and security headers for non-GET methods', async () => {
+    const methods = ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'];
+    for (const method of methods) {
+      const request = new Request('https://cleengreenz.com/leads', { method });
+      const res = await onRequestLeads({ request, env: {} });
+
+      assert.equal(res.status, 405, `Expected 405 for HTTP method ${method}`);
+      assert.equal(res.headers.get('allow'), 'GET');
+      assert.equal(res.headers.get('content-type'), 'text/plain; charset=utf-8');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(res.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
+      assert.equal(await res.text(), 'Method Not Allowed');
+    }
   });
 });
 

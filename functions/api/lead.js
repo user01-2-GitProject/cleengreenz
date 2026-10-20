@@ -25,7 +25,7 @@ function clean(value, field) {
   return s || null;
 }
 
-export function json(body, status = 200) {
+export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -39,8 +39,16 @@ export function json(body, status = 200) {
       'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
       'cross-origin-resource-policy': 'same-origin',
       'x-permitted-cross-domain-policies': 'none',
+      ...extraHeaders,
     },
   });
+}
+
+export async function onRequest(context) {
+  if (context.request.method === 'POST') {
+    return onRequestPost(context);
+  }
+  return json({ ok: false, error: 'method_not_allowed' }, 405, { allow: 'POST' });
 }
 
 function escapeHtml(s) {
