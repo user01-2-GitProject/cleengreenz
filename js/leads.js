@@ -105,6 +105,7 @@
     function updateNotesCount() {
       var remaining = maxLen - notesInput.value.length;
       notesCount.textContent = '· ' + remaining + ' character' + (remaining === 1 ? '' : 's') + ' remaining';
+      notesCount.classList.toggle('near-limit', remaining <= 20);
     }
     notesInput.addEventListener('input', updateNotesCount);
     updateNotesCount();
