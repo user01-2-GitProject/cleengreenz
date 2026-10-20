@@ -1591,8 +1591,6 @@
               } else if (readyGrass) {
                 p.target = readyGrass; p.targetType = 'grass'; p.riding = true; p.state = 'notice'; p.t = 0;
                 idleAt = now;
-              } else {
-                p.cooldown = 0.5;
               }
             }
           } else if (p.state === 'leave') {
@@ -1708,16 +1706,20 @@
           wasWalking = walking;
           // While held or thrown he is a pendulum hanging from the grab point: the angle is an
           // underdamped spring chasing "trailing behind the motion", so he swings and settles.
-          // Performance optimization: skip transcendental Math.exp() calls and spring updates when not grabbing or decaying.
+          // Performance optimization: skip transcendental Math.exp() calls and spring updates when not grabbing, walking, or decaying.
           var grabbing = p.state === 'drag' || p.state === 'toss';
+          if (p.x !== prevX || p.mvx > 0.001 || p.mvx < -0.001) {
+            p.mvx += (dt > 0 ? (p.x - prevX) / dt - p.mvx : 0) * (1 - Math.exp(-dt * 22));
+          } else {
+            p.mvx = 0;
+          }
           if (grabbing || p.grab > 0.001 || Math.abs(p.tilt) > 0.001 || Math.abs(p.tiltV) > 0.001) {
             p.grab += ((grabbing ? 1 : 0) - p.grab) * (1 - Math.exp(-dt * 16));
-            p.mvx += (dt > 0 ? (p.x - prevX) / dt - p.mvx : 0) * (1 - Math.exp(-dt * 22));
             var tiltTarget = grabbing ? Math.max(-16, Math.min(16, p.mvx / 40)) * p.face : 0;
             p.tiltV += (-170 * (p.tilt - tiltTarget) - 13 * p.tiltV) * dt;
             p.tilt += p.tiltV * dt;
           } else {
-            p.grab = 0; p.mvx = 0; p.tilt = 0; p.tiltV = 0;
+            p.grab = 0; p.tilt = 0; p.tiltV = 0;
           }
           if (p.grab > .001 || grabOn) {
             grabOn = p.grab > .001;
