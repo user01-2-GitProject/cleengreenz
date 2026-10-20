@@ -211,6 +211,42 @@
     return field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
   }
 
+  // Validate non-empty or previously invalid fields on focusout (blur) for immediate feedback
+  form.addEventListener('focusout', function (e) {
+    var field = e.target;
+    if (!field || !field.id) return;
+    var errEl = errorFor(field);
+    if (!errEl) return;
+
+    var val = field.value ? field.value.trim() : '';
+    if (field.id === 'f-phone') {
+      var phoneDigits = field.value.replace(/\D/g, '');
+      if (val && phoneDigits.length < 7) {
+        field.setAttribute('aria-invalid', 'true');
+        errEl.textContent = 'Please enter a valid phone number with area code';
+        errEl.classList.add('show');
+        field.setAttribute('aria-describedby', errEl.id);
+        return;
+      }
+    }
+
+    if (field.getAttribute('aria-invalid') === 'true') {
+      if (!val && field.hasAttribute('required')) {
+        field.setAttribute('aria-invalid', 'true');
+        if (field.id === 'f-phone') errEl.textContent = 'Please enter your phone number';
+        errEl.classList.add('show');
+        field.setAttribute('aria-describedby', errEl.id);
+      } else {
+        field.removeAttribute('aria-invalid');
+        var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+          .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+        if (descriptions) field.setAttribute('aria-describedby', descriptions);
+        else field.removeAttribute('aria-describedby');
+        errEl.classList.remove('show');
+      }
+    }
+  });
+
   // Performance optimization: check field.getAttribute('aria-invalid') first
   // to avoid redundant DOM queries, string parsing, and attribute manipulation on every keystroke
   // when the field is already valid.

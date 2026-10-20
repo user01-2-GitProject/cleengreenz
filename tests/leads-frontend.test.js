@@ -457,6 +457,52 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneErr.classList.contains('show'), true);
     assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
   });
+
+  await t.test('validates incomplete phone number on focusout event and displays contextual error', async () => {
+    const { window, document } = setupEnvironment();
+    const phoneInput = document.getElementById('f-phone');
+    const phoneErr = document.getElementById('f-phone-err');
+
+    phoneInput.value = '123';
+    phoneInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+
+    assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
+    assert.equal(phoneInput.getAttribute('aria-describedby'), 'f-phone-err');
+  });
+
+  await t.test('does not flag pristine empty fields on focusout before form submission', async () => {
+    const { window, document } = setupEnvironment();
+    const nameInput = document.getElementById('f-name');
+    const nameErr = document.getElementById('f-name-err');
+
+    nameInput.value = '';
+    nameInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+
+    assert.equal(nameInput.hasAttribute('aria-invalid'), false);
+    assert.equal(nameErr.classList.contains('show'), false);
+  });
+
+  await t.test('clears error on focusout when previously invalid field is corrected', async () => {
+    const { window, document } = setupEnvironment();
+    const nameInput = document.getElementById('f-name');
+    const nameErr = document.getElementById('f-name-err');
+
+    // Submit empty to trigger initial error state
+    nameInput.value = '';
+    document.getElementById('estimate-form').dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+
+    assert.equal(nameInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(nameErr.classList.contains('show'), true);
+
+    // Fill valid name and trigger focusout
+    nameInput.value = 'Jane Doe';
+    nameInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+
+    assert.equal(nameInput.hasAttribute('aria-invalid'), false);
+    assert.equal(nameErr.classList.contains('show'), false);
+  });
 });
 
 test('Form initialization, honeypot field, and lead tracking events', async (t) => {
