@@ -457,6 +457,31 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneErr.classList.contains('show'), true);
     assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
   });
+
+  await t.test('performs inline validation on focusout when field has value or was previously invalid', async () => {
+    const { window, document } = setupEnvironment();
+    const form = document.getElementById('estimate-form');
+    const phoneInput = form.querySelector('#f-phone');
+    const nameInput = form.querySelector('#f-name');
+    const phoneErr = document.querySelector('#f-phone-err');
+
+    // Blurring an untouched empty required field should not trigger error immediately before submission
+    nameInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+    assert.equal(nameInput.hasAttribute('aria-invalid'), false);
+
+    // Typing incomplete phone and blurring triggers inline validation error
+    phoneInput.value = '123';
+    phoneInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+    assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
+
+    // Correcting the phone number updates the field to valid on input
+    phoneInput.value = '2693628286';
+    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(phoneInput.hasAttribute('aria-invalid'), false);
+    assert.equal(phoneErr.classList.contains('show'), false);
+  });
 });
 
 test('Form initialization, honeypot field, and lead tracking events', async (t) => {

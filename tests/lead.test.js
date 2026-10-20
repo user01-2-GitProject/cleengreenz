@@ -1292,6 +1292,7 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
 
   await t.test('clears error state when user types into invalid input field', async () => {
     const env = setupDomEnvironment();
+    env.nameInput.value = 'Jane';
     env.nameInput.setAttribute('aria-invalid', 'true');
     env.nameInput.setAttribute('aria-describedby', 'f-name-err');
     env.nameErr.classList.add('show');
