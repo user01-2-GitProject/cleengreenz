@@ -211,21 +211,58 @@
     return field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
   }
 
-  // Performance optimization: check field.getAttribute('aria-invalid') first
-  // to avoid redundant DOM queries, string parsing, and attribute manipulation on every keystroke
-  // when the field is already valid.
-  form.addEventListener('input', function (e) {
-    var field = e.target;
-    if (field && field.getAttribute && field.getAttribute('aria-invalid')) {
-      field.removeAttribute('aria-invalid');
-      var errEl = errorFor(field);
+  function validateField(field) {
+    var isRequired = field && (field.hasAttribute ? field.hasAttribute('required') : (field.getAttribute && field.getAttribute('required') !== null));
+    if (!isRequired) return true;
+    var errEl = errorFor(field);
+    var isInvalid = !field.value.trim();
+    if (field.id === 'f-phone') {
+      var phoneDigits = field.value.replace(/\D/g, '');
+      if (!isInvalid && phoneDigits.length < 7) {
+        isInvalid = true;
+        if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
+      } else if (errEl) {
+        errEl.textContent = 'Please enter your phone number';
+      }
+    }
+    if (isInvalid) {
+      field.setAttribute('aria-invalid', 'true');
       if (errEl) {
+        errEl.classList.add('show');
+        var currentDescribedBy = field.getAttribute('aria-describedby') || '';
+        var ids = currentDescribedBy.split(/\s+/).filter(Boolean);
+        if (ids.indexOf(errEl.id) === -1) {
+          ids.push(errEl.id);
+          field.setAttribute('aria-describedby', ids.join(' '));
+        }
+      }
+      return false;
+    } else {
+      field.removeAttribute('aria-invalid');
+      if (errEl) {
+        errEl.classList.remove('show');
         var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
           .filter(function (id) { return id && id !== errEl.id; }).join(' ');
         if (descriptions) field.setAttribute('aria-describedby', descriptions);
         else field.removeAttribute('aria-describedby');
-        errEl.classList.remove('show');
       }
+      return true;
+    }
+  }
+
+  form.addEventListener('focusout', function (e) {
+    var field = e.target;
+    if (field && field.hasAttribute && field.hasAttribute('required')) {
+      if (field.value.trim() !== '' || field.getAttribute('aria-invalid') === 'true') {
+        validateField(field);
+      }
+    }
+  });
+
+  form.addEventListener('input', function (e) {
+    var field = e.target;
+    if (field && field.getAttribute && field.getAttribute('aria-invalid') === 'true') {
+      validateField(field);
     }
   });
 
@@ -235,28 +272,9 @@
     var invalidField = null;
     for (var i = 0; i < requiredFields.length; i++) {
       var field = requiredFields[i];
-      var errEl = errorFor(field);
-      var isInvalid = !field.value.trim();
-      if (field.id === 'f-phone') {
-        var phoneDigits = field.value.replace(/\D/g, '');
-        if (!isInvalid && phoneDigits.length < 7) {
-          isInvalid = true;
-          if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
-        } else if (errEl) {
-          errEl.textContent = 'Please enter your phone number';
-        }
-      }
-      if (isInvalid) {
-        field.setAttribute('aria-invalid', 'true');
-        if (errEl) {
-          errEl.classList.add('show');
-          field.setAttribute('aria-describedby', errEl.id);
-        }
-        if (!invalidField) invalidField = field;
-      } else {
-        field.removeAttribute('aria-invalid');
-        field.removeAttribute('aria-describedby');
-        if (errEl) errEl.classList.remove('show');
+      var isValid = validateField(field);
+      if (!isValid && !invalidField) {
+        invalidField = field;
       }
     }
     if (invalidField) {
