@@ -115,7 +115,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   if (origin) {
     try {
-      if (new URL(origin).origin !== reqUrl.origin) {
+      const parsedOrigin = new URL(origin);
+      if (parsedOrigin.origin !== reqUrl.origin || (parsedOrigin.protocol !== 'http:' && parsedOrigin.protocol !== 'https:')) {
         return json({ ok: false, error: 'forbidden' }, 403);
       }
     } catch {
@@ -123,7 +124,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
   } else if (referer) {
     try {
-      if (new URL(referer).origin !== reqUrl.origin) {
+      const parsedReferer = new URL(referer);
+      if (parsedReferer.origin !== reqUrl.origin || (parsedReferer.protocol !== 'http:' && parsedReferer.protocol !== 'https:')) {
         return json({ ok: false, error: 'forbidden' }, 403);
       }
     } catch {
