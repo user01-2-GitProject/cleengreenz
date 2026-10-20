@@ -39,6 +39,11 @@
 
 **Action:** Store metadata directly on item objects instead of parallel `Map` collections, and use indexed `for` loops rather than `.forEach()` in high-frequency animation and DOM update paths.
 
+## 2026-10-02 - Avoid micro-optimizing low-frequency event handlers like IntersectionObserver
+
+**Learning:** Optimizing low-frequency event handlers (e.g. `IntersectionObserver` callbacks for 4 navigation links) by replacing clean `Map`/`Set` structures with custom properties attached to DOM elements (`sec._navLink`) and replacing `.forEach` with indexed `for` loops is a micro-optimization with zero measurable impact. It pollutes DOM objects, degrades code readability, and adds maintenance complexity without real performance benefits.
+
+**Action:** Focus performance optimizations strictly on hot paths (e.g. `requestAnimationFrame` loops, scroll/resize handlers, high-volume DOM rendering). Never compromise code readability or pollute DOM instances for low-frequency events.
 ## 2026-10-02 - Guard form input validation error cleanup with attribute presence check
 
 **Learning:** Unconditionally querying the DOM (`querySelector('#' + CSS.escape(...) + '-err')`), splitting/filtering/joining `aria-describedby` strings, and updating DOM attributes on every `input` event (keystroke) creates significant CPU and string allocation overhead during typing. Checking `field.getAttribute('aria-invalid')` first allows 99.9% of normal keystrokes on valid inputs to return immediately without touching the DOM.
