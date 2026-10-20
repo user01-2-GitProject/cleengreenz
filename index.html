@@ -1029,6 +1029,7 @@
       var catcherItems = catchers.map(function (el) {
         return { el: el, pile: [], r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0, width: 0, left: 0 };
       });
+      var minButtonTop = Infinity, maxButtonTopMax = -Infinity, hasVisibleButtons = false;
       var MAX_PILE = 12, CLEAR_AT = 6;
       function rnd(a, b) { return a + Math.random() * (b - a); }
 
@@ -1477,6 +1478,7 @@
         var isRectsDirty = rectsDirty;
         // Batch DOM layout reads: update cached element bounding rects using direct property storage on objects
         if (rectsDirty) {
+          minButtonTop = Infinity; maxButtonTopMax = -Infinity; hasVisibleButtons = false;
           for (var idx = 0; idx < catcherItems.length; idx++) {
             var ci = catcherItems[idx];
             var r = ci.el.getBoundingClientRect();
@@ -1489,6 +1491,9 @@
               ci.rightMax = valid.right + 18;
               ci.width = valid.width;
               ci.left = valid.left;
+              if (ci.top < minButtonTop) minButtonTop = ci.top;
+              if (ci.topMax > maxButtonTopMax) maxButtonTopMax = ci.topMax;
+              hasVisibleButtons = true;
             }
           }
           for (var gIdx = 0; gIdx < grassPatches.length; gIdx++) {
@@ -1510,21 +1515,25 @@
             y = l.y;
             if (l.sticky && y > 0) {
               var cx = x + l.size / 2, bottom = y + l.size * 0.8;
-              for (var j = 0; j < catcherItems.length; j++) {
-                var ci = catcherItems[j], r = ci.r, pile = ci.pile;
-                if (!r || pile.length >= MAX_PILE) continue;
-                if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
-                  l.state = 'land';
-                  l.landedDirty = true;
-                  l.host = ci.el;
-                  l.hostCi = ci;
-                  // Gather toward the middle and stack in a low mound, not a flat row.
-                  l.ox = Math.max(12, Math.min(ci.width - 12,
-                    ci.width / 2 + (cx - ci.left - ci.width / 2) * .62));
-                  l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
-                  l.rot = rnd(-50, 50);
-                  pile.push(l);
-                  break;
+              // Performance optimization: Vertical bounding box guard skips iterating catcherItems array
+              // for leaves falling outside the vertical range of visible buttons.
+              if (hasVisibleButtons && bottom >= minButtonTop && bottom <= maxButtonTopMax) {
+                for (var j = 0; j < catcherItems.length; j++) {
+                  var ci = catcherItems[j], r = ci.r, pile = ci.pile;
+                  if (!r || pile.length >= MAX_PILE) continue;
+                  if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
+                    l.state = 'land';
+                    l.landedDirty = true;
+                    l.host = ci.el;
+                    l.hostCi = ci;
+                    // Gather toward the middle and stack in a low mound, not a flat row.
+                    l.ox = Math.max(12, Math.min(ci.width - 12,
+                      ci.width / 2 + (cx - ci.left - ci.width / 2) * .62));
+                    l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
+                    l.rot = rnd(-50, 50);
+                    pile.push(l);
+                    break;
+                  }
                 }
               }
             }
