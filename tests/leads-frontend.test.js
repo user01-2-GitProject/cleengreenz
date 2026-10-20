@@ -408,6 +408,34 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(document.querySelector('#f-name-err').classList.contains('show'), false);
   });
 
+  await t.test('triggers inline validation on focusout (blur) for non-empty or previously invalid fields', async () => {
+    const { window, document } = setupEnvironment();
+
+    const form = document.getElementById('estimate-form');
+    const nameInput = form.querySelector('#f-name');
+    const phoneInput = form.querySelector('#f-phone');
+
+    // Clean initial state: focusout on pristine empty field should not trigger error
+    nameInput.value = '';
+    nameInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+    assert.equal(nameInput.hasAttribute('aria-invalid'), false);
+    assert.equal(document.querySelector('#f-name-err').classList.contains('show'), false);
+
+    // Blur on incomplete phone number (less than 7 digits) triggers inline error
+    phoneInput.value = '123';
+    phoneInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+    assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
+    const phoneErr = document.querySelector('#f-phone-err');
+    assert.equal(phoneErr.classList.contains('show'), true);
+    assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
+
+    // Blur on complete phone number clears inline error
+    phoneInput.value = '(269) 555-0199';
+    phoneInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+    assert.equal(phoneInput.hasAttribute('aria-invalid'), false);
+    assert.equal(phoneErr.classList.contains('show'), false);
+  });
+
   await t.test('formats phone number on input event into (XXX) XXX-XXXX structure', async () => {
     const { window, document } = setupEnvironment();
     const phoneInput = document.getElementById('f-phone');

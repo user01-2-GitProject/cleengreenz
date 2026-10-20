@@ -98,6 +98,41 @@
   var form = document.getElementById('estimate-form');
   if (!form) return;
 
+  // Inline focusout (blur) validation for required form fields
+  form.addEventListener('focusout', function (e) {
+    var field = e.target;
+    if (!field || !field.hasAttribute || !field.hasAttribute('required')) return;
+    var errEl = errorFor(field);
+    var isDirty = field.value.trim() !== '' || field.getAttribute('aria-invalid') === 'true';
+    if (!isDirty) return;
+
+    var isInvalid = !field.value.trim();
+    if (field.id === 'f-phone') {
+      var phoneDigits = field.value.replace(/\D/g, '');
+      if (!isInvalid && phoneDigits.length < 7) {
+        isInvalid = true;
+        if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
+      } else if (errEl) {
+        errEl.textContent = 'Please enter your phone number';
+      }
+    }
+
+    if (isInvalid) {
+      field.setAttribute('aria-invalid', 'true');
+      if (errEl) {
+        errEl.classList.add('show');
+        field.setAttribute('aria-describedby', errEl.id);
+      }
+    } else {
+      field.removeAttribute('aria-invalid');
+      var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+        .filter(function (id) { return id && id !== (errEl ? errEl.id : ''); }).join(' ');
+      if (descriptions) field.setAttribute('aria-describedby', descriptions);
+      else field.removeAttribute('aria-describedby');
+      if (errEl) errEl.classList.remove('show');
+    }
+  });
+
   var notesInput = form.querySelector('#f-notes');
   var notesCount = form.querySelector('#f-notes-count');
   if (notesInput && notesCount) {
