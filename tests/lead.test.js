@@ -304,7 +304,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
   });
 
-  await t.test('returns 403 JSON response when Origin does not match request origin', async () => {
+  await t.test('returns 403 JSON response when Origin does not match request origin or uses invalid protocol', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'origin': 'https://evil-attacker.com' },
@@ -315,9 +315,17 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'javascript:alert(1)' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 403);
   });
 
-  await t.test('returns 403 JSON response when Referer does not match request origin', async () => {
+  await t.test('returns 403 JSON response when Referer does not match request origin or uses invalid protocol', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'referer': 'https://evil-attacker.com/phishing' },
@@ -328,6 +336,14 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'referer': 'not-a-valid-url' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 403);
   });
 
   await t.test('returns 200 JSON response on valid click event with same origin', async () => {
