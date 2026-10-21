@@ -43,23 +43,25 @@
         writePromise = Promise.resolve();
       }
       writePromise.then(function () {
-        if (feedback) {
-          if (copyTimeout) clearTimeout(copyTimeout);
-          feedback.textContent = 'Copied!';
-          copyTimeout = setTimeout(function () {
-            feedback.textContent = '';
-            copyTimeout = null;
-          }, 2000);
-        }
+        if (copyTimeout) clearTimeout(copyTimeout);
+        copyBtn.classList.add('copied');
+        copyBtn.setAttribute('aria-label', 'Phone number copied');
+        if (feedback) feedback.textContent = 'Copied!';
+        copyTimeout = setTimeout(function () {
+          if (feedback) feedback.textContent = '';
+          copyBtn.classList.remove('copied');
+          copyBtn.setAttribute('aria-label', 'Copy phone number ' + phoneNum);
+          copyTimeout = null;
+        }, 2000);
       }).catch(function () {
-        if (feedback) {
-          if (copyTimeout) clearTimeout(copyTimeout);
-          feedback.textContent = 'Failed to copy';
-          copyTimeout = setTimeout(function () {
-            feedback.textContent = '';
-            copyTimeout = null;
-          }, 2000);
-        }
+        if (copyTimeout) clearTimeout(copyTimeout);
+        copyBtn.classList.remove('copied');
+        copyBtn.setAttribute('aria-label', 'Copy phone number ' + phoneNum);
+        if (feedback) feedback.textContent = 'Failed to copy';
+        copyTimeout = setTimeout(function () {
+          if (feedback) feedback.textContent = '';
+          copyTimeout = null;
+        }, 2000);
       });
     }
   });

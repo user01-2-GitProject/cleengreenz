@@ -630,6 +630,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(copyBtn, 'copy phone button exists');
     assert.ok(feedback, 'copy feedback element exists');
     assert.equal(copyBtn.getAttribute('aria-label'), 'Copy phone number (269) 362-8286');
+    assert.equal(feedback.getAttribute('aria-atomic'), 'true', 'copy feedback live region has aria-atomic="true"');
 
     copyBtn.click();
 
@@ -637,6 +638,8 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     assert.equal(copiedText, '(269) 362-8286');
     assert.equal(feedback.textContent, 'Copied!');
+    assert.equal(copyBtn.classList.contains('copied'), true, 'copy button toggles .copied class');
+    assert.equal(copyBtn.getAttribute('aria-label'), 'Phone number copied', 'copy button updates aria-label');
   });
 
   await t.test('copy phone button displays error feedback when clipboard write rejects', async () => {
