@@ -613,7 +613,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(mobileCallBtn.querySelector('svg'), 'mobile bar call link includes phone icon svg');
   });
 
-  await t.test('copy phone button copies phone number to clipboard and displays feedback', async () => {
+  await t.test('copy phone button copies phone number to clipboard and displays visual & aria feedback', async () => {
     let copiedText = '';
     const { window, document } = setupEnvironment();
 
@@ -629,7 +629,8 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     assert.ok(copyBtn, 'copy phone button exists');
     assert.ok(feedback, 'copy feedback element exists');
-    assert.equal(copyBtn.getAttribute('aria-label'), 'Copy phone number (269) 362-8286');
+    const initialLabel = copyBtn.getAttribute('aria-label');
+    assert.equal(initialLabel, 'Copy phone number (269) 362-8286');
 
     copyBtn.click();
 
@@ -637,6 +638,17 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     assert.equal(copiedText, '(269) 362-8286');
     assert.equal(feedback.textContent, 'Copied!');
+    assert.equal(copyBtn.classList.contains('copied'), true);
+    assert.equal(copyBtn.getAttribute('aria-label'), 'Phone number copied to clipboard');
+    assert.match(copyBtn.innerHTML, /Copied!/);
+
+    // Fast-forward past timeout (2000ms) to check reset
+    await new Promise((r) => setTimeout(r, 2050));
+
+    assert.equal(feedback.textContent, '');
+    assert.equal(copyBtn.classList.contains('copied'), false);
+    assert.equal(copyBtn.getAttribute('aria-label'), initialLabel);
+    assert.match(copyBtn.innerHTML, /Copy/);
   });
 
   await t.test('copy phone button displays error feedback when clipboard write rejects', async () => {

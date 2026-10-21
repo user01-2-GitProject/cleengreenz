@@ -42,15 +42,24 @@
       } else {
         writePromise = Promise.resolve();
       }
+      var origHtml = copyBtn.dataset.origHtml || copyBtn.innerHTML;
+      if (!copyBtn.dataset.origHtml) copyBtn.dataset.origHtml = origHtml;
+      var origLabel = copyBtn.dataset.origLabel || (copyBtn.getAttribute('aria-label') || 'Copy phone number');
+      if (!copyBtn.dataset.origLabel) copyBtn.dataset.origLabel = origLabel;
+
       writePromise.then(function () {
-        if (feedback) {
-          if (copyTimeout) clearTimeout(copyTimeout);
-          feedback.textContent = 'Copied!';
-          copyTimeout = setTimeout(function () {
-            feedback.textContent = '';
-            copyTimeout = null;
-          }, 2000);
-        }
+        if (copyTimeout) clearTimeout(copyTimeout);
+        copyBtn.classList.add('copied');
+        copyBtn.setAttribute('aria-label', 'Phone number copied to clipboard');
+        copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Copied!';
+        if (feedback) feedback.textContent = 'Copied!';
+        copyTimeout = setTimeout(function () {
+          if (feedback) feedback.textContent = '';
+          copyBtn.classList.remove('copied');
+          copyBtn.setAttribute('aria-label', origLabel);
+          copyBtn.innerHTML = origHtml;
+          copyTimeout = null;
+        }, 2000);
       }).catch(function () {
         if (feedback) {
           if (copyTimeout) clearTimeout(copyTimeout);

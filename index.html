@@ -451,6 +451,8 @@
     display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease;
   }
   .copy-phone-btn:hover { background: rgba(255, 255, 255, 0.28); color: var(--gold); }
+  .copy-phone-btn.copied { background: rgba(108, 191, 58, 0.35); color: var(--gold); }
+  .copy-phone-btn.copied + .copy-feedback { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   .copy-phone-btn svg { width: 14px; height: 14px; color: currentColor; }
   .copy-feedback { font-size: .8rem; color: var(--gold); font-weight: 700; }
   form.estimate {
