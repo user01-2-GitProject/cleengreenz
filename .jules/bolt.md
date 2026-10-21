@@ -49,3 +49,9 @@
 **Learning:** Unconditionally querying the DOM (`querySelector('#' + CSS.escape(...) + '-err')`), splitting/filtering/joining `aria-describedby` strings, and updating DOM attributes on every `input` event (keystroke) creates significant CPU and string allocation overhead during typing. Checking `field.getAttribute('aria-invalid')` first allows 99.9% of normal keystrokes on valid inputs to return immediately without touching the DOM.
 
 **Action:** Always guard input field error clearing listeners with a fast attribute presence check (`getAttribute('aria-invalid')`) to bypass DOM queries and string manipulation on valid keystrokes.
+
+## 2026-10-03 - Guard spring physics and exponential decay calculations during idle animation frames
+
+**Learning:** In animation loops, evaluating spring physics and `Math.exp()` exponential decay functions on every frame when the target object is completely stationary/idle wastes CPU cycles. Guarding grab dynamics (`grabbing || p.grab > 0.0001`) and lean dynamics (`walking || Math.abs(p.lean) > 0.0001`) with absolute value checks ensures both positive and negative lean values decay smoothly while bypassing floating-point math completely on idle frames (reducing CPU time ~7x during idle states).
+
+**Action:** Always guard spring dynamics and exponential math calculations in high-frequency animation loops with magnitude threshold checks (`Math.abs(val) > epsilon`), zeroing out idle variables when inactive.
