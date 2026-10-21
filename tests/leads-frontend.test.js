@@ -613,7 +613,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(mobileCallBtn.querySelector('svg'), 'mobile bar call link includes phone icon svg');
   });
 
-  await t.test('copy phone button copies phone number to clipboard and displays feedback', async () => {
+  await t.test('copy phone button copies phone number to clipboard and displays feedback with aria-atomic', async () => {
     let copiedText = '';
     const { window, document } = setupEnvironment();
 
@@ -630,6 +630,8 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(copyBtn, 'copy phone button exists');
     assert.ok(feedback, 'copy feedback element exists');
     assert.equal(copyBtn.getAttribute('aria-label'), 'Copy phone number (269) 362-8286');
+    assert.equal(feedback.getAttribute('aria-live'), 'polite', 'feedback has aria-live="polite"');
+    assert.equal(feedback.getAttribute('aria-atomic'), 'true', 'feedback has aria-atomic="true" for assistive tech');
 
     copyBtn.click();
 
