@@ -1251,15 +1251,15 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.match(env.location.href, /John%20Smith/);
   });
 
-  await t.test('sanitizes CRLF characters from name and service in mailto fallback link', async () => {
+  await t.test('sanitizes CRLF and ASCII control characters from fields in mailto fallback link', async () => {
     const env = setupDomEnvironment();
     env.setFetchImpl(async () => {
       throw new Error('Network error');
     });
 
-    env.nameInput.value = 'John\r\nHeaderInjection';
-    env.phoneInput.value = '269-555-1234';
-    env.serviceSelect.value = 'Fall\nLeaf\rCleanup';
+    env.nameInput.value = 'John\x00\x08\r\nHeaderInjection\x1F';
+    env.phoneInput.value = '269-555-1234\x07';
+    env.serviceSelect.value = 'Fall\nLeaf\rCleanup\x0B';
 
     const submitEvent = new env.Event('submit', { cancelable: true });
     env.form.dispatchEvent(submitEvent);
@@ -1268,7 +1268,10 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
 
     const url = new URL(env.location.href);
     const subject = url.searchParams.get('subject');
+    const body = url.searchParams.get('body');
     assert.equal(subject, 'Estimate request: Fall Leaf Cleanup (John HeaderInjection)');
+    assert.match(body, /Name: John HeaderInjection/);
+    assert.match(body, /Phone: 269-555-1234/);
   });
 
   await t.test('prevents submission when required fields are empty and shows errors', async () => {
@@ -1327,6 +1330,7 @@ test('_headers configuration file for static routes', async (t) => {
     assert.match(headersContent, /Referrer-Policy:\s*strict-origin-when-cross-origin/i);
     assert.match(headersContent, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i);
     assert.match(headersContent, /Permissions-Policy:/i);
+    assert.match(headersContent, /object-src 'none'/i);
   });
 });
 
