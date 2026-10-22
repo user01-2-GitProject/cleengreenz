@@ -451,6 +451,7 @@
     display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease;
   }
   .copy-phone-btn:hover { background: rgba(255, 255, 255, 0.28); color: var(--gold); }
+  .copy-phone-btn.copied { background: rgba(108, 191, 58, 0.28); color: var(--gold); }
   .copy-phone-btn svg { width: 14px; height: 14px; color: currentColor; }
   .copy-feedback { font-size: .8rem; color: var(--gold); font-weight: 700; }
   form.estimate {
@@ -764,7 +765,7 @@
           <li>
             <a href="tel:+12693628286" data-lead="call" data-lead-location="estimate" aria-label="Call (269) 362-8286"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>(269) 362-8286</a>
             <button type="button" class="copy-phone-btn" data-phone="(269) 362-8286" aria-label="Copy phone number (269) 362-8286" title="Copy phone number"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
-            <span class="copy-feedback" aria-live="polite"></span>
+            <span class="copy-feedback" aria-live="polite" aria-atomic="true"></span>
           </li>
           <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="estimate" aria-label="Email chris@cleengreenz.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>chris@cleengreenz.com</a></li>
         </ul>
@@ -1014,11 +1015,12 @@
       }
       updateBarH();
 
+      var greenSections = document.querySelectorAll('section.green');
       window.addEventListener('resize', function () {
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
         updateBarH();
-        document.querySelectorAll('section.green').forEach(function (sec) {
+        greenSections.forEach(function (sec) {
           sec.cachedHeight = sec.clientHeight;
         });
         updateRects();
@@ -1392,7 +1394,6 @@
         updateRects();
       }
       function setupGrassPatches() {
-        var greenSections = document.querySelectorAll('section.green');
         greenSections.forEach(function (sec) {
           sec.cachedHeight = sec.clientHeight;
           var layer = sec.querySelector('.lawn-grass-layer');
@@ -1471,12 +1472,15 @@
       }
 
       var last = performance.now();
+      var minCatcherTop = Infinity, maxCatcherTopMax = -Infinity;
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
         last = now;
         var isRectsDirty = rectsDirty;
         // Batch DOM layout reads: update cached element bounding rects using direct property storage on objects
         if (rectsDirty) {
+          minCatcherTop = Infinity;
+          maxCatcherTopMax = -Infinity;
           for (var idx = 0; idx < catcherItems.length; idx++) {
             var ci = catcherItems[idx];
             var r = ci.el.getBoundingClientRect();
@@ -1489,6 +1493,8 @@
               ci.rightMax = valid.right + 18;
               ci.width = valid.width;
               ci.left = valid.left;
+              if (ci.top < minCatcherTop) minCatcherTop = ci.top;
+              if (ci.topMax > maxCatcherTopMax) maxCatcherTopMax = ci.topMax;
             }
           }
           for (var gIdx = 0; gIdx < grassPatches.length; gIdx++) {
@@ -1510,21 +1516,25 @@
             y = l.y;
             if (l.sticky && y > 0) {
               var cx = x + l.size / 2, bottom = y + l.size * 0.8;
-              for (var j = 0; j < catcherItems.length; j++) {
-                var ci = catcherItems[j], r = ci.r, pile = ci.pile;
-                if (!r || pile.length >= MAX_PILE) continue;
-                if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
-                  l.state = 'land';
-                  l.landedDirty = true;
-                  l.host = ci.el;
-                  l.hostCi = ci;
-                  // Gather toward the middle and stack in a low mound, not a flat row.
-                  l.ox = Math.max(12, Math.min(ci.width - 12,
-                    ci.width / 2 + (cx - ci.left - ci.width / 2) * .62));
-                  l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
-                  l.rot = rnd(-50, 50);
-                  pile.push(l);
-                  break;
+              // Performance optimization: bounding-box guard bypasses individual button checks
+              // when falling leaf is above the topmost or below the bottommost target button.
+              if (bottom >= minCatcherTop && bottom <= maxCatcherTopMax) {
+                for (var j = 0; j < catcherItems.length; j++) {
+                  var ci = catcherItems[j], r = ci.r, pile = ci.pile;
+                  if (!r || pile.length >= MAX_PILE) continue;
+                  if (bottom >= ci.top && bottom <= ci.topMax && cx > ci.leftMin && cx < ci.rightMax) {
+                    l.state = 'land';
+                    l.landedDirty = true;
+                    l.host = ci.el;
+                    l.hostCi = ci;
+                    // Gather toward the middle and stack in a low mound, not a flat row.
+                    l.ox = Math.max(12, Math.min(ci.width - 12,
+                      ci.width / 2 + (cx - ci.left - ci.width / 2) * .62));
+                    l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
+                    l.rot = rnd(-50, 50);
+                    pile.push(l);
+                    break;
+                  }
                 }
               }
             }
