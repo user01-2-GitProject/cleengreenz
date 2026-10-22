@@ -1718,15 +1718,20 @@
           // While held or thrown he is a pendulum hanging from the grab point: the angle is an
           // underdamped spring chasing "trailing behind the motion", so he swings and settles.
           var grabbing = p.state === 'drag' || p.state === 'toss';
-          p.grab += ((grabbing ? 1 : 0) - p.grab) * (1 - Math.exp(-dt * 16));
-          p.mvx += (dt > 0 ? (p.x - prevX) / dt - p.mvx : 0) * (1 - Math.exp(-dt * 22));
-          var tiltTarget = grabbing ? Math.max(-16, Math.min(16, p.mvx / 40)) * p.face : 0;
-          p.tiltV += (-170 * (p.tilt - tiltTarget) - 13 * p.tiltV) * dt;
-          p.tilt += p.tiltV * dt;
-          if (p.grab > .001 || grabOn) {
-            grabOn = p.grab > .001;
-            wrap.style.setProperty('--drag-tilt', (p.tilt * p.grab).toFixed(2) + 'deg');
-            wrap.style.setProperty('--drag-scale', (1 + .04 * p.grab).toFixed(3));
+          // Optimization: Bypass exponential physics decay and spring dynamics during idle frames when p.grab is ~0
+          if (grabbing || p.grab > 0.0001) {
+            p.grab += ((grabbing ? 1 : 0) - p.grab) * (1 - Math.exp(-dt * 16));
+            p.mvx += (dt > 0 ? (p.x - prevX) / dt - p.mvx : 0) * (1 - Math.exp(-dt * 22));
+            var tiltTarget = grabbing ? Math.max(-16, Math.min(16, p.mvx / 40)) * p.face : 0;
+            p.tiltV += (-170 * (p.tilt - tiltTarget) - 13 * p.tiltV) * dt;
+            p.tilt += p.tiltV * dt;
+            if (p.grab > .001 || grabOn) {
+              grabOn = p.grab > .001;
+              wrap.style.setProperty('--drag-tilt', (p.tilt * p.grab).toFixed(2) + 'deg');
+              wrap.style.setProperty('--drag-scale', (1 + .04 * p.grab).toFixed(3));
+            }
+          } else {
+            p.grab = 0; p.mvx = 0; p.tilt = 0; p.tiltV = 0;
           }
           // The shadow stays on the ground and shrinks as he rises.
           if (grabbing) {
@@ -1742,8 +1747,13 @@
           // Lean into a start, rock back when braking. Decays after he stops so the class can drop.
           var leanTarget = walking && !reduceMotion
             ? 2 * Math.min(1, p.speed / WALK_SPEED) + 1.5 * Math.max(-1, Math.min(1, p.acc / 700)) : 0;
-          p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
-          if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
+          // Optimization: Guard lean exponential decay calculation to skip Math.exp on idle frames
+          if (walking || Math.abs(p.lean) > 0.0001) {
+            p.lean += (leanTarget - p.lean) * (1 - Math.exp(-dt * 14));
+            if (Math.abs(p.lean - lastLean) > .03) { wrap.style.setProperty('--lean', p.lean.toFixed(2) + 'deg'); lastLean = p.lean; }
+          } else {
+            p.lean = 0;
+          }
           // Cache element class states on state object `p` to avoid redundant DOM classList toggles every animation frame
           var isWalking = walking || Math.abs(p.lean) > .04;
           if (isWalking !== p.lastWalking) { wrap.classList.toggle('walking', isWalking); p.lastWalking = isWalking; }
