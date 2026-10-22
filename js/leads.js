@@ -106,8 +106,10 @@
     var maxLen = notesInput.maxLength > 0 ? notesInput.maxLength : 500;
     function updateNotesCount() {
       var remaining = maxLen - notesInput.value.length;
+      var isNearLimit = remaining <= 20;
       notesCount.textContent = '· ' + remaining + ' character' + (remaining === 1 ? '' : 's') + ' remaining';
-      notesCount.classList.toggle('near-limit', remaining <= 20);
+      notesCount.classList.toggle('near-limit', isNearLimit);
+      notesCount.setAttribute('aria-live', isNearLimit ? 'polite' : 'off');
     }
     notesInput.addEventListener('input', updateNotesCount);
     updateNotesCount();
