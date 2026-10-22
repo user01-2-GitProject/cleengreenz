@@ -1317,9 +1317,9 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
       throw new Error('Network error');
     });
 
-    env.nameInput.value = 'John\r\n\u202AHeaderInjection\u202E';
-    env.phoneInput.value = '269-555-1234\u200B';
-    env.serviceSelect.value = 'Fall\nLeaf\r\uFEFFCleanup';
+    env.nameInput.value = 'John\x00\x08\r\n\u202AHeaderInjection\u202E\x1F';
+    env.phoneInput.value = '269-555-1234\u200B\x07';
+    env.serviceSelect.value = 'Fall\nLeaf\r\uFEFFCleanup\x0B';
 
     const notesEl = env.form.querySelector('#f-notes');
     if (notesEl) notesEl.value = 'Clean\u200B up\r\nleaves; joiners \u200C\u200D';
