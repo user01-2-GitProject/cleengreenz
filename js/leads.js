@@ -78,13 +78,49 @@
     var a = e.target.closest('a[href="#estimate"]');
     if (a) {
       if (window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+      var formEl = document.getElementById('estimate-form');
+      if (formEl) {
+        var doneBox = formEl.querySelector('.form-done');
+        var fieldsBoxEl = formEl.querySelector('.form-fields');
+        if (doneBox && doneBox.classList.contains('show')) {
+          formEl.reset();
+          var reqs = formEl.querySelectorAll('[required]');
+          for (var i = 0; i < reqs.length; i++) {
+            var field = reqs[i];
+            field.removeAttribute('aria-invalid');
+            var errEl = field.id ? formEl.querySelector('#' + CSS.escape(field.id) + '-err') : null;
+            if (errEl) {
+              errEl.classList.remove('show');
+              if (field.id === 'f-phone') errEl.textContent = 'Please enter your phone number';
+              var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
+                .filter(function (id) { return id && id !== errEl.id; }).join(' ');
+              if (descriptions) field.setAttribute('aria-describedby', descriptions);
+              else field.removeAttribute('aria-describedby');
+            }
+          }
+          doneBox.classList.remove('show');
+          if (fieldsBoxEl) fieldsBoxEl.style.display = '';
+          var heading = doneBox.querySelector('h3');
+          if (heading) heading.textContent = 'Thanks, got it!';
+          var p = doneBox.querySelector('p');
+          if (p) p.textContent = 'Chris has your request and will be in touch soon.';
+          var nInput = formEl.querySelector('#f-notes');
+          var nCount = formEl.querySelector('#f-notes-count');
+          if (nInput && nCount) {
+            var maxLen = nInput.maxLength > 0 ? nInput.maxLength : 500;
+            var rem = maxLen - nInput.value.length;
+            nCount.textContent = '· ' + rem + ' character' + (rem === 1 ? '' : 's') + ' remaining';
+            nCount.classList.toggle('near-limit', rem <= 20);
+          }
+        }
+      }
       if (a.dataset.service) {
         var serviceSelect = document.getElementById('f-service');
         if (serviceSelect) {
           var targetVal = a.dataset.service;
-          for (var i = 0; i < serviceSelect.options.length; i++) {
-            if (serviceSelect.options[i].text === targetVal || serviceSelect.options[i].value === targetVal) {
-              serviceSelect.selectedIndex = i;
+          for (var j = 0; j < serviceSelect.options.length; j++) {
+            if (serviceSelect.options[j].text === targetVal || serviceSelect.options[j].value === targetVal) {
+              serviceSelect.selectedIndex = j;
               break;
             }
           }

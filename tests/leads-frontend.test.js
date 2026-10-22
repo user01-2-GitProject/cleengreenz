@@ -585,6 +585,46 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.equal(document.activeElement, nameInput);
   });
 
+  await t.test('restores form fields visibility, resets done box, updates service option, and focuses first input when estimate link is clicked after submission', async () => {
+    const { window, document } = setupEnvironment({
+      fetch: () => Promise.resolve({ ok: true, status: 200 }),
+    });
+
+    const form = document.getElementById('estimate-form');
+    const fieldsBox = form.querySelector('.form-fields');
+    const doneBox = form.querySelector('.form-done');
+    const serviceSelect = document.getElementById('f-service');
+    const nameInput = document.getElementById('f-name');
+
+    // Complete initial form submission to reach done state
+    form.querySelector('#f-name').value = 'Jane Doe';
+    form.querySelector('#f-phone').value = '269-555-0199';
+    form.querySelector('#f-address').value = '123 Main St';
+    form.querySelector('#f-service').value = 'Fall leaf cleanup';
+
+    form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
+    await new Promise((r) => setTimeout(r, 20));
+
+    assert.equal(fieldsBox.style.display, 'none');
+    assert.equal(doneBox.classList.contains('show'), true);
+
+    // Create and click an estimate link for a different service
+    const link = document.createElement('a');
+    link.href = '#estimate';
+    link.dataset.service = 'Snow removal';
+    link.dataset.leadLocation = 'services';
+    document.body.appendChild(link);
+
+    link.click();
+
+    assert.equal(fieldsBox.style.display, '');
+    assert.equal(doneBox.classList.contains('show'), false);
+    assert.equal(serviceSelect.value, 'Snow removal');
+
+    await new Promise((r) => setTimeout(r, 60));
+    assert.equal(document.activeElement, nameInput);
+  });
+
   await t.test('pre-selects matching service option when clicking estimate link with data-service', async () => {
     const { window, document } = setupEnvironment();
 
