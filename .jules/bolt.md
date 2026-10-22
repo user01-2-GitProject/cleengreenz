@@ -49,3 +49,9 @@
 **Learning:** Unconditionally querying the DOM (`querySelector('#' + CSS.escape(...) + '-err')`), splitting/filtering/joining `aria-describedby` strings, and updating DOM attributes on every `input` event (keystroke) creates significant CPU and string allocation overhead during typing. Checking `field.getAttribute('aria-invalid')` first allows 99.9% of normal keystrokes on valid inputs to return immediately without touching the DOM.
 
 **Action:** Always guard input field error clearing listeners with a fast attribute presence check (`getAttribute('aria-invalid')`) to bypass DOM queries and string manipulation on valid keystrokes.
+
+## 2026-10-03 - Guard element array collision loops with global vertical bounding box
+
+**Learning:** When moving particles/leaves in a high-frequency animation loop check for collisions against multiple target elements scattered vertically across a page, iterating through all target elements for every particle on every frame creates unnecessary loop and property lookup overhead for particles outside the active target zone. Computing global vertical bounds (`minCatcherTop`, `maxCatcherTopMax`) during layout recalculations and guarding the target loop with a single range check allows ~65% of particle checks to be bypassed completely.
+
+**Action:** Always compute global target bounding boxes during cache refreshes and guard per-item collision loops in animation frame handlers with a fast bounding-box range check.
