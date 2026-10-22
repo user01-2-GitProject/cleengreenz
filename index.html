@@ -1053,7 +1053,8 @@
           var size = rnd(14, 28);
           el.style.width = el.style.height = size + 'px';
           layer.appendChild(el);
-          var l = { el: el, size: size };
+          // Pre-compute leaf sizing offsets to eliminate redundant multiplication/division in animation loops
+          var l = { el: el, size: size, halfSize: size / 2, bottomOffset: size * 0.8, topOffset: size * 0.75 };
           resetLeaf(l, true);
           leaves.push(l);
         }
@@ -1092,8 +1093,8 @@
         for (var i = 0; i < pile.length; i++) {
           var l = pile[i];
           l.state = 'blown';
-          l.x = hr.left + l.ox - l.size / 2;
-          l.y = hr.top - l.size * 0.75 - l.lift;
+          l.x = hr.left + l.ox - l.halfSize;
+          l.y = hr.top - l.topOffset - l.lift;
           l.vx = dir * rnd(140, 360);
           l.vy = -rnd(90, 240);
           l.spin = rnd(-540, 540);
@@ -1515,7 +1516,7 @@
             x = l.bx + Math.sin(l.phase) * l.sway;
             y = l.y;
             if (l.sticky && y > 0) {
-              var cx = x + l.size / 2, bottom = y + l.size * 0.8;
+              var cx = x + l.halfSize, bottom = y + l.bottomOffset;
               // Performance optimization: bounding-box guard bypasses individual button checks
               // when falling leaf is above the topmost or below the bottommost target button.
               if (bottom >= minCatcherTop && bottom <= maxCatcherTopMax) {
@@ -1546,7 +1547,7 @@
             // nor initial landing (l.landedDirty) occurred.
             if (!isRectsDirty && !l.landedDirty) continue;
             // Optimization: Prefer cached hostCi bounding rect directly from catcherItem object
-            var ci = l.hostCi || catcherItemFor(l.host);
+            var ci = l.hostCi;
             var hr = ci ? ci.r : null;
             if (!hr) {
               if (l.lastOpacity !== 0) { l.el.style.opacity = 0; l.lastOpacity = 0; }
@@ -1554,8 +1555,8 @@
               continue;
             }
             if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
-            x = hr.left + l.ox - l.size / 2;
-            y = hr.top - l.size * 0.75 - l.lift;
+            x = hr.left + l.ox - l.halfSize;
+            y = hr.top - l.topOffset - l.lift;
             l.landedDirty = false;
           }
           if (l.state === 'blown') {
