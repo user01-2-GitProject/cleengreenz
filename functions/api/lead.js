@@ -7,6 +7,36 @@
 
 const CLICK_TYPES = ['call', 'email', 'estimate_click'];
 const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, location: 40, page: 300, referrer: 300, country: 10, city: 100 };
+
+// In-memory sliding window rate limiter: max 10 requests per minute per IP address
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 10;
+const ipRequestLogs = new Map();
+
+export function isRateLimited(ip, now = Date.now()) {
+  if (!ip) return false;
+  let timestamps = ipRequestLogs.get(ip);
+  if (!timestamps) {
+    timestamps = [];
+    ipRequestLogs.set(ip, timestamps);
+  }
+  // Filter out timestamps outside the sliding window
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const recent = timestamps.filter((t) => t > windowStart);
+  if (recent.length >= RATE_LIMIT_MAX_REQUESTS) {
+    ipRequestLogs.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  ipRequestLogs.set(ip, recent);
+  // Periodic cleanup of stale IP entries when map grows
+  if (ipRequestLogs.size > 1000) {
+    for (const [k, v] of ipRequestLogs.entries()) {
+      if (v.every((t) => t <= windowStart)) ipRequestLogs.delete(k);
+    }
+  }
+  return false;
+}
 // Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -104,6 +134,12 @@ async function emailChris(env, lead) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
+  // Rate Limiting: Prevent automated spam and DoS attacks by limiting requests per IP address
+  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  if (clientIp && isRateLimited(clientIp)) {
+    return json({ ok: false, error: 'rate_limited' }, 429);
+  }
+
   // CSRF Protection: Block cross-site requests to prevent unauthorized lead submissions/spam.
   const secFetchSite = request.headers.get('sec-fetch-site');
   if (secFetchSite === 'cross-site') {

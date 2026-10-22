@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { json, onRequest, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { isRateLimited, json, onRequest, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
 import { authorized, onRequest as onRequestLeads, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 // js/leads.js is a classic browser script (loaded via <script src>), so it
@@ -16,6 +16,57 @@ function loadLeadsScript() {
   return module.exports;
 }
 const { buildPayload } = loadLeadsScript();
+
+test('isRateLimited helper and IP rate limiting behavior', async (t) => {
+  await t.test('allows requests under threshold for a given IP', async () => {
+    const testIp = '198.51.100.10';
+    const now = Date.now();
+    for (let i = 0; i < 9; i++) {
+      assert.equal(isRateLimited(testIp, now + i), false);
+    }
+  });
+
+  await t.test('blocks requests when threshold (10 per minute) is exceeded', async () => {
+    const testIp = '198.51.100.11';
+    const now = Date.now();
+    for (let i = 0; i < 10; i++) {
+      isRateLimited(testIp, now + i);
+    }
+    // 11th request within window should be rate limited
+    assert.equal(isRateLimited(testIp, now + 10), true);
+  });
+
+  await t.test('resets rate limit window after window duration (60s) passes', async () => {
+    const testIp = '198.51.100.12';
+    const now = Date.now();
+    for (let i = 0; i < 10; i++) {
+      isRateLimited(testIp, now + i);
+    }
+    assert.equal(isRateLimited(testIp, now + 10), true);
+
+    // After 61 seconds, old timestamps expire and request is allowed
+    assert.equal(isRateLimited(testIp, now + 61000), false);
+  });
+
+  await t.test('onRequestPost returns 429 Too Many Requests when IP rate limit is exceeded', async () => {
+    const testIp = '198.51.100.13';
+    const makeReq = () => new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': testIp },
+      body: JSON.stringify({ type: 'call' }),
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const res = await onRequestPost({ request: makeReq(), env: {}, waitUntil: () => {} });
+      assert.equal(res.status, 200);
+    }
+
+    const rateLimitedRes = await onRequestPost({ request: makeReq(), env: {}, waitUntil: () => {} });
+    assert.equal(rateLimitedRes.status, 429);
+    assert.equal(rateLimitedRes.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await rateLimitedRes.json(), { ok: false, error: 'rate_limited' });
+  });
+});
 
 test('sanitizePhone helper function', async (t) => {
   await t.test('preserves valid phone numbers and formatting characters', async () => {
