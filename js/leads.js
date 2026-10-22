@@ -185,11 +185,13 @@
   }
 
   function openEmail(d) {
-    // Sanitize single-line fields to remove linebreaks that could inject mail headers or corrupt text
-    var cleanName = (d.name || '').replace(/[\r\n]+/g, ' ');
-    var cleanPhone = (d.phone || '').replace(/[\r\n]+/g, ' ');
-    var cleanAddress = (d.address || '').replace(/[\r\n]+/g, ' ');
-    var cleanService = (d.service || 'lawn care').replace(/[\r\n]+/g, ' ');
+    // Sanitize fields to remove control/BIDI characters and linebreaks that could inject mail headers or spoof display
+    var ctrlRegex = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200E\u200F\u202A-\u202E\u2066-\u2069\u200B\uFEFF]/g;
+    var cleanName = (d.name || '').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanPhone = (d.phone || '').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanAddress = (d.address || '').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanService = (d.service || 'lawn care').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanNotes = (d.notes || '').replace(ctrlRegex, '').replace(/\r\n?/g, '\n');
 
     var body = [
       'Hi Chris, I would like a free estimate.',
@@ -198,7 +200,7 @@
       'Phone: ' + cleanPhone,
       'Address: ' + cleanAddress,
       'Service: ' + cleanService,
-      d.notes ? 'Notes: ' + d.notes : ''
+      cleanNotes ? 'Notes: ' + cleanNotes : ''
     ].join('\n');
     done.querySelector('h3').textContent = 'Almost there!';
     done.querySelector('p').textContent = 'Your email app should have opened with your request. Just hit send and Chris will be in touch.';
