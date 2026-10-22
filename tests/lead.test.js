@@ -304,7 +304,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
   });
 
-  await t.test('returns 403 JSON response when Origin does not match request origin', async () => {
+  await t.test('returns 403 JSON response when Origin does not match request origin or uses invalid protocol', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'origin': 'https://evil-attacker.com' },
@@ -315,9 +315,17 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'javascript:alert(1)' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 403);
   });
 
-  await t.test('returns 403 JSON response when Referer does not match request origin', async () => {
+  await t.test('returns 403 JSON response when Referer does not match request origin or uses invalid protocol', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'referer': 'https://evil-attacker.com/phishing' },
@@ -328,6 +336,14 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'referer': 'not-a-valid-url' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 403);
   });
 
   await t.test('returns 200 JSON response on valid click event with same origin', async () => {
@@ -361,7 +377,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
           phone: '269-555-0199\u200B',
           address: '123\uFEFF Main St',
           service: 'Mowing\u2066\u2067',
-          notes: 'Special\u200C Notes',
+          notes: 'Special\u200B Notes; joiners \u200C\u200D',
         }),
       });
 
@@ -376,7 +392,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       assert.match(capturedBody.text, /Name: Alice Doe/);
       assert.match(capturedBody.text, /Phone: 269-555-0199/);
       assert.match(capturedBody.text, /Address: 123 Main St/);
-      assert.match(capturedBody.text, /Notes: Special Notes/);
+      assert.match(capturedBody.text, /Notes: Special Notes; joiners \u200C\u200D/);
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -1306,7 +1322,7 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     env.serviceSelect.value = 'Fall\nLeaf\r\uFEFFCleanup';
 
     const notesEl = env.form.querySelector('#f-notes');
-    if (notesEl) notesEl.value = 'Clean\u200D up\r\nleaves';
+    if (notesEl) notesEl.value = 'Clean\u200B up\r\nleaves; joiners \u200C\u200D';
 
     const submitEvent = new env.Event('submit', { cancelable: true });
     env.form.dispatchEvent(submitEvent);
@@ -1320,7 +1336,7 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.match(body, /Name: John HeaderInjection/);
     assert.match(body, /Phone: 269-555-1234/);
     assert.match(body, /Service: Fall Leaf Cleanup/);
-    assert.match(body, /Notes: Clean up\nleaves/);
+    assert.match(body, /Notes: Clean up\nleaves; joiners \u200C\u200D/);
   });
 
   await t.test('prevents submission when required fields are empty and shows errors', async () => {

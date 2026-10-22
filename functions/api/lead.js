@@ -12,7 +12,7 @@ const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'":
 
 // Pre-compiled module-scoped RegExp instances to avoid re-compilation and garbage collection overhead per API request.
 // Strips non-printable ASCII control characters, Unicode BIDI directionality overrides, and zero-width spaces.
-const CONTROL_CHARS_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200E\u200F\u202A-\u202E\u2066-\u2069\u200B-\u200D\uFEFF]/g;
+const CONTROL_CHARS_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200E\u200F\u202A-\u202E\u2066-\u2069\u200B\uFEFF]/g;
 const CRLF_REGEX = /[\r\n]+/g;
 const CRLF_SINGLE_REGEX = /\r\n?/g;
 const CRLF_RAW_REGEX = /[\r\n]/g;
@@ -116,7 +116,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   if (origin) {
     try {
-      if (new URL(origin).origin !== reqUrl.origin) {
+      const parsedOrigin = new URL(origin);
+      if (parsedOrigin.origin !== reqUrl.origin || (parsedOrigin.protocol !== 'http:' && parsedOrigin.protocol !== 'https:')) {
         return json({ ok: false, error: 'forbidden' }, 403);
       }
     } catch {
@@ -124,7 +125,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
   } else if (referer) {
     try {
-      if (new URL(referer).origin !== reqUrl.origin) {
+      const parsedReferer = new URL(referer);
+      if (parsedReferer.origin !== reqUrl.origin || (parsedReferer.protocol !== 'http:' && parsedReferer.protocol !== 'https:')) {
         return json({ ok: false, error: 'forbidden' }, 403);
       }
     } catch {

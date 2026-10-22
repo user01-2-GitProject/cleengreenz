@@ -35,7 +35,9 @@ export function authorized(request, password) {
   // Use b if lengths match; otherwise compare a against a dummy buffer of matching length.
   const compB = lengthsMatch ? b : new Uint8Array(a.length);
   let equal = false;
-  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.timingSafeEqual === 'function') {
+  if (typeof crypto !== 'undefined' && typeof crypto.timingSafeEqual === 'function') {
+    equal = crypto.timingSafeEqual(a, compB);
+  } else if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.timingSafeEqual === 'function') {
     equal = crypto.subtle.timingSafeEqual(a, compB);
   } else {
     let mismatch = 0;
