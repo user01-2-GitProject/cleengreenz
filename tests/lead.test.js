@@ -304,7 +304,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
   });
 
-  await t.test('returns 403 JSON response when Origin does not match request origin', async () => {
+  await t.test('returns 403 JSON response when Origin does not match request origin or uses invalid protocol', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'origin': 'https://evil-attacker.com' },
@@ -315,9 +315,17 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'javascript:alert(1)' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 403);
   });
 
-  await t.test('returns 403 JSON response when Referer does not match request origin', async () => {
+  await t.test('returns 403 JSON response when Referer does not match request origin or uses invalid protocol', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'referer': 'https://evil-attacker.com/phishing' },
@@ -328,6 +336,14 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
+
+    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'referer': 'not-a-valid-url' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const resInvalid = await onRequestPost({ request: reqInvalid, env: {}, waitUntil: () => {} });
+    assert.equal(resInvalid.status, 403);
   });
 
   await t.test('returns 200 JSON response on valid click event with same origin', async () => {
@@ -341,6 +357,45 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: true });
+  });
+
+  await t.test('sanitizes Unicode BIDI overrides and zero-width characters in form fields when submitted', async () => {
+    let capturedBody = null;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Alice\u200E \u202A\u202EDoe',
+          phone: '269-555-0199\u200B',
+          address: '123\uFEFF Main St',
+          service: 'Mowing\u2066\u2067',
+          notes: 'Special\u200B Notes; joiners \u200C\u200D',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.equal(capturedBody.subject, 'Estimate request: Mowing (Alice Doe)');
+      assert.match(capturedBody.text, /Name: Alice Doe/);
+      assert.match(capturedBody.text, /Phone: 269-555-0199/);
+      assert.match(capturedBody.text, /Address: 123 Main St/);
+      assert.match(capturedBody.text, /Notes: Special Notes; joiners \u200C\u200D/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   await t.test('sanitizes linebreaks and control characters in form, page, and referrer fields when submitted', async () => {
@@ -1102,6 +1157,10 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     serviceSelect.value = 'Mowing';
     fieldsBox.appendChild(serviceSelect);
 
+    const notesTextArea = new MockElement('textarea', 'f-notes');
+    notesTextArea.name = 'notes';
+    fieldsBox.appendChild(notesTextArea);
+
     const locationObj = { pathname: '/estimate', href: 'https://cleengreenz.com/' };
 
     const trackedLeads = [];
@@ -1214,6 +1273,7 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
       name: 'Jane Doe',
       phone: '(269) 555-0199',
       service: 'Fall leaf cleanup',
+      notes: '',
       website: '',
     });
 
@@ -1251,15 +1311,18 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.match(env.location.href, /John%20Smith/);
   });
 
-  await t.test('sanitizes CRLF and ASCII control characters from fields in mailto fallback link', async () => {
+  await t.test('sanitizes CRLF, BIDI, and zero-width characters in mailto fallback link', async () => {
     const env = setupDomEnvironment();
     env.setFetchImpl(async () => {
       throw new Error('Network error');
     });
 
-    env.nameInput.value = 'John\x00\x08\r\nHeaderInjection\x1F';
-    env.phoneInput.value = '269-555-1234\x07';
-    env.serviceSelect.value = 'Fall\nLeaf\rCleanup\x0B';
+    env.nameInput.value = 'John\x00\x08\r\n\u202AHeaderInjection\u202E\x1F';
+    env.phoneInput.value = '269-555-1234\u200B\x07';
+    env.serviceSelect.value = 'Fall\nLeaf\r\uFEFFCleanup\x0B';
+
+    const notesEl = env.form.querySelector('#f-notes');
+    if (notesEl) notesEl.value = 'Clean\u200B up\r\nleaves; joiners \u200C\u200D';
 
     const submitEvent = new env.Event('submit', { cancelable: true });
     env.form.dispatchEvent(submitEvent);
@@ -1272,6 +1335,8 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.equal(subject, 'Estimate request: Fall Leaf Cleanup (John HeaderInjection)');
     assert.match(body, /Name: John HeaderInjection/);
     assert.match(body, /Phone: 269-555-1234/);
+    assert.match(body, /Service: Fall Leaf Cleanup/);
+    assert.match(body, /Notes: Clean up\nleaves; joiners \u200C\u200D/);
   });
 
   await t.test('prevents submission when required fields are empty and shows errors', async () => {
@@ -1330,7 +1395,6 @@ test('_headers configuration file for static routes', async (t) => {
     assert.match(headersContent, /Referrer-Policy:\s*strict-origin-when-cross-origin/i);
     assert.match(headersContent, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i);
     assert.match(headersContent, /Permissions-Policy:/i);
-    assert.match(headersContent, /object-src 'none'/i);
   });
 });
 

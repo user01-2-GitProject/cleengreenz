@@ -183,13 +183,13 @@
   }
 
   function openEmail(d) {
-    // Sanitize single-line fields to remove control chars and linebreaks that could inject mail headers or corrupt text
-    var controlCharsRegex = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
-    var cleanName = (d.name || '').replace(controlCharsRegex, '').replace(/[\r\n]+/g, ' ');
-    var cleanPhone = (d.phone || '').replace(controlCharsRegex, '').replace(/[\r\n]+/g, ' ');
-    var cleanAddress = (d.address || '').replace(controlCharsRegex, '').replace(/[\r\n]+/g, ' ');
-    var cleanService = (d.service || 'lawn care').replace(controlCharsRegex, '').replace(/[\r\n]+/g, ' ');
-    var cleanNotes = (d.notes || '').replace(controlCharsRegex, '');
+    // Sanitize fields to remove control/BIDI characters and linebreaks that could inject mail headers or spoof display
+    var ctrlRegex = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200E\u200F\u202A-\u202E\u2066-\u2069\u200B\uFEFF]/g;
+    var cleanName = (d.name || '').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanPhone = (d.phone || '').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanAddress = (d.address || '').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanService = (d.service || 'lawn care').replace(ctrlRegex, '').replace(/[\r\n]+/g, ' ');
+    var cleanNotes = (d.notes || '').replace(ctrlRegex, '').replace(/\r\n?/g, '\n');
 
     var body = [
       'Hi Chris, I would like a free estimate.',
