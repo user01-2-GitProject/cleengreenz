@@ -11,7 +11,8 @@ const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, l
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 // Pre-compiled module-scoped RegExp instances to avoid re-compilation and garbage collection overhead per API request.
-const CONTROL_CHARS_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+// Strips non-printable ASCII control characters, Unicode BIDI directionality overrides, zero-width spaces, and BOM while preserving ZWNJ/ZWJ (\u200C/\u200D) for legitimate text and emoji joiners.
+const CONTROL_CHARS_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200E\u200F\u202A-\u202E\u2066-\u2069\u200B\uFEFF]/g;
 const CRLF_REGEX = /[\r\n]+/g;
 const CRLF_SINGLE_REGEX = /\r\n?/g;
 const CRLF_RAW_REGEX = /[\r\n]/g;

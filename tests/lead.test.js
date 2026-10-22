@@ -343,6 +343,45 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.deepEqual(await res.json(), { ok: true });
   });
 
+  await t.test('sanitizes Unicode BIDI overrides and zero-width characters in form fields when submitted', async () => {
+    let capturedBody = null;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ id: 'resend_123' }), { status: 200 });
+    };
+
+    try {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'form',
+          name: 'Alice\u200E \u202A\u202EDoe',
+          phone: '269-555-0199\u200B',
+          address: '123\uFEFF Main St',
+          service: 'Mowing\u2066\u2067',
+          notes: 'Special\u200C Notes',
+        }),
+      });
+
+      const res = await onRequestPost({
+        request,
+        env: { RESEND_API_KEY: 'test-key' },
+        waitUntil: () => {},
+      });
+
+      assert.equal(res.status, 200);
+      assert.equal(capturedBody.subject, 'Estimate request: Mowing (Alice Doe)');
+      assert.match(capturedBody.text, /Name: Alice Doe/);
+      assert.match(capturedBody.text, /Phone: 269-555-0199/);
+      assert.match(capturedBody.text, /Address: 123 Main St/);
+      assert.match(capturedBody.text, /Notes: Special\u200C Notes/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   await t.test('sanitizes linebreaks and control characters in form, page, and referrer fields when submitted', async () => {
     let capturedBody = null;
     const originalFetch = globalThis.fetch;
@@ -1102,6 +1141,10 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     serviceSelect.value = 'Mowing';
     fieldsBox.appendChild(serviceSelect);
 
+    const notesTextArea = new MockElement('textarea', 'f-notes');
+    notesTextArea.name = 'notes';
+    fieldsBox.appendChild(notesTextArea);
+
     const locationObj = { pathname: '/estimate', href: 'https://cleengreenz.com/' };
 
     const trackedLeads = [];
@@ -1214,6 +1257,7 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
       name: 'Jane Doe',
       phone: '(269) 555-0199',
       service: 'Fall leaf cleanup',
+      notes: '',
       website: '',
     });
 
@@ -1251,15 +1295,18 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
     assert.match(env.location.href, /John%20Smith/);
   });
 
-  await t.test('sanitizes CRLF characters from name and service in mailto fallback link', async () => {
+  await t.test('sanitizes CRLF, BIDI, and zero-width characters in mailto fallback link', async () => {
     const env = setupDomEnvironment();
     env.setFetchImpl(async () => {
       throw new Error('Network error');
     });
 
-    env.nameInput.value = 'John\r\nHeaderInjection';
-    env.phoneInput.value = '269-555-1234';
-    env.serviceSelect.value = 'Fall\nLeaf\rCleanup';
+    env.nameInput.value = 'John\r\n\u202AHeaderInjection\u202E';
+    env.phoneInput.value = '269-555-1234\u200B';
+    env.serviceSelect.value = 'Fall\nLeaf\r\uFEFFCleanup';
+
+    const notesEl = env.form.querySelector('#f-notes');
+    if (notesEl) notesEl.value = 'Clean\u200D up\r\nleaves';
 
     const submitEvent = new env.Event('submit', { cancelable: true });
     env.form.dispatchEvent(submitEvent);
@@ -1268,7 +1315,12 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
 
     const url = new URL(env.location.href);
     const subject = url.searchParams.get('subject');
+    const body = url.searchParams.get('body');
     assert.equal(subject, 'Estimate request: Fall Leaf Cleanup (John HeaderInjection)');
+    assert.match(body, /Name: John HeaderInjection/);
+    assert.match(body, /Phone: 269-555-1234/);
+    assert.match(body, /Service: Fall Leaf Cleanup/);
+    assert.match(body, /Notes: Clean\u200D up\nleaves/);
   });
 
   await t.test('prevents submission when required fields are empty and shows errors', async () => {
