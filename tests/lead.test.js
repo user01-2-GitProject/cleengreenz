@@ -468,6 +468,38 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     }
   });
 
+  await t.test('returns 400 with bad_request when form fields exceed length limits', async () => {
+    const overLimitCases = [
+      { field: 'name', value: 'a'.repeat(101) },
+      { field: 'phone', value: '1'.repeat(41) },
+      { field: 'address', value: 'a'.repeat(201) },
+      { field: 'service', value: 'a'.repeat(81) },
+      { field: 'notes', value: 'a'.repeat(2001) },
+    ];
+
+    const baseForm = {
+      type: 'form',
+      name: 'John Doe',
+      phone: '269-555-0100',
+      address: '123 Main St',
+      service: 'Mowing',
+      notes: 'Some notes',
+    };
+
+    for (const { field, value } of overLimitCases) {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...baseForm, [field]: value }),
+      });
+      const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 400, `Expected status 400 when ${field} exceeds limit`);
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' }, `Expected error bad_request when ${field} exceeds limit`);
+    }
+  });
+
   await t.test('returns 400 with missing_fields error on form submission missing required fields', async () => {
     const testCases = [
       { body: { type: 'form' }, missing: 'all required fields' },
