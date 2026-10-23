@@ -15,7 +15,7 @@ function loadLeadsScript() {
   new Function('module', 'exports', src)(module, module.exports);
   return module.exports;
 }
-const { buildPayload } = loadLeadsScript();
+const { buildPayload, cleanLocation } = loadLeadsScript();
 
 test('sanitizePhone helper function', async (t) => {
   await t.test('preserves valid phone numbers and formatting characters', async () => {
@@ -1395,6 +1395,26 @@ test('_headers configuration file for static routes', async (t) => {
     assert.match(headersContent, /Referrer-Policy:\s*strict-origin-when-cross-origin/i);
     assert.match(headersContent, /Strict-Transport-Security:\s*max-age=31536000;\s*includeSubDomains/i);
     assert.match(headersContent, /Permissions-Policy:/i);
+  });
+});
+
+test('cleanLocation and location sanitization in js/leads.js', async (t) => {
+  await t.test('cleanLocation helper function strips control chars, CRLF linebreaks, and truncates', async () => {
+    assert.equal(cleanLocation('hero\r\nheader'), 'hero header');
+    assert.equal(cleanLocation('hero\u200E\u202A\u200B'), 'hero');
+    assert.equal(cleanLocation('a'.repeat(50)), 'a'.repeat(40));
+    assert.equal(cleanLocation(null), '');
+  });
+
+  await t.test('buildPayload sanitizes location property when string is provided', async () => {
+    globalThis.location = { pathname: '/' };
+    globalThis.document = { referrer: '' };
+
+    const payload = buildPayload({ type: 'call', location: 'hero\r\nSet-Cookie:admin=1\u200B' });
+    assert.equal(payload.location, 'hero Set-Cookie:admin=1');
+
+    delete globalThis.location;
+    delete globalThis.document;
   });
 });
 
