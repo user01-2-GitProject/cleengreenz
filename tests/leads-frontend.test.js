@@ -585,6 +585,34 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.equal(document.activeElement, nameInput);
   });
 
+  await t.test('triggers form reset and reveals form fields when clicking estimate link during submitted state', async () => {
+    const { document } = setupEnvironment();
+
+    const form = document.getElementById('estimate-form');
+    const fieldsBox = form.querySelector('.form-fields');
+    const doneBox = form.querySelector('.form-done');
+    const serviceSelect = document.getElementById('f-service');
+
+    // Simulate submitted state
+    fieldsBox.style.display = 'none';
+    doneBox.classList.add('show');
+
+    const link = document.createElement('a');
+    link.href = '#estimate';
+    link.dataset.service = 'Snow removal';
+    document.body.appendChild(link);
+
+    link.click();
+
+    assert.equal(doneBox.classList.contains('show'), false);
+    assert.equal(fieldsBox.style.display, '');
+    assert.equal(serviceSelect.value, 'Snow removal');
+
+    await new Promise((r) => setTimeout(r, 60));
+    const nameInput = document.getElementById('f-name');
+    assert.equal(document.activeElement, nameInput);
+  });
+
   await t.test('pre-selects matching service option when clicking estimate link with data-service', async () => {
     const { window, document } = setupEnvironment();
 
