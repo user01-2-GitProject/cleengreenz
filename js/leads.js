@@ -211,8 +211,11 @@
   }
 
   // The honeypot field is built without an id, so skip the lookup rather than query '#-err'.
+  // Cache the error element lookup on field._errEl to avoid repeated DOM queries and CSS escaping on keystrokes/validation.
   function errorFor(field) {
-    return field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
+    if (field._errEl !== undefined) return field._errEl;
+    field._errEl = field.id ? form.querySelector('#' + CSS.escape(field.id) + '-err') : null;
+    return field._errEl;
   }
 
   function validateField(field) {
