@@ -1592,17 +1592,24 @@
               nextBlink = now + rnd(3200, 7200);
             }
             if (p.cooldown <= 0 && !reduceMotion) {
-              var ready = readyPile(CLEAR_AT);
-                var readyGrass = readyGrassPatch(now);
               if (p.stay > STAY_FOR && !document.hidden && !bubble.classList.contains('is-visible')) {
                 // He has been around a while: off the left edge he goes, and the leaves pile up.
                 p.state = 'leave'; p.t = 0;
-              } else if (ready) {
-                p.target = ready; p.targetType = 'leaf'; p.state = 'notice'; p.t = 0;
-                idleAt = now;
-              } else if (readyGrass) {
-                p.target = readyGrass; p.targetType = 'grass'; p.riding = true; p.state = 'notice'; p.t = 0;
-                idleAt = now;
+              } else {
+                // Performance optimization: evaluate target searches lazily.
+                // Skip searching for grass patches if a leaf pile target is already found,
+                // and avoid searching for either target when leaving stage.
+                var ready = readyPile(CLEAR_AT);
+                if (ready) {
+                  p.target = ready; p.targetType = 'leaf'; p.state = 'notice'; p.t = 0;
+                  idleAt = now;
+                } else {
+                  var readyGrass = readyGrassPatch(now);
+                  if (readyGrass) {
+                    p.target = readyGrass; p.targetType = 'grass'; p.riding = true; p.state = 'notice'; p.t = 0;
+                    idleAt = now;
+                  }
+                }
               }
             }
           } else if (p.state === 'leave') {
