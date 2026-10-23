@@ -468,6 +468,27 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     }
   });
 
+  await t.test('returns 400 with bad_request when tracking fields exceed length limits', async () => {
+    const trackingCases = [
+      { field: 'location', value: 'a'.repeat(41) },
+      { field: 'page', value: 'a'.repeat(301) },
+      { field: 'referrer', value: 'a'.repeat(301) },
+    ];
+
+    for (const { field, value } of trackingCases) {
+      const request = new Request('https://cleengreenz.com/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'call', [field]: value }),
+      });
+      const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+      assert.equal(res.status, 400, `Expected status 400 when tracking field ${field} exceeds limit`);
+      assert.equal(res.headers.get('content-type'), 'application/json');
+      assert.deepEqual(await res.json(), { ok: false, error: 'bad_request' }, `Expected error bad_request when tracking field ${field} exceeds limit`);
+    }
+  });
+
   await t.test('returns 400 with bad_request when form fields exceed length limits', async () => {
     const overLimitCases = [
       { field: 'name', value: 'a'.repeat(101) },
@@ -888,6 +909,23 @@ test('onRequestGet authorization and response handling', async (t) => {
     });
     const resInvalidHeader = await onRequestGet({ request: reqInvalidHeader, env: { LEADS_PASSWORD: secret } });
     assert.equal(resInvalidHeader.status, 401);
+  });
+
+  await t.test('returns 403 JSON response when Origin matches but Referer is cross-origin or invalid', async () => {
+    const request = new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'origin': 'https://cleengreenz.com',
+        'referer': 'https://evil-attacker.com/phishing',
+      },
+      body: JSON.stringify({ type: 'call' }),
+    });
+    const res = await onRequestPost({ request, env: {}, waitUntil: () => {} });
+
+    assert.equal(res.status, 403);
+    assert.equal(res.headers.get('content-type'), 'application/json');
+    assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
   });
 
   await t.test('allows request when authorization header is valid', async () => {
