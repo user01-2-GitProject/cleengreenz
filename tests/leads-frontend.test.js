@@ -494,12 +494,14 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     assert.ok(notesCount, 'notes count element should exist');
     assert.equal(notesInput.getAttribute('maxlength'), '500');
     assert.equal(notesCount.textContent, '· 500 characters remaining');
+    assert.equal(notesCount.getAttribute('aria-live'), 'off', 'should initialize aria-live="off" when > 20 characters remain');
 
     notesInput.value = 'Hello world!';
     notesInput.dispatchEvent(new window.Event('input', { bubbles: true }));
 
     assert.equal(notesCount.textContent, '· 488 characters remaining');
     assert.equal(notesCount.classList.contains('near-limit'), false, 'should not have near-limit class when > 20 characters remain');
+    assert.equal(notesCount.getAttribute('aria-live'), 'off', 'should keep aria-live="off" when > 20 characters remain');
 
     // Type until 20 characters remain (500 - 480 = 20)
     notesInput.value = 'a'.repeat(480);
@@ -507,6 +509,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     assert.equal(notesCount.textContent, '· 20 characters remaining');
     assert.equal(notesCount.classList.contains('near-limit'), true, 'should toggle near-limit class when <= 20 characters remain');
+    assert.equal(notesCount.getAttribute('aria-live'), 'polite', 'should switch aria-live="polite" when <= 20 characters remain');
 
     // Delete characters so 21 remain
     notesInput.value = 'a'.repeat(479);
@@ -514,6 +517,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     assert.equal(notesCount.textContent, '· 21 characters remaining');
     assert.equal(notesCount.classList.contains('near-limit'), false, 'should remove near-limit class when > 20 characters remain');
+    assert.equal(notesCount.getAttribute('aria-live'), 'off', 'should switch aria-live back to "off" when > 20 characters remain');
   });
 
   await t.test('appends a hidden honeypot website field to the form on script load', async () => {
