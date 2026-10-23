@@ -6,10 +6,21 @@
 // to /api/lead, which stores it and emails Chris. If that fails, the form falls
 // back to opening a prefilled email like before.
 (function () {
+  var CTRL_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200E\u200F\u202A-\u202E\u2066-\u2069\u200B\uFEFF]/g;
+  var CRLF_REGEX = /[\r\n]+/g;
+  function cleanLocation(loc) {
+    if (typeof loc !== 'string') return '';
+    return loc.replace(CTRL_REGEX, '').replace(CRLF_REGEX, ' ').trim().slice(0, 40);
+  }
+
   function buildPayload(data) {
     var page = typeof location !== 'undefined' ? location.pathname : '';
     var referrer = typeof document !== 'undefined' ? document.referrer : '';
-    return Object.assign({ page: page, referrer: referrer }, data);
+    var payload = Object.assign({ page: page, referrer: referrer }, data);
+    if (typeof payload.location === 'string') {
+      payload.location = cleanLocation(payload.location);
+    }
+    return payload;
   }
 
   function send(data) {
@@ -23,7 +34,7 @@
 
   if (typeof document === 'undefined') {
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { buildPayload };
+      module.exports = { buildPayload, cleanLocation };
     }
     return;
   }
@@ -309,6 +320,6 @@
   });
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildPayload };
+    module.exports = { buildPayload, cleanLocation };
   }
 })();
