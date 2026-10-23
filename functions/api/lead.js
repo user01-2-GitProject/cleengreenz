@@ -159,7 +159,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     } catch {
       return json({ ok: false, error: 'forbidden' }, 403);
     }
-  } else if (referer) {
+  }
+  if (referer) {
     try {
       const parsedReferer = new URL(referer);
       if (parsedReferer.origin !== reqUrl.origin || (parsedReferer.protocol !== 'http:' && parsedReferer.protocol !== 'https:')) {
@@ -220,8 +221,14 @@ export async function onRequestPost({ request, env, waitUntil }) {
     city: clean(request.cf?.city, 'city'),
   };
 
+  // Validate raw string lengths against configured LIMITS to mitigate DoS / payload inflation risks
+  for (const f of ['location', 'page', 'referrer']) {
+    if (typeof body[f] === 'string' && body[f].length > (LIMITS[f] || 300)) {
+      return json({ ok: false, error: 'bad_request' }, 400);
+    }
+  }
+
   if (type === 'form') {
-    // Validate raw string lengths against configured LIMITS to mitigate DoS / payload inflation risks
     for (const f of ['name', 'phone', 'address', 'service', 'notes']) {
       if (typeof body[f] === 'string' && body[f].length > (LIMITS[f] || 300)) {
         return json({ ok: false, error: 'bad_request' }, 400);
