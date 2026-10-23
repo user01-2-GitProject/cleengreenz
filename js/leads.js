@@ -89,6 +89,11 @@
     var a = e.target.closest('a[href="#estimate"]');
     if (a) {
       if (window.trackLead) window.trackLead('estimate_click', a.dataset.leadLocation || 'link');
+      var done = document.querySelector('.form-done');
+      var resetBtn = document.getElementById('form-reset-btn');
+      if (done && done.classList.contains('show') && resetBtn) {
+        resetBtn.click();
+      }
       if (a.dataset.service) {
         var serviceSelect = document.getElementById('f-service');
         if (serviceSelect) {
