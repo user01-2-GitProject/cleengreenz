@@ -205,7 +205,7 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
     const button = form.querySelector('button[type="submit"]');
 
     form.querySelector('#f-name').value = 'John Smith';
-    form.querySelector('#f-phone').value = '555-0000';
+    form.querySelector('#f-phone').value = '269-555-0000';
     form.querySelector('#f-address').value = '789 Pine Ave';
     form.querySelector('#f-service').value = 'Snow removal';
     form.querySelector('#f-notes').value = '';
@@ -284,7 +284,7 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
 
     const form = document.getElementById('estimate-form');
     form.querySelector('#f-name').value = 'Carol Danvers';
-    form.querySelector('#f-phone').value = '555-3210';
+    form.querySelector('#f-phone').value = '269-555-3210';
     form.querySelector('#f-address').value = '200 Hero Way';
     form.querySelector('#f-service').value = 'Seeding and fertilizing';
 
@@ -434,7 +434,7 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneInput.value, '(269) 362-8286');
   });
 
-  await t.test('rejects phone number with fewer than 7 digits on submit and marks field as invalid', async () => {
+  await t.test('rejects phone number with fewer than 10 digits (e.g. 7-digit numbers missing area code) on submit and marks field as invalid', async () => {
     let fetchCalled = false;
     const { window, document } = setupEnvironment({
       fetch: () => {
@@ -444,14 +444,14 @@ test('Estimate form field validation & user input handling', async (t) => {
     });
 
     const form = document.getElementById('estimate-form');
+    const phoneInput = form.querySelector('#f-phone');
     form.querySelector('#f-name').value = 'Jane Doe';
-    form.querySelector('#f-phone').value = '123'; // Incomplete phone
+    phoneInput.value = '555-0199'; // 7-digit local number missing 3-digit area code
     form.querySelector('#f-address').value = '123 Main St';
 
     form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
 
-    assert.equal(fetchCalled, false, 'fetch should not be called with an invalid phone number');
-    const phoneInput = form.querySelector('#f-phone');
+    assert.equal(fetchCalled, false, 'fetch should not be called with an incomplete phone number missing area code');
     assert.equal(phoneInput.getAttribute('aria-invalid'), 'true');
     const phoneErr = document.querySelector('#f-phone-err');
     assert.equal(phoneErr.classList.contains('show'), true);
@@ -725,6 +725,13 @@ test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
 });
 
 test('Accessibility attributes & focus management enhancements', async (t) => {
+  await t.test('towns list has aria-label="Towns served" for screen reader navigation', () => {
+    const { document } = setupEnvironment();
+    const townsList = document.querySelector('ul.towns');
+    assert.ok(townsList, 'ul.towns list should exist');
+    assert.equal(townsList.getAttribute('aria-label'), 'Towns served');
+  });
+
   await t.test('main element has tabindex="-1" for skip link focus targeting', () => {
     const { document } = setupEnvironment();
     const mainEl = document.getElementById('main');

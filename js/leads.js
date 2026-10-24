@@ -245,7 +245,7 @@
     var isInvalid = !field.value.trim();
     if (field.id === 'f-phone') {
       var phoneDigits = field.value.replace(/\D/g, '');
-      if (!isInvalid && phoneDigits.length < 7) {
+      if (!isInvalid && phoneDigits.length < 10) {
         isInvalid = true;
         if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
       } else if (errEl) {
