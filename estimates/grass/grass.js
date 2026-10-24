@@ -12,10 +12,12 @@ export function grassEstimate(lawnSqft) {
     GRASS.minimum,
     GRASS.basePrice + (over / 1000) * GRASS.perThousandOverBase
   );
+  // Per-visit prices round to the dollar (not $5) so the calibration to
+  // Chris's real $30-per-typical-lot price lands exact.
   const perVisit = {
-    low: round5(mid * (1 - GRASS.rangeSpread)),
-    mid: round5(mid),
-    high: round5(mid * (1 + GRASS.rangeSpread)),
+    low: Math.round(mid * (1 - GRASS.rangeSpread)),
+    mid: Math.round(mid),
+    high: Math.round(mid * (1 + GRASS.rangeSpread)),
   };
   const seasonMid = round5(
     perVisit.mid * GRASS.seasonVisits * (1 - GRASS.seasonDiscount)

@@ -16,13 +16,17 @@ export const SURFACE = {
   fallbackLotSqft: 7840,
 };
 
-// Grass cutting, per visit. Anchored to the going Niles-area rate
-// (~$57 average per cut, Lawn Love market data, Oct 2026).
+// Grass cutting, per visit. CALIBRATED 2026-10-24 to Chris's real price:
+// $60 to cut Jimmy's property AND the house next door — two typical
+// in-town lots side by side — so one typical lot must price at $30/visit:
+// base $28 + $3 per 1,000 sq ft over 5,000 lands the typical 5,645 sq ft
+// lawn at exactly $30. (This supersedes the ~$57 "market average" from
+// Lawn Love — Chris's actual price is the ground truth for this business.)
 export const GRASS = {
-  basePrice: 45, // covers the first baseLawnSqft of lawn
+  basePrice: 28, // covers the first baseLawnSqft of lawn
   baseLawnSqft: 5000,
-  perThousandOverBase: 6, // added per extra 1,000 sq ft of lawn
-  minimum: 40,
+  perThousandOverBase: 3, // added per extra 1,000 sq ft of lawn
+  minimum: 25,
   rangeSpread: 0.1, // estimates are quoted as mid +/- 10%
   seasonVisits: 26, // weekly cuts, roughly April-October
   seasonDiscount: 0.1, // full-season booking discount

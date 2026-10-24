@@ -15,17 +15,20 @@ test("surfaceAreas splits a lot into lawn and driveway shares", () => {
   assert.equal(a.drivewaySqft, 900);
 });
 
-test("grass: typical in-town lot lands near the Niles going rate", () => {
+test("grass: calibrated to Chris's real price — $30 per typical lot", () => {
+  // Calibration (Jimmy, 2026-10-24): Chris charges $60 to cut Jimmy's
+  // property plus the house next door — two typical in-town lots.
   // 7,840 sq ft fallback lot -> 5,645 sq ft of lawn.
   const e = grassEstimate(5645);
-  assert.ok(e.perVisit.mid >= 45 && e.perVisit.mid <= 60, `mid=${e.perVisit.mid}`);
+  assert.equal(e.perVisit.mid, 30);
+  assert.equal(e.perVisit.mid * 2, 60); // the pair prices at Chris's $60
   assert.ok(e.perVisit.low < e.perVisit.mid && e.perVisit.mid < e.perVisit.high);
   assert.ok(e.season.mid > e.perVisit.mid * 20);
 });
 
-test("grass: small lawn hits the minimum", () => {
+test("grass: small lawn pays the base price", () => {
   const e = grassEstimate(2000);
-  assert.equal(e.perVisit.mid, 45); // base price, above the $40 minimum
+  assert.equal(e.perVisit.mid, 28); // base price, above the $25 minimum
 });
 
 test("leaves: heavy cover costs more than light on the same lot", () => {
