@@ -61,3 +61,9 @@
 **Learning:** In animation loops, evaluating spring physics and `Math.exp()` exponential decay functions on every frame when the target object is completely stationary/idle wastes CPU cycles. Guarding grab dynamics (`grabbing || p.grab > 0.0001`) and lean dynamics (`walking || Math.abs(p.lean) > 0.0001`) with absolute value checks ensures both positive and negative lean values decay smoothly while bypassing floating-point math completely on idle frames (reducing CPU time ~7x during idle states).
 
 **Action:** Always guard spring dynamics and exponential math calculations in high-frequency animation loops with magnitude threshold checks (`Math.abs(val) > epsilon`), zeroing out idle variables when inactive.
+
+## 2026-10-04 - Prune chronologically ordered sliding-window arrays in-place with shift and O(1) last-element staleness check
+
+**Learning:** Re-allocating arrays with `.filter()` on every incoming HTTP request during sliding-window rate limit checks creates continuous garbage collection pressure. Because timestamps are added in strictly increasing chronological order, expired timestamps are always at the start of the array and can be pruned in-place using `timestamps.shift()`. Similarly, checking the latest timestamp (`v[v.length - 1] <= windowStart`) during periodic Map cleanup evaluates entry staleness in $O(1)$ time without iterating elements or allocating `.every()` closures.
+
+**Action:** For chronologically ordered sliding-window collections, prune expired head items in-place with a `while` loop calling `.shift()` and evaluate collection staleness by inspecting the last element.
