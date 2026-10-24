@@ -18,7 +18,7 @@ import { snowEstimate } from "./snow/snow.js";
 /** Price all three services from measured/known surface areas. */
 export function estimateFromAreas({ lawnSqft, lotSqft, drivewaySqft }, options = {}) {
   return {
-    grass: grassEstimate(lawnSqft),
+    grass: grassEstimate(lawnSqft, options),
     leaves: leavesEstimate(lotSqft, options.cover),
     snow: snowEstimate(drivewaySqft),
   };

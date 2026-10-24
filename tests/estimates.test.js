@@ -15,20 +15,27 @@ test("surfaceAreas splits a lot into lawn and driveway shares", () => {
   assert.equal(a.drivewaySqft, 900);
 });
 
-test("grass: calibrated to Chris's real price — $30 per typical lot", () => {
-  // Calibration (Jimmy, 2026-10-24): Chris charges $60 to cut Jimmy's
-  // property plus the house next door — two typical in-town lots.
-  // 7,840 sq ft fallback lot -> 5,645 sq ft of lawn.
-  const e = grassEstimate(5645);
-  assert.equal(e.perVisit.mid, 30);
-  assert.equal(e.perVisit.mid * 2, 60); // the pair prices at Chris's $60
-  assert.ok(e.perVisit.low < e.perVisit.mid && e.perVisit.mid < e.perVisit.high);
-  assert.ok(e.season.mid > e.perVisit.mid * 20);
+test("grass: calibrated to Chris's real prices (Jimmy, 2026-10-24)", () => {
+  // $60 cuts Jimmy's property plus the house next door (two typical
+  // in-town lots at one stop); $50 is the cheapest job he does; the pair
+  // takes him ~1 hr 15 solo. 7,840 sq ft lot -> 5,645 sq ft of lawn.
+  const single = grassEstimate(5645);
+  assert.equal(single.perProperty.mid, 30); // per-property curve
+  assert.equal(single.job.mid, 50); // ...but the $50 job minimum binds
+
+  const pair = grassEstimate(5645, { properties: 2 });
+  assert.equal(pair.job.mid, 60); // the pair prices at Chris's $60
+  assert.equal(pair.job.minutes, 75); // ...and takes him ~1 hr 15 solo
+
+  assert.ok(single.perProperty.low < single.perProperty.mid);
+  assert.ok(single.perProperty.mid < single.perProperty.high);
+  assert.ok(single.season.mid > single.job.mid * 20);
 });
 
-test("grass: small lawn pays the base price", () => {
+test("grass: small lawn pays the base price per property", () => {
   const e = grassEstimate(2000);
-  assert.equal(e.perVisit.mid, 28); // base price, above the $25 minimum
+  assert.equal(e.perProperty.mid, 28); // base price, above the $25 minimum
+  assert.equal(e.job.mid, 50); // job minimum still binds
 });
 
 test("leaves: heavy cover costs more than light on the same lot", () => {

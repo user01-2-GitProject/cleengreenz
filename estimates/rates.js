@@ -16,17 +16,25 @@ export const SURFACE = {
   fallbackLotSqft: 7840,
 };
 
-// Grass cutting, per visit. CALIBRATED 2026-10-24 to Chris's real price:
-// $60 to cut Jimmy's property AND the house next door — two typical
-// in-town lots side by side — so one typical lot must price at $30/visit:
-// base $28 + $3 per 1,000 sq ft over 5,000 lands the typical 5,645 sq ft
-// lawn at exactly $30. (This supersedes the ~$57 "market average" from
-// Lawn Love — Chris's actual price is the ground truth for this business.)
+// Grass cutting, per visit. CALIBRATED 2026-10-24 to Chris's real prices
+// (Jimmy's figures, not market surveys):
+//   - $60 cuts Jimmy's property AND the house next door — two typical
+//     in-town lots at one stop — so the per-property curve must land a
+//     typical lot at $30: base $28 + $3 per 1,000 sq ft over 5,000 does
+//     (typical lawn = 5,645 sq ft -> exactly $30, pair = $60).
+//   - $50 is the cheapest job he does: a per-stop JOB MINIMUM. A single
+//     typical lot curves to $30 but quotes at the $50 job minimum; the
+//     pair clears the minimum on its own ($60).
+//   - The pair takes him ~1 hr 15 min solo: ~150 sq ft of lawn per minute,
+//     used for the job-time estimate.
+// (Supersedes the ~$57 "market average" from Lawn Love.)
 export const GRASS = {
   basePrice: 28, // covers the first baseLawnSqft of lawn
   baseLawnSqft: 5000,
   perThousandOverBase: 3, // added per extra 1,000 sq ft of lawn
   minimum: 25,
+  jobMinimum: 50, // cheapest job Chris does — per stop, per visit
+  soloSqftPerMin: 150, // solo pace: ~11,300 sq ft of lawn in ~75 minutes
   rangeSpread: 0.1, // estimates are quoted as mid +/- 10%
   seasonVisits: 26, // weekly cuts, roughly April-October
   seasonDiscount: 0.1, // full-season booking discount

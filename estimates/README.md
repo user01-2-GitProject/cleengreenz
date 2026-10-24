@@ -49,10 +49,13 @@ Lawn and driveway areas are shares of the lot (house/drive/beds removed):
 
 ## Rates (starting points, Chris has final say)
 
-- **Grass:** $28 up to 5,000 sq ft of lawn, +$3 per extra 1,000 sq ft.
-  Calibrated to Chris's real price (2026-10-24): $60 cuts Jimmy's property
-  plus the house next door, so a typical in-town lot prices at exactly
-  $30/visit. Season = 26 weekly cuts with a 10% booking discount.
+- **Grass:** $28 up to 5,000 sq ft of lawn, +$3 per extra 1,000 sq ft,
+  with a **$50 minimum per stop**. Calibrated to Chris's real prices
+  (2026-10-24): $60 cuts Jimmy's property plus the house next door (the
+  pair prices at $30 per property and clears the minimum on its own),
+  $50 is the cheapest job he does, and the pair takes him ~1 hr 15 solo
+  (~150 sq ft/min — the tool also estimates job time). Season = 26 weekly
+  cuts with a 10% booking discount.
 - **Leaves:** $120 up to 5,000 sq ft of lot, +$18 per extra 1,000 sq ft,
   scaled by tree cover (light x1.0 / moderate x1.3 / heavy x1.6).
 - **Snow:** $35 up to 400 sq ft of driveway/walk, +$5 per extra 100 sq ft.
