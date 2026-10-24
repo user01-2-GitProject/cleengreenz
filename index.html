@@ -357,6 +357,7 @@
     transition: transform .2s ease, box-shadow .2s ease;
   }
   .season-card:hover { transform: translateY(-3px); }
+  .season-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .season-card h3 { color: var(--forest); }
   .season-card p { color: var(--bark-soft); margin: 0; }
   .season-card .icon {
@@ -379,6 +380,7 @@
     text-decoration: none; color: inherit;
   }
   .service:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
+  .service:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #e3f3d6; color: var(--forest); }
   .service .icon svg { width: 26px; height: 26px; }
   .service h3 { font-size: 1.2rem; margin-bottom: .25em; }
