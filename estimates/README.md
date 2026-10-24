@@ -57,7 +57,11 @@ Lawn and driveway areas are shares of the lot (house/drive/beds removed):
   (~150 sq ft/min — the tool also estimates job time). Season = 26 weekly
   cuts with a 10% booking discount.
 - **Leaves:** $120 up to 5,000 sq ft of lot, +$18 per extra 1,000 sq ft,
-  scaled by tree cover (light x1.0 / moderate x1.3 / heavy x1.6).
+  scaled by tree cover (light x1.0 / moderate x1.3 / heavy x1.6) and by
+  the AMOUNT of leaf work in the visit (light x0.15 / moderate x0.27 /
+  full x1.0). Calibrated 2026-10-24: lawn + a moderate amount of leaves
+  at 812 Chippewa Trail = $110 total ($50 grass + $60 leaves); the $220
+  typical-lot figure is a full cleanup.
 - **Snow:** $35 up to 400 sq ft of driveway/walk, +$5 per extra 100 sq ft.
   Season contract assumes ~20 plowable events, Nov–Mar.
 

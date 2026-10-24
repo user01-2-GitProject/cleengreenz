@@ -40,8 +40,14 @@ export const GRASS = {
   seasonDiscount: 0.1, // full-season booking discount
 };
 
-// Leaf blowing / cleanup, per visit. Tree cover is the swing factor, so the
-// customer (or Chris) picks a cover level; moderate is the default.
+// Leaf blowing / cleanup, per visit. Two axes (Jimmy, 2026-10-24): tree
+// COVER is how wooded the lot is; AMOUNT is how much leaf work the visit
+// actually is. CALIBRATED: at 812 Chippewa Trail Chris did the lawn plus
+// a MODERATE amount of leaves for $110 total — grass at its $50 job
+// minimum, so moderate-amount leaves = $60, about 0.27x a full cleanup.
+// The $220 typical-lot figure is the FULL cleanup price (Jimmy: "that
+// price is assuming there's a lot"). Light amount is interpolated; real
+// numbers replace these factors as Chris's jobs come in.
 export const LEAVES = {
   basePrice: 120, // covers the first baseLotSqft of lot
   baseLotSqft: 5000,
@@ -49,8 +55,9 @@ export const LEAVES = {
   minimum: 95,
   rangeSpread: 0.15,
   coverFactors: { light: 1.0, moderate: 1.3, heavy: 1.6 },
+  amountFactors: { light: 0.15, moderate: 0.27, full: 1.0 },
   defaultCover: "moderate",
-  seasonVisits: 3, // typical fall: early, mid, final cleanup
+  seasonVisits: 3, // typical fall: early, mid, final cleanup (full-amount)
   seasonDiscount: 0.1,
 };
 

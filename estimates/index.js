@@ -8,6 +8,7 @@
 // Options:
 //   lotSqft  — skip the lookup and price this exact lot size (sq ft).
 //   cover    — leaf tree-cover level: "light" | "moderate" | "heavy".
+//   amount   — leaf job size this visit: "light" | "moderate" | "full".
 
 import { geocodeAddress } from "./address.js";
 import { resolveLotSqft, surfaceAreas } from "./lot.js";
@@ -19,7 +20,7 @@ import { snowEstimate } from "./snow/snow.js";
 export function estimateFromAreas({ lawnSqft, lotSqft, drivewaySqft }, options = {}) {
   return {
     grass: grassEstimate(lawnSqft, options),
-    leaves: leavesEstimate(lotSqft, options.cover),
+    leaves: leavesEstimate(lotSqft, options.cover, options),
     snow: snowEstimate(drivewaySqft),
   };
 }

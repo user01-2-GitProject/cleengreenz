@@ -44,6 +44,22 @@ test("leaves: heavy cover costs more than light on the same lot", () => {
   assert.ok(heavy.perVisit.mid > light.perVisit.mid);
 });
 
+test("leaves: full cleanup at a typical lot is $220; moderate amount is $60", () => {
+  // Jimmy (2026-10-24): the $220 price "is assuming there's a lot" — it
+  // is the FULL cleanup. A moderate-amount visit is far less.
+  assert.equal(leavesEstimate(7840, "moderate").perVisit.mid, 220);
+  assert.equal(
+    leavesEstimate(7840, "moderate", { amount: "moderate" }).perVisit.mid,
+    60
+  );
+});
+
+test("leaves: calibrated to the Chippewa Trail job (Jimmy, 2026-10-24)", () => {
+  // 812 Chippewa Trail: lawn + a moderate amount of leaves = $110 total.
+  const leaves = leavesEstimate(7840, "moderate", { amount: "moderate" });
+  assert.equal(grassEstimate(5645).job.mid + leaves.perVisit.mid, 110);
+});
+
 test("snow: bigger driveway costs more per visit", () => {
   const small = snowEstimate(400);
   const big = snowEstimate(1200);
