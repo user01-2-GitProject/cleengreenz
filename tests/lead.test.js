@@ -903,6 +903,25 @@ test('onRequestGet authorization and response handling', async (t) => {
     return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
 
+  await t.test('returns 429 Too Many Requests with security headers when client IP is rate limited', async () => {
+    const testIp = '198.51.100.99';
+    const makeReq = () => new Request('https://cleengreenz.com/leads', {
+      headers: { 'cf-connecting-ip': testIp },
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const res = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+      assert.equal(res.status, 401);
+    }
+
+    const rateLimitedRes = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+    assert.equal(rateLimitedRes.status, 429);
+    assert.equal(await rateLimitedRes.text(), 'Too many requests');
+    assert.equal(rateLimitedRes.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(rateLimitedRes.headers.get('cache-control'), 'no-store');
+    assert.equal(rateLimitedRes.headers.get('x-frame-options'), 'DENY');
+  });
+
   await t.test('returns 401 with security headers when LEADS_PASSWORD env is missing', async () => {
     const request = new Request('https://cleengreenz.com/leads', {
       headers: { authorization: basicAuth('admin', secret) },
