@@ -932,6 +932,27 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
   });
 
+  await t.test('returns 429 Too Many Requests with security headers when IP exceeds rate limit on GET /leads', async () => {
+    const testIp = '198.51.100.99';
+    const makeReq = () => new Request('https://cleengreenz.com/leads', {
+      headers: { 'cf-connecting-ip': testIp, authorization: basicAuth('admin', secret) },
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const res = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+      assert.equal(res.status, 503);
+    }
+
+    const rateLimitedRes = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+    assert.equal(rateLimitedRes.status, 429);
+    assert.equal(await rateLimitedRes.text(), 'Too Many Requests');
+    assert.equal(rateLimitedRes.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(rateLimitedRes.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(rateLimitedRes.headers.get('x-frame-options'), 'DENY');
+    assert.equal(rateLimitedRes.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.equal(rateLimitedRes.headers.get('strict-transport-security'), 'max-age=31536000; includeSubDomains');
+  });
+
   await t.test('returns 401 when authorization header is missing', async () => {
     const request = new Request('https://cleengreenz.com/leads');
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
