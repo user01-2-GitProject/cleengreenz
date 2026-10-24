@@ -61,3 +61,9 @@
 **Learning:** In animation loops, evaluating spring physics and `Math.exp()` exponential decay functions on every frame when the target object is completely stationary/idle wastes CPU cycles. Guarding grab dynamics (`grabbing || p.grab > 0.0001`) and lean dynamics (`walking || Math.abs(p.lean) > 0.0001`) with absolute value checks ensures both positive and negative lean values decay smoothly while bypassing floating-point math completely on idle frames (reducing CPU time ~7x during idle states).
 
 **Action:** Always guard spring dynamics and exponential math calculations in high-frequency animation loops with magnitude threshold checks (`Math.abs(val) > epsilon`), zeroing out idle variables when inactive.
+
+## 2026-10-04 - Trim chronologically sorted rate limit timestamp queues in-place
+
+**Learning:** Using `array.filter()` inside API request rate limit checks allocates new array instances and closure callbacks on every HTTP request. Because timestamps are appended sequentially in time order, the oldest timestamp is always at index 0 and the newest is at `length - 1`. Trimming expired timestamps with `while (timestamps.length > 0 && timestamps[0] <= windowStart) timestamps.shift()` modifies the array in-place without allocations, and checking `v[v.length - 1] <= windowStart` evaluates map entry staleness in $O(1)$ time without iterating elements.
+
+**Action:** Maintain chronological order in timestamp queues, trimming expired items in-place with `while ... shift()` and checking the newest item (`array[array.length - 1]`) for $O(1)$ staleness checks.
