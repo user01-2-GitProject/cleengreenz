@@ -131,25 +131,26 @@
     updateNotesCount();
   }
 
+  function formatPhone(val) {
+    var digits = val.replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length >= 11 && digits[0] === '1') {
+      digits = digits.slice(1);
+    }
+    if (digits.length > 10) digits = digits.slice(0, 10);
+    if (digits.length <= 3) {
+      return '(' + digits;
+    } else if (digits.length <= 6) {
+      return '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
+    } else {
+      return '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+    }
+  }
+
   var phoneInput = form.querySelector('#f-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', function () {
-      var digits = phoneInput.value.replace(/\D/g, '');
-      if (!digits) {
-        phoneInput.value = '';
-        return;
-      }
-      if (digits.length >= 11 && digits[0] === '1') {
-        digits = digits.slice(1);
-      }
-      if (digits.length > 10) digits = digits.slice(0, 10);
-      if (digits.length <= 3) {
-        phoneInput.value = '(' + digits;
-      } else if (digits.length <= 6) {
-        phoneInput.value = '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
-      } else {
-        phoneInput.value = '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
-      }
+      phoneInput.value = formatPhone(phoneInput.value);
     });
   }
 
@@ -245,7 +246,7 @@
     var isInvalid = !field.value.trim();
     if (field.id === 'f-phone') {
       var phoneDigits = field.value.replace(/\D/g, '');
-      if (!isInvalid && phoneDigits.length < 7) {
+      if (!isInvalid && phoneDigits.length < 10) {
         isInvalid = true;
         if (errEl) errEl.textContent = 'Please enter a valid phone number with area code';
       } else if (errEl) {
@@ -279,6 +280,9 @@
 
   form.addEventListener('focusout', function (e) {
     var field = e.target;
+    if (field && field.id === 'f-phone' && field.value) {
+      field.value = formatPhone(field.value);
+    }
     if (field && field.hasAttribute && field.hasAttribute('required')) {
       if (field.value.trim() !== '' || field.getAttribute('aria-invalid') === 'true') {
         validateField(field);
