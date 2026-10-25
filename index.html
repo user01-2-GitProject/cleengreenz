@@ -308,9 +308,10 @@
   .pet-bubble .bubble-close {
     position: absolute; top: 6px; right: 8px; background: none; border: 0; padding: 0;
     width: 20px; height: 20px; font-size: .85rem; line-height: 20px; text-align: center; color: var(--bark-soft);
-    cursor: pointer; border-radius: 50%; opacity: .7; transition: opacity .15s ease, color .15s ease;
+    cursor: pointer; border-radius: 50%; opacity: .7; transition: opacity .15s ease, color .15s ease, transform .15s ease;
   }
   .pet-bubble .bubble-close:hover { opacity: 1; color: var(--pumpkin-2); }
+  .pet-bubble .bubble-close:active { transform: scale(0.92); }
   .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; opacity: 1; }
   .pet-bubble.is-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
@@ -448,9 +449,10 @@
   .copy-phone-btn {
     background: rgba(255, 255, 255, 0.15); border: none; color: #fff; border-radius: 999px;
     padding: 3px 10px; font-size: .8rem; font-family: inherit; font-weight: 700; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease;
+    display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease, color .2s ease, transform .15s ease;
   }
   .copy-phone-btn:hover { background: rgba(255, 255, 255, 0.28); color: var(--gold); }
+  .copy-phone-btn:active { transform: scale(0.95); }
   .copy-phone-btn.copied { background: rgba(108, 191, 58, 0.28); color: var(--gold); }
   .copy-phone-btn svg { width: 14px; height: 14px; color: currentColor; }
   .copy-feedback { font-size: .8rem; color: var(--gold); font-weight: 700; }
@@ -523,7 +525,7 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
-    .btn:hover, .service:hover, .season-card:hover { transform: none; }
+    .btn:hover, .service:hover, .season-card:hover, .copy-phone-btn:active, .bubble-close:active { transform: none; }
     .grass-patch { transition: none; }
     .grass-blade { animation: none; }
     .pet-mower { display: none !important; }
