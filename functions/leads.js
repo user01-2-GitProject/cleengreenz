@@ -4,7 +4,7 @@
 // estimate requests. Protected by a browser password prompt; the password is
 // the LEADS_PASSWORD secret (any username works).
 
-import { sanitizePhone } from './api/lead.js';
+import { isRateLimited, sanitizePhone } from './api/lead.js';
 
 // Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -137,6 +137,18 @@ export async function onRequest(context) {
 }
 
 export async function onRequestGet({ request, env }) {
+  // Rate Limiting: Prevent basic authentication brute-force attempts and DoS attacks by limiting requests per IP address
+  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  if (clientIp && isRateLimited(clientIp)) {
+    return new Response('Too Many Requests', {
+      status: 429,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        ...SECURITY_HEADERS,
+      },
+    });
+  }
+
   if (!env.LEADS_PASSWORD || !authorized(request, env.LEADS_PASSWORD)) {
     return new Response('Password required', {
       status: 401,
