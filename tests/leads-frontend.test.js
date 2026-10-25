@@ -743,6 +743,24 @@ test('Accessibility attributes & focus management enhancements', async (t) => {
       'typing must retain the permanent character count description');
   });
 
+  await t.test('estimate form fields have optimal mobile keyboard attributes (autocapitalize and enterkeyhint)', () => {
+    const { document } = setupEnvironment();
+    const nameInput = document.getElementById('f-name');
+    const phoneInput = document.getElementById('f-phone');
+    const addressInput = document.getElementById('f-address');
+    const notesInput = document.getElementById('f-notes');
+
+    assert.equal(nameInput.getAttribute('autocapitalize'), 'words');
+    assert.equal(nameInput.getAttribute('enterkeyhint'), 'next');
+
+    assert.equal(phoneInput.getAttribute('enterkeyhint'), 'next');
+
+    assert.equal(addressInput.getAttribute('autocapitalize'), 'words');
+    assert.equal(addressInput.getAttribute('enterkeyhint'), 'next');
+
+    assert.equal(notesInput.getAttribute('enterkeyhint'), 'done');
+  });
+
   await t.test('Pet Chris hide button shifts focus to brand link before removing container', () => {
     const dom = new JSDOM(htmlTemplate, {
       runScripts: 'dangerously',

@@ -775,10 +775,10 @@
           <h3>Request a free estimate</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
-            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
-            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err" role="alert">Please enter your phone number</span></div>
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" autocapitalize="words" enterkeyhint="next" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" enterkeyhint="next" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err" role="alert">Please enter your phone number</span></div>
           </div>
-          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err" role="alert">Please enter your street address</span></div>
+          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" autocapitalize="words" enterkeyhint="next" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err" role="alert">Please enter your street address</span></div>
           <div class="field">
             <label for="f-service">What do you need?</label>
             <select id="f-service" name="service">
@@ -791,7 +791,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="off"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="off"></span></label><textarea id="f-notes" name="notes" maxlength="500" enterkeyhint="done" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
         </div>
