@@ -726,6 +726,11 @@ test('seasonal ribbon CTA has data-lead-location="ribbon"', () => {
 });
 
 test('Accessibility attributes & focus management enhancements', async (t) => {
+  await t.test('towns list has an accessible name', () => {
+    const { document } = setupEnvironment();
+    assert.equal(document.querySelector('ul.towns').getAttribute('aria-label'), 'Towns served');
+  });
+
   await t.test('main element has tabindex="-1" for skip link focus targeting', () => {
     const { document } = setupEnvironment();
     const mainEl = document.getElementById('main');
