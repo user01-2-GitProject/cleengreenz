@@ -205,7 +205,7 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
     const button = form.querySelector('button[type="submit"]');
 
     form.querySelector('#f-name').value = 'John Smith';
-    form.querySelector('#f-phone').value = '555-0000';
+    form.querySelector('#f-phone').value = '269-555-0000';
     form.querySelector('#f-address').value = '789 Pine Ave';
     form.querySelector('#f-service').value = 'Snow removal';
     form.querySelector('#f-notes').value = '';
@@ -284,7 +284,7 @@ test('Estimate form submission - Error handling & Mailto fallback', async (t) =>
 
     const form = document.getElementById('estimate-form');
     form.querySelector('#f-name').value = 'Carol Danvers';
-    form.querySelector('#f-phone').value = '555-3210';
+    form.querySelector('#f-phone').value = '269-555-3210';
     form.querySelector('#f-address').value = '200 Hero Way';
     form.querySelector('#f-service').value = 'Seeding and fertilizing';
 
@@ -434,7 +434,7 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneInput.value, '(269) 362-8286');
   });
 
-  await t.test('rejects phone number with fewer than 7 digits on submit and marks field as invalid', async () => {
+  await t.test('rejects phone number with fewer than 10 digits on submit and marks field as invalid', async () => {
     let fetchCalled = false;
     const { window, document } = setupEnvironment({
       fetch: () => {
@@ -445,7 +445,7 @@ test('Estimate form field validation & user input handling', async (t) => {
 
     const form = document.getElementById('estimate-form');
     form.querySelector('#f-name').value = 'Jane Doe';
-    form.querySelector('#f-phone').value = '123'; // Incomplete phone
+    form.querySelector('#f-phone').value = '555-0199'; // Incomplete phone missing area code
     form.querySelector('#f-address').value = '123 Main St';
 
     form.dispatchEvent(new window.Event('submit', { cancelable: true, bubbles: true }));
@@ -458,7 +458,7 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
   });
 
-  await t.test('performs inline validation on focusout when field has value or was previously invalid', async () => {
+  await t.test('performs inline validation and auto-formatting on focusout when field has value or was previously invalid', async () => {
     const { window, document } = setupEnvironment();
     const form = document.getElementById('estimate-form');
     const phoneInput = form.querySelector('#f-phone');
@@ -476,9 +476,10 @@ test('Estimate form field validation & user input handling', async (t) => {
     assert.equal(phoneErr.classList.contains('show'), true);
     assert.equal(phoneErr.textContent, 'Please enter a valid phone number with area code');
 
-    // Correcting the phone number updates the field to valid on input
+    // Pasting raw 10 digits and blurring formats the value into (269) 362-8286 and clears validation error
     phoneInput.value = '2693628286';
-    phoneInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    phoneInput.dispatchEvent(new window.Event('focusout', { bubbles: true }));
+    assert.equal(phoneInput.value, '(269) 362-8286');
     assert.equal(phoneInput.hasAttribute('aria-invalid'), false);
     assert.equal(phoneErr.classList.contains('show'), false);
   });
