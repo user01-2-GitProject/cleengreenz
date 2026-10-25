@@ -932,6 +932,24 @@ test('onRequestGet authorization and response handling', async (t) => {
     assert.equal(res.headers.get('x-permitted-cross-domain-policies'), 'none');
   });
 
+  await t.test('returns 429 Too Many Requests when IP rate limit is exceeded on /leads', async () => {
+    const testIp = '198.51.100.99';
+    const makeReq = () => new Request('https://cleengreenz.com/leads', {
+      headers: { 'cf-connecting-ip': testIp, authorization: basicAuth('admin', secret) },
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const res = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+      assert.equal(res.status, 503); // DB not connected
+    }
+
+    const rateLimitedRes = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+    assert.equal(rateLimitedRes.status, 429);
+    assert.equal(rateLimitedRes.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(rateLimitedRes.headers.get('x-frame-options'), 'DENY');
+    assert.equal(await rateLimitedRes.text(), 'Too many requests');
+  });
+
   await t.test('returns 401 when authorization header is missing', async () => {
     const request = new Request('https://cleengreenz.com/leads');
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
