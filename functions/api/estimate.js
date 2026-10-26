@@ -51,9 +51,32 @@ export async function onRequest(context) {
 
 export async function onRequestPost({ request, env = {} }) {
   if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405, { allow: 'POST' });
-  const origin = request.headers.get('origin');
-  if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== new URL(request.url).origin)) {
+  if (request.headers.get('sec-fetch-site') === 'cross-site') {
     return json({ ok: false, error: 'forbidden' }, 403);
+  }
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const reqUrl = new URL(request.url);
+
+  if (origin) {
+    try {
+      const parsedOrigin = new URL(origin);
+      if (parsedOrigin.origin !== reqUrl.origin || (parsedOrigin.protocol !== 'http:' && parsedOrigin.protocol !== 'https:')) {
+        return json({ ok: false, error: 'forbidden' }, 403);
+      }
+    } catch {
+      return json({ ok: false, error: 'forbidden' }, 403);
+    }
+  }
+  if (referer) {
+    try {
+      const parsedReferer = new URL(referer);
+      if (parsedReferer.origin !== reqUrl.origin || (parsedReferer.protocol !== 'http:' && parsedReferer.protocol !== 'https:')) {
+        return json({ ok: false, error: 'forbidden' }, 403);
+      }
+    } catch {
+      return json({ ok: false, error: 'forbidden' }, 403);
+    }
   }
   if (request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
     return json({ ok: false, error: 'unsupported_media_type' }, 415);
