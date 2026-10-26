@@ -24,7 +24,7 @@ test('FAQ details/summary accessibility attributes', async (t) => {
     });
   });
 
-  await t.test('FAQ summary elements have initial aria-expanded="false" and toggle to "true" on details open', () => {
+  await t.test('all summary elements (including #yard-area-details) have initial aria-expanded="false" and toggle on open', () => {
     const dom = new JSDOM(htmlTemplate, {
       runScripts: 'dangerously',
       beforeParse(window) {
@@ -38,11 +38,12 @@ test('FAQ details/summary accessibility attributes', async (t) => {
     });
     const { document, Event } = dom.window;
 
-    const detailsList = document.querySelectorAll('.faq details');
-    assert.ok(detailsList.length > 0, 'FAQ details exist');
+    const detailsList = document.querySelectorAll('details');
+    assert.ok(detailsList.length > 1, 'Multiple details elements exist including FAQ and yard-area-details');
 
     detailsList.forEach((details, index) => {
       const summary = details.querySelector('summary');
+      assert.ok(summary, `Details ${index + 1} has a summary element`);
       assert.equal(summary.getAttribute('aria-expanded'), 'false', `Summary ${index + 1} initially has aria-expanded="false"`);
 
       details.open = true;
@@ -55,7 +56,7 @@ test('FAQ details/summary accessibility attributes', async (t) => {
     });
   });
 
-  await t.test('pressing Escape key on an open FAQ details element closes it and focuses summary', () => {
+  await t.test('pressing Escape key on open details elements (including #yard-area-details) closes them and focuses summary', () => {
     const dom = new JSDOM(htmlTemplate, {
       runScripts: 'dangerously',
       beforeParse(window) {
@@ -69,17 +70,28 @@ test('FAQ details/summary accessibility attributes', async (t) => {
     });
     const { document, KeyboardEvent } = dom.window;
 
-    const details = document.querySelector('.faq details');
-    const summary = details.querySelector('summary');
+    const yardDetails = document.getElementById('yard-area-details');
+    assert.ok(yardDetails, '#yard-area-details exists');
+    const yardSummary = yardDetails.querySelector('summary');
 
-    details.open = true;
-    details.dispatchEvent(new dom.window.Event('toggle'));
-    assert.equal(details.open, true);
+    yardDetails.open = true;
+    yardDetails.dispatchEvent(new dom.window.Event('toggle'));
+    assert.equal(yardDetails.open, true);
 
     const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-    details.dispatchEvent(escapeEvent);
+    yardDetails.dispatchEvent(escapeEvent);
 
-    assert.equal(details.open, false);
-    assert.equal(document.activeElement, summary);
+    assert.equal(yardDetails.open, false);
+    assert.equal(document.activeElement, yardSummary);
+  });
+
+  await t.test('#yard-address input has optimal mobile keyboard attributes', () => {
+    const dom = new JSDOM(htmlTemplate);
+    const { document } = dom.window;
+
+    const addressInput = document.getElementById('yard-address');
+    assert.ok(addressInput, '#yard-address input exists');
+    assert.equal(addressInput.getAttribute('autocapitalize'), 'words');
+    assert.equal(addressInput.getAttribute('enterkeyhint'), 'search');
   });
 });
