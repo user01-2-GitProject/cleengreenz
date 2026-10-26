@@ -1,27 +1,20 @@
-// address.js — turn a typed street address into coordinates.
-// Uses the US Census Bureau geocoder: free, no API key, US addresses only.
-// Docs: https://geocoding.geo.census.gov/geocoder/
+// Census matches locate an address; they do not measure its lawn or driveway.
+import { addressValue, coordinates, fetchJson } from './validation.js';
+const CENSUS_URL = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
 
-const CENSUS_URL =
-  "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress";
-
-/**
- * Geocode a one-line address ("1154 Lambert St, Niles, MI 49120").
- * Returns { matchedAddress, lat, lon } or null when the Census geocoder
- * cannot match it. Throws only on network/HTTP failure.
- */
-export async function geocodeAddress(address, fetchImpl = fetch) {
-  const url =
-    `${CENSUS_URL}?address=${encodeURIComponent(address)}` +
-    `&benchmark=Public_AR_Current&format=json`;
-  const res = await fetchImpl(url);
-  if (!res.ok) throw new Error(`Census geocoder HTTP ${res.status}`);
-  const data = await res.json();
-  const match = data?.result?.addressMatches?.[0];
-  if (!match) return null;
-  return {
-    matchedAddress: match.matchedAddress,
-    lat: match.coordinates.y,
-    lon: match.coordinates.x,
-  };
+export async function geocodeAddress(address, fetchImpl = fetch, { timeoutMs = 5000 } = {}) {
+  address = addressValue(address);
+  const params = new URLSearchParams({ address, benchmark: 'Public_AR_Current', format: 'json' });
+  const data = await fetchJson(`${CENSUS_URL}?${params}`, fetchImpl, timeoutMs);
+  const matches = data?.result?.addressMatches;
+  if (!Array.isArray(matches)) throw new Error('Invalid address lookup response.');
+  if (!matches.length) return null;
+  // Multiple matches require a choice; never silently select a different property.
+  if (matches.length !== 1) throw new Error('Address match is ambiguous.');
+  const match = matches[0];
+  const matchedAddress = addressValue(match?.matchedAddress);
+  const lat = match?.coordinates?.y;
+  const lon = match?.coordinates?.x;
+  coordinates(lat, lon);
+  return { matchedAddress, lat, lon };
 }

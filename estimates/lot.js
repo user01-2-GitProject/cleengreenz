@@ -1,72 +1,44 @@
-// lot.js — resolve a property's lot square footage.
-//
-// Provider chain, best source first:
-//   1. ArcGIS parcel layer (county GIS). Many counties publish a public
-//      ArcGIS REST layer of parcels with an acreage field. Point
-//      PARCEL_LAYER_URL at that layer's query endpoint and set
-//      PARCEL_ACRES_FIELD to its acreage attribute, and lot size comes
-//      straight from the county record (high confidence).
-//      Berrien County (Niles) is the first layer to wire up — see README.
-//   2. Fallback typical lot (rates.js SURFACE.fallbackLotSqft), labeled
-//      low confidence. Never present a fallback figure as measured.
-//
-// Every result carries its source so the estimate can say how it knows.
-
-import { SURFACE } from "./rates.js";
-
+// County parcel acreage is optional. Configuration is explicit, never read from
+// Node globals, so the pricing modules also work in a browser or Pages runtime.
+import { SURFACE } from './rates.js';
+import { area, coordinates, fetchJson } from './validation.js';
 const SQFT_PER_ACRE = 43560;
 
-// Configured via environment so each county/site can point at its own GIS.
-const PARCEL_LAYER_URL = process.env.PARCEL_LAYER_URL || "";
-const PARCEL_ACRES_FIELD = process.env.PARCEL_ACRES_FIELD || "ACREAGE";
-
-/**
- * Ask an ArcGIS REST layer which parcel contains (lat, lon) and read its
- * acreage. Returns square feet, or null when no layer is configured, the
- * point hits no parcel, or the parcel has no acreage recorded.
- */
-export async function parcelSqftFromArcGIS(lat, lon, fetchImpl = fetch) {
-  if (!PARCEL_LAYER_URL) return null;
-  const params = new URLSearchParams({
-    geometry: `${lon},${lat}`,
-    geometryType: "esriGeometryPoint",
-    inSR: "4326",
-    spatialRel: "esriSpatialRelIntersects",
-    outFields: PARCEL_ACRES_FIELD,
-    returnGeometry: "false",
-    f: "json",
-  });
-  const res = await fetchImpl(`${PARCEL_LAYER_URL}?${params}`);
-  if (!res.ok) throw new Error(`Parcel layer HTTP ${res.status}`);
-  const data = await res.json();
-  const attrs = data?.features?.[0]?.attributes;
-  const acres = attrs?.[PARCEL_ACRES_FIELD];
-  if (typeof acres !== "number" || !(acres > 0)) return null;
-  return Math.round(acres * SQFT_PER_ACRE);
+export async function parcelSqftFromArcGIS(lat, lon, fetchImpl = fetch, config = {}) {
+  coordinates(lat, lon);
+  if (!config.layerUrl) return null;
+  const url = new URL(config.layerUrl);
+  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid parcel configuration.');
+  const acresField = config.acresField || 'ACREAGE';
+  if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/u.test(acresField)) throw new Error('Invalid parcel field.');
+  const params = { geometry: `${lon},${lat}`, geometryType: 'esriGeometryPoint', inSR: '4326',
+    spatialRel: 'esriSpatialRelIntersects', outFields: acresField, returnGeometry: 'false', f: 'json' };
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  const data = await fetchJson(url.toString(), fetchImpl, config.timeoutMs ?? 5000);
+  if (data?.error || !Array.isArray(data?.features)) throw new Error('Invalid parcel response.');
+  // Overlapping parcels cannot safely be resolved by taking the first result.
+  if (data.features.length !== 1) return null;
+  const acres = data.features[0]?.attributes?.[acresField];
+  if (typeof acres !== 'number' || !Number.isFinite(acres) || acres <= 0) return null;
+  return area(Math.round(acres * SQFT_PER_ACRE), 'parcel area');
 }
 
-/**
- * Resolve lot square footage for a geocoded point.
- * Returns { lotSqft, source, confidence } where source is "county-parcel"
- * or "typical-lot-fallback".
- */
-export async function resolveLotSqft(lat, lon, fetchImpl = fetch) {
-  const parcel = await parcelSqftFromArcGIS(lat, lon, fetchImpl);
-  if (parcel) {
-    return { lotSqft: parcel, source: "county-parcel", confidence: "high" };
-  }
-  return {
-    lotSqft: SURFACE.fallbackLotSqft,
-    source: "typical-lot-fallback",
-    confidence: "low",
-  };
+export async function resolveLotSqft(lat, lon, fetchImpl = fetch, config = {}) {
+  coordinates(lat, lon);
+  let warning = config.layerUrl ? 'parcel-not-found' : 'parcel-not-configured';
+  try {
+    const parcel = await parcelSqftFromArcGIS(lat, lon, fetchImpl, config);
+    if (parcel) return { lotSqft: parcel, source: 'county-parcel', confidence: 'medium', warnings: [] };
+  } catch { warning = 'parcel-lookup-unavailable'; }
+  return typicalLot(warning);
 }
 
-/** Split a lot into the surfaces each service actually works on. */
+export function typicalLot(warning = 'lot-area-unknown') {
+  return { lotSqft: SURFACE.fallbackLotSqft, source: 'typical-lot-fallback', confidence: 'low', warnings: [warning] };
+}
+
 export function surfaceAreas(lotSqft) {
-  return {
-    lotSqft,
-    lawnSqft: Math.round(lotSqft * SURFACE.lawnShareOfLot),
-    drivewaySqft: Math.round(lotSqft * SURFACE.drivewayShareOfLot),
-  };
+  area(lotSqft, 'lotSqft');
+  return { lotSqft, lawnSqft: Math.max(1, Math.round(lotSqft * SURFACE.lawnShareOfLot)),
+    drivewaySqft: Math.max(1, Math.round(lotSqft * SURFACE.drivewayShareOfLot)) };
 }

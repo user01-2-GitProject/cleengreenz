@@ -4,11 +4,15 @@
 // solo job time runs ~150 sq ft of lawn per minute — so the two-lot stop
 // next door prices at $60 and takes about 1 hr 15, exactly like real life.
 
+import { area, optionsValue } from '../validation.js';
 import { GRASS } from "../rates.js";
 
 const round5 = (n) => Math.round(n / 5) * 5;
 
-export function grassEstimate(lawnSqft, { properties = 1 } = {}) {
+export function grassEstimate(lawnSqft, options = {}) {
+  area(lawnSqft, 'lawnSqft');
+  optionsValue(options);
+  const { properties = 1 } = options;
   const over = Math.max(0, lawnSqft - GRASS.baseLawnSqft);
   const raw = Math.max(
     GRASS.minimum,

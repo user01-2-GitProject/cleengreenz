@@ -5,11 +5,15 @@
 // Chris's real Chippewa Trail job ($50 lawn + $60 leaves = $110); the $220
 // figure is a full cleanup. See rates.js for the calibration notes.
 
+import { area, optionsValue } from '../validation.js';
 import { LEAVES } from "../rates.js";
 
 const round5 = (n) => Math.round(n / 5) * 5;
 
-export function leavesEstimate(lotSqft, cover = LEAVES.defaultCover, { amount = "full" } = {}) {
+export function leavesEstimate(lotSqft, cover = LEAVES.defaultCover, options = {}) {
+  area(lotSqft, 'lotSqft');
+  optionsValue({ ...optionsValue(options), cover });
+  const { amount = 'full' } = options;
   const factor = LEAVES.coverFactors[cover] ?? LEAVES.coverFactors.moderate;
   const amountFactor = LEAVES.amountFactors[amount] ?? 1;
   const over = Math.max(0, lotSqft - LEAVES.baseLotSqft);

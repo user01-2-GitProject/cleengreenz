@@ -69,9 +69,60 @@ Lawn and driveway areas are shares of the lot (house/drive/beds removed):
 
 `npm test` runs `tests/estimates.test.js` — pure pricing math, no network.
 
-## Not built yet (next steps)
+## Customer flow (October 25, 2026)
 
-- Wire the real Berrien County parcel layer URL into `PARCEL_LAYER_URL`.
-- A page on cleengreenz.com that calls this and shows the estimate, then
-  hands the address + estimate into the existing lead flow.
-- Chris confirms/tunes the starting rates in `rates.js`.
+Jimmy confirmed the branch's rates may be used publicly. The homepage calculator
+uses `POST /api/estimate` to look up an address, explain the source of its area
+figures, and calculate a preliminary per-visit range. Customers can supply their
+own lot, lawn, or driveway measurements. They confirm the address and area
+assumptions before seeing prices or transferring the estimate to the existing
+quote-request form. Grass uses the **job** range, including the $50 stop minimum.
+The calculator does not book work, charge money, or promise a season discount.
+
+The address, selected service, area basis and price range pass into the existing
+contact form; the customer must still provide contact information and submit it.
+Existing notes are preserved. Calculating alone never creates a lead or sends
+email. A preliminary estimate is not Chris's final quote or service-area approval.
+
+### Area and lookup limits
+
+- Census coordinates are calculated along a street address range; they are not
+  proof of a property's boundary. See the [official Census API documentation](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html).
+- A parcel's acreage is its total lot area, not measured lawn or driveway area.
+  The 72% / 9% split remains an explicit assumption unless the customer supplies
+  those surface measurements.
+- Missing or unavailable parcel data uses the labeled 7,840 sq ft example from
+  `rates.js`. It must never be described as a measured property size.
+- The Pages endpoint defaults to Berrien County's current public parcel layer,
+  querying only its numeric `acres` field. Its [official metadata](https://gis.berriencountymi.gov/server/rest/services/Hosted/Parcels_Current/FeatureServer/0?f=pjson)
+  and [county portal item](https://gis.berriencountymi.gov/portal/sharing/rest/content/items/8c8ff545a18449118d25616955f5f9d6?f=json)
+  identify it as current parcels, updated annually. Records are approximate,
+  not surveyed boundaries. Outside coverage or on lookup failure, the explicitly
+  labeled typical-lot fallback remains available.
+- Optional overrides come from Pages Function bindings, not `process.env`:
+  `PARCEL_LAYER_URL` (HTTPS query endpoint) and `PARCEL_ACRES_FIELD` (numeric
+  acreage field). No credential belongs in this file.
+
+### Privacy and request handling
+
+The browser posts to the site's own endpoint. Address lookup sends the entered
+address to the US Census Geocoder; an optional configured county service receives
+coordinates. The calculator does not save addresses in URLs, browser storage,
+analytics, logs, or a database. Once the customer submits the existing quote form,
+its existing lead storage and email behavior applies. Infrastructure providers
+may retain their normal request logs. The endpoint uses no-store responses,
+bounded JSON input, lookup deadlines and a separate best-effort per-isolate rate
+limit; this is not a globally coordinated abuse limit.
+
+### Verification
+
+`npm test` includes pricing calibration, invalid input, mocked lookup/outage,
+endpoint and browser-form tests. Use a Pages preview to check the actual server
+route and desktop/mobile flow. A plain static server cannot execute `/api/estimate`.
+
+### Before production
+
+Review the branch preview before merging the calculator to production. County
+data is supplied as-is; a coordinate match and parcel acreage do not verify the
+customer's service area or exact mowing/snow surfaces. The customer confirmation
+and Chris's final quote remain necessary.

@@ -2,11 +2,13 @@
 // Snow work is priced on the hard surface, not the lot: driveway and front
 // walk square footage drive the per-visit price.
 
+import { area } from '../validation.js';
 import { SNOW } from "../rates.js";
 
 const round5 = (n) => Math.round(n / 5) * 5;
 
 export function snowEstimate(drivewaySqft) {
+  area(drivewaySqft, 'drivewaySqft');
   const over = Math.max(0, drivewaySqft - SNOW.baseDrivewaySqft);
   const mid = Math.max(
     SNOW.minimum,
