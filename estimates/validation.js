@@ -35,7 +35,10 @@ export async function fetchJson(url, fetchImpl = fetch, timeoutMs = 5000) {
   try {
     return await Promise.race([
       (async () => {
-        const response = await fetchImpl(url, { signal: controller.signal, redirect: 'error' });
+        // Workers supports manual/follow, but rejects the standard error mode.
+        // https://developers.cloudflare.com/workers/runtime-apis/request/
+        // Manual plus the status check still refuses redirected provider requests.
+        const response = await fetchImpl(url, { signal: controller.signal, redirect: 'manual' });
         if (!response.ok) throw new Error('Lookup unavailable.');
         return await response.json();
       })(),

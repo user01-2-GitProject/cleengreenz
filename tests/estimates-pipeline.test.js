@@ -111,3 +111,18 @@ test('browser-compatible module import does not depend on process globals', asyn
   try { globalThis.process = undefined; await import('../estimates/lot.js?browser-test'); }
   finally { globalThis.process = saved; }
 });
+
+
+test('provider fetch uses Workers-compatible manual redirects and rejects redirect responses', async () => {
+  const workersFetch = async (_url, options) => {
+    if (options.redirect === 'error') throw new TypeError('Unsupported redirect mode: error');
+    assert.equal(options.redirect, 'manual');
+    return response(geo);
+  };
+  const match = await geocodeAddress(address, workersFetch);
+  assert.equal(match.matchedAddress, geo.result.addressMatches[0].matchedAddress);
+  await assert.rejects(fetchJson('https://example.test', async (_url, options) => {
+    assert.equal(options.redirect, 'manual');
+    return new Response(null, { status: 302, headers: { location: 'https://other.example/' } });
+  }), /Lookup unavailable/u);
+});
