@@ -392,17 +392,17 @@
 
   /* Meet Chris */
   .meet { background: var(--cream-2); }
-  .meet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
-  .meet .video-card {
-    border-radius: 28px; overflow: hidden; border: 8px solid var(--paper); box-shadow: var(--shadow);
-    transform: rotate(-1.5deg); aspect-ratio: 16 / 9; background: var(--cream);
-  }
-  .meet video { width: 100%; height: 100%; object-fit: cover; }
+  .meet-grid { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 64px; align-items: center; }
+  .meet-photo { margin: 0; width: 100%; max-width: 380px; justify-self: center; border: 8px solid var(--paper); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); }
+  .meet-photo img { width: 100%; height: auto; }
   .checks { list-style: none; padding: 0; margin: 24px 0 32px; display: grid; gap: 14px; }
   .checks li { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; }
   .checks svg { flex: none; width: 26px; height: 26px; color: var(--leaf); margin-top: 1px; }
   .checks span { font-weight: 400; color: var(--bark-soft); display: block; }
-  @media (max-width: 900px) { .meet-grid { grid-template-columns: 1fr; gap: 40px; } }
+  @media (max-width: 900px) {
+    .meet-grid { grid-template-columns: 1fr; gap: 40px; }
+    .meet-photo { max-width: 320px; }
+  }
 
   /* Steps */
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; counter-reset: step; list-style: none; padding: 0; margin: 0; }
@@ -707,11 +707,9 @@
   <!-- Meet Chris -->
   <section class="section meet" id="meet" tabindex="-1">
     <div class="wrap meet-grid">
-      <div class="video-card reveal">
-        <video autoplay muted loop playsinline preload="none" poster="media/mascot-mower.jpg" aria-label="Cartoon Chris riding a mower across a freshly striped lawn">
-          <source src="media/mascot-mower.mp4" type="video/mp4">
-        </video>
-      </div>
+      <figure class="meet-photo reveal">
+        <img src="media/chris-liebetrau-clean.webp" alt="Chris Liebetrau, owner of Cleen Greenz" width="1086" height="1448" loading="lazy" decoding="async">
+      </figure>
       <div class="reveal">
         <div class="eyebrow">Meet the guy on the mower</div>
         <h2>A real person, not a call center</h2>
