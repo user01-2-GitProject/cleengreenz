@@ -28,9 +28,9 @@ test('confirmation gate, safe property rendering, and grass job minimum', async 
   const e = setup(async () => ({ ok: true, json: async () => data }));
   e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush();
   assert.equal(e.get('yard-price-review').hidden, false); assert.equal(e.get('yard-price-result').hidden, true);
-  assert.match(e.get('yard-surfaces').textContent, /assumed, not measured/); assert.match(e.get('yard-source').textContent, /Low-confidence/);
+  assert.match(e.get('yard-surfaces').textContent, /typical for the area/); assert.match(e.get('yard-source').textContent, /typical lot for the area/);
   assert.equal(e.get('yard-price-review').querySelectorAll('img,script').length, 0);
-  e.confirm(); assert.equal(e.get('yard-price-result').hidden, false); assert.equal(e.get('yard-price-range').textContent, '$50–$50');
+  e.confirm(); assert.equal(e.get('yard-price-result').hidden, false); assert.equal(e.get('yard-price-range').textContent, '$50');
   assert.match(e.get('yard-price-context').textContent, /\$50 minimum/); assert.equal(e.d.activeElement.id, 'yard-price-result');
   assert.equal(e.window.localStorage.length, 0); assert.equal(e.window.location.search, '');
 });
@@ -40,7 +40,7 @@ test('quote handoff preserves existing notes, emits input events, and avoids dup
   let changes = 0; e.get('f-notes').addEventListener('input', () => changes++);
   e.submit(); await e.flush(); e.confirm(); e.get('yard-quote-handoff').click(); e.get('yard-quote-handoff').click();
   assert.equal(e.get('f-address').value, '123 MAIN ST, NILES MI'); assert.equal(e.get('f-service').value, 'Fall leaf cleanup');
-  assert.match(e.get('f-notes').value, /^Please close the gate\./); assert.equal((e.get('f-notes').value.match(/\[Yard estimate:/g) || []).length, 1);
+  assert.match(e.get('f-notes').value, /^Please close the gate\./); assert.equal((e.get('f-notes').value.match(/\[Yard quote:/g) || []).length, 1);
   assert.equal(changes, 2); assert.ok(e.get('f-notes').value.length <= 500);
   assert.deepEqual(JSON.parse(e.calls[0][1].body), { address: '123 Main St, Niles MI', properties: 1, cover: 'moderate', amount: 'moderate', lotSqft: 9000 });
   assert.equal(e.calls[0][0], '/api/estimate'); assert.equal(e.calls[0][1].method, 'POST');
@@ -77,5 +77,5 @@ test('handoff reopens an already completed quote form before prefilling it', asy
 test('technical warning codes have plain language explanations', async () => {
   const data = fixture(); data.property.warnings = ['parcel-not-configured', 'address-not-matched'];
   const e = setup(async () => ({ ok: true, json: async () => data })); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush();
-  assert.match(e.get('yard-warnings').textContent, /not connected yet/); assert.doesNotMatch(e.get('yard-warnings').textContent, /parcel-not-configured|address-not-matched/);
+  assert.match(e.get('yard-warnings').textContent, /typical lot for the area/); assert.doesNotMatch(e.get('yard-warnings').textContent, /parcel-not-configured|address-not-matched/);
 });

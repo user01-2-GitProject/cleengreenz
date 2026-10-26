@@ -15,7 +15,7 @@
   function loading(value) {
     pending = value;
     submit.disabled = value;
-    submit.textContent = value ? 'Checking your property…' : 'Find my rough estimate';
+    submit.textContent = value ? 'Checking your property…' : 'Get my price';
     form.setAttribute('aria-busy', String(value));
   }
   function clear() {
@@ -81,22 +81,22 @@
         dt.textContent = entry[2];
         var basis = property.surfaceBasis && property.surfaceBasis[entry[0]];
         var supplied = Object.prototype.hasOwnProperty.call(payload, entry[1]);
-        dd.textContent = number.format(property[entry[1]]) + ' sq ft — ' + (supplied ? 'provided by you' : basis === 'parcel' || (entry[0] === 'lot' && property.source === 'county-parcel') ? 'county parcel record' : 'assumed, not measured');
+        dd.textContent = number.format(property[entry[1]]) + ' sq ft — ' + (supplied ? 'provided by you' : basis === 'parcel' || (entry[0] === 'lot' && property.source === 'county-parcel') ? 'county parcel record' : 'typical for the area');
         list.append(dt, dd);
       });
-      byId('yard-source').textContent = property.confidence === 'low' ? 'Low-confidence starting point. No measured lot size was available. Add your lot size above for a better starting point.' : 'Lot records do not measure the exact lawn or snow-clearing area. Check each area before continuing.';
+      byId('yard-source').textContent = property.confidence === 'low' ? 'Priced on a typical lot for the area. Know your lot size? Add it above and your price updates.' : 'Sized from county parcel records. Adjust the areas above if you know them better — your price updates with you.';
       var warnings = byId('yard-warnings'); warnings.replaceChildren();
       var warningCopy = {
-        'parcel-not-configured': 'County parcel records are not connected yet. The lot size is a typical local starting point.',
+        'parcel-not-configured': 'We priced this on a typical lot for the area. Add your lot size if you know it.',
         'parcel-not-found': 'We could not identify one county parcel for this address. Check or enter your lot size.',
         'parcel-lookup-unavailable': 'County lot records could not be reached. Check or enter your lot size.',
-        'lot-area-unknown': 'Your lot size is unknown, so a typical lot size is assumed.',
+        'lot-area-unknown': 'Priced on a typical lot for the area. Add your lot size if you know it.',
         'address-not-matched': 'The address could not be matched. Check its spelling, city, state, and ZIP before confirming.',
         'address-lookup-unavailable': 'Address lookup is temporarily unavailable. The address shown has not been verified.'
       };
       (Array.isArray(property.warnings) ? property.warnings : []).forEach(function (warning) { var li = document.createElement('li'); li.textContent = warningCopy[warning] || 'Some property details could not be verified. Check the address and areas carefully.'; warnings.append(li); });
       review.hidden = false;
-      status.textContent = 'Check the address and areas below, then confirm them to see your price range.';
+      status.textContent = 'Check the address and areas below, then confirm to see your price.';
       review.focus();
     } catch (err) {
       if (requestVersion !== version || err.name === 'AbortError') return;
@@ -111,7 +111,7 @@
   confirmation.addEventListener('change', function () {
     if (!candidate || !confirmation.checked) { result.hidden = true; return; }
     var range = candidate.range;
-    byId('yard-price-range').textContent = money(range.low) + '–' + money(range.high);
+    byId('yard-price-range').textContent = money(range.mid);
     byId('yard-price-context').textContent = serviceNames[candidate.service] + ' for one property, one visit.' + (candidate.service === 'grass' ? ' Includes the $50 minimum per stop.' : candidate.service === 'leaves' ? ' Based on ' + candidate.payload.cover + ' tree cover and a ' + candidate.payload.amount + ' amount of leaf work.' : ' Based on the driveway and walk area above.');
     result.hidden = false; result.focus();
   });
@@ -125,11 +125,11 @@
     leadService.value = leadServices[candidate.service];
     var basis = property.source === 'provided' ? 'provided lot' : property.source === 'county-parcel' ? 'county lot' : 'assumed lot';
     var leavesDetail = candidate.service === 'leaves' ? '; ' + candidate.payload.cover + ' cover/' + candidate.payload.amount + ' leaves' : '';
-    var summary = '[Yard estimate: ' + serviceNames[candidate.service] + ' ' + money(candidate.range.low) + '–' + money(candidate.range.high) + '/visit; lot ' + number.format(property.lotSqft) + ', lawn ' + number.format(property.lawnSqft) + ', drive/walk ' + number.format(property.drivewaySqft) + ' sq ft; ' + basis + leavesDetail + '; areas confirmed, rough quote.]';
+    var summary = '[Yard quote: ' + serviceNames[candidate.service] + ' ' + money(candidate.range.mid) + '/visit; lot ' + number.format(property.lotSqft) + ', lawn ' + number.format(property.lawnSqft) + ', drive/walk ' + number.format(property.drivewaySqft) + ' sq ft; ' + basis + leavesDetail + '; areas confirmed.]';
     var existing = notes.value;
     if (previousSummary) existing = existing.replace(previousSummary, '').trimEnd();
     var combined = existing + (existing ? '\n' : '') + summary;
-    if (combined.length <= 500) { notes.value = combined; previousSummary = summary; byId('yard-handoff-status').textContent = 'Address, service, and estimate added to your request below.'; }
+    if (combined.length <= 500) { notes.value = combined; previousSummary = summary; byId('yard-handoff-status').textContent = 'Address, service, and your price added to your request below.'; }
     else { byId('yard-handoff-status').textContent = 'Address and service added. Your existing notes were preserved; shorten them if you want room for the estimate summary.'; }
     [leadAddress, leadService, notes].forEach(function (field) { field.dispatchEvent(new Event('input', { bubbles: true })); field.dispatchEvent(new Event('change', { bubbles: true })); });
     var quote = byId('estimate');

@@ -818,7 +818,7 @@
       <div>
         <span class="yard-kicker">A little less guesswork</span>
         <h2 id="yard-heading">Price your yard.</h2>
-        <p class="lead">Get a rough per-visit range for mowing, leaves, or snow. Check the address and yard size, then ask Chris to confirm your quote.</p>
+        <p class="lead">Get your per-visit price for mowing, leaves, or snow. Check the address and yard size, and you're ready to book.</p>
         <p>Every yard is different. Access, obstacles, and the work needed can change the final price. Mowing starts at $50 per stop.</p>
         <p class="yard-help">Your address is sent to the US Census Geocoder for a match and, when configured, a county parcel service for lot size. We do not put it in the page URL, browser storage, or analytics.</p>
       </div>
@@ -835,13 +835,13 @@
             <div class="field-row"><div class="field"><label for="yard-lawn">Mowable lawn <span class="opt">(sq ft)</span></label><input id="yard-lawn" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="If known"></div><div class="field"><label for="yard-driveway">Driveway + walk <span class="opt">(sq ft)</span></label><input id="yard-driveway" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="If known"></div></div>
           </details>
           <p id="yard-price-error" class="yard-error" role="alert" hidden></p>
-          <button class="btn btn-primary" id="yard-price-submit" type="submit">Find my rough estimate</button>
+          <button class="btn btn-primary" id="yard-price-submit" type="submit">Get my price</button>
           <p id="yard-price-status" class="yard-help" role="status" aria-live="polite"></p>
         </form>
         <div id="yard-price-review" class="yard-review" tabindex="-1" hidden>
           <h3>First, check your property</h3><p id="yard-matched-address"></p><dl id="yard-surfaces"></dl><p id="yard-source" class="yard-help"></p><ul id="yard-warnings" class="yard-help"></ul>
-          <label class="yard-confirm" for="yard-confirm"><input id="yard-confirm" type="checkbox"><span>I confirm this address is correct and these areas are reasonable for my property. I understand any assumed areas are not measurements.</span></label>
-          <div id="yard-price-result" tabindex="-1" hidden><p class="yard-kicker">Rough estimate · per visit</p><p id="yard-price-range" class="yard-range"></p><p id="yard-price-context"></p><p class="yard-help">This is a planning range, not a binding quote. Chris will confirm the scope and final price with you.</p><button class="btn btn-primary" type="button" id="yard-quote-handoff">Ask Chris to confirm this quote</button><p id="yard-handoff-status" role="status" class="yard-help"></p></div>
+          <label class="yard-confirm" for="yard-confirm"><input id="yard-confirm" type="checkbox"><span>I confirm this address is correct and these areas look right for my property.</span></label>
+          <div id="yard-price-result" tabindex="-1" hidden><p class="yard-kicker">Your price · per visit</p><p id="yard-price-range" class="yard-range"></p><p id="yard-price-context"></p><button class="btn btn-primary" type="button" id="yard-quote-handoff">Book this price</button><p id="yard-handoff-status" role="status" class="yard-help"></p></div>
         </div>
       </div>
     </div>
