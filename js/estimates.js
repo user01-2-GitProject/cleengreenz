@@ -27,7 +27,14 @@
     review.hidden = result.hidden = true;
     error.hidden = true;
     status.textContent = '';
-    address.removeAttribute('aria-invalid');
+    [address, byId('yard-lot'), byId('yard-lawn'), byId('yard-driveway')].forEach(function (input) {
+      if (!input) return;
+      input.removeAttribute('aria-invalid');
+      var describedBy = input.getAttribute('aria-describedby') || '';
+      var ids = describedBy.split(/\s+/).filter(function (id) { return id && id !== 'yard-price-error'; });
+      if (ids.length) input.setAttribute('aria-describedby', ids.join(' '));
+      else input.removeAttribute('aria-describedby');
+    });
     byId('yard-leaves-options').hidden = service.value !== 'leaves';
   }
   var intro = byId('yard-intro'), startBtn = byId('yard-start');
@@ -44,7 +51,16 @@
   function fail(message, field) {
     error.textContent = message;
     error.hidden = false;
-    if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+    if (field) {
+      field.setAttribute('aria-invalid', 'true');
+      var describedBy = field.getAttribute('aria-describedby') || '';
+      var ids = describedBy.split(/\s+/).filter(Boolean);
+      if (ids.indexOf('yard-price-error') === -1) {
+        ids.push('yard-price-error');
+        field.setAttribute('aria-describedby', ids.join(' '));
+      }
+      field.focus();
+    }
   }
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
