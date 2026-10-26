@@ -32,12 +32,13 @@ a plain-English explanation of the math.
 Honest version: there is no free national parcel database. The chain in
 `lot.js` is:
 
-1. **County parcel record (high confidence).** Many counties publish a
+1. **County parcel record (medium confidence).** Many counties publish a
    public ArcGIS REST parcel layer with an acreage field. Set
    `PARCEL_LAYER_URL` to that layer's query endpoint and
    `PARCEL_ACRES_FIELD` to its acreage attribute (default `ACREAGE`) and
-   lot size comes straight from the county. **First wire-up target:
-   Berrien County GIS** (Niles) — the service area's own parcels.
+   lot size comes from the county record. The Pages endpoint defaults to
+   Berrien County's current layer (`acres`); other callers pass explicit config.
+   A coordinate match is not confirmation of surveyed parcel boundaries.
 2. **Typical-lot fallback (low confidence).** If no parcel layer answers,
    the tool assumes a typical in-town lot (7,840 sq ft, in `rates.js`) and
    the result is labeled `confidence: "low"` with source
