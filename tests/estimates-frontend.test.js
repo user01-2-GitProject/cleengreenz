@@ -79,3 +79,14 @@ test('technical warning codes have plain language explanations', async () => {
   const e = setup(async () => ({ ok: true, json: async () => data })); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush();
   assert.match(e.get('yard-warnings').textContent, /typical lot for the area/); assert.doesNotMatch(e.get('yard-warnings').textContent, /parcel-not-configured|address-not-matched/);
 });
+
+test('infographic gates the tool until it is touched', async () => {
+  const e = setup();
+  assert.equal(e.get('yard-intro').hidden, false);
+  assert.equal(e.get('yard-price-form').hidden, true);
+  assert.equal(e.get('yard-price-result').hidden, true);
+  e.get('yard-start').click();
+  assert.equal(e.get('yard-intro').hidden, true);
+  assert.equal(e.get('yard-price-form').hidden, false);
+  assert.equal(e.get('yard-price-result').hidden, true);
+});

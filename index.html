@@ -458,6 +458,14 @@
   .yard-review dd { margin:0; }
   .yard-confirm { display:flex; align-items:flex-start; gap:10px; margin:20px 0; }
   .yard-confirm input { width:20px; height:20px; flex:none; margin-top:3px; accent-color:var(--forest); }
+  .yard-intro { cursor:pointer; }
+  .yard-intro h3 { font-size:1.5rem; margin:6px 0 4px; }
+  .yard-steps { list-style:none; margin:20px 0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .yard-steps li { display:flex; gap:12px; align-items:flex-start; }
+  .yard-step-num { flex:none; width:34px; height:34px; border-radius:50%; background:var(--forest); color:var(--paper); font-family:"Fredoka",sans-serif; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .yard-steps strong { display:block; color:var(--forest); }
+  .yard-steps p { margin:2px 0 0; font-size:.92rem; color:var(--bark-soft); }
+  @media(max-width:600px) { .yard-steps { grid-template-columns:1fr; } }
   .yard-range { color:var(--forest); font-family:"Fredoka",sans-serif; font-size:clamp(2rem,5vw,3rem); margin:8px 0; }
   .yard-error { color:var(--maple); font-weight:700; }
   .yard-estimator [hidden] { display:none !important; }
@@ -819,11 +827,23 @@
         <span class="yard-kicker">A little less guesswork</span>
         <h2 id="yard-heading">Price your yard.</h2>
         <p class="lead">Get your per-visit price for mowing, leaves, or snow. Check the address and yard size, and you're ready to book.</p>
-        <p>Every yard is different. Access, obstacles, and the work needed can change the final price. Mowing starts at $50 per stop.</p>
+        <p>One flat per-visit price, right here on the page — no callback, no waiting. Mowing starts at $50 per stop.</p>
         <p class="yard-help">Your address is sent to the US Census Geocoder for a match and, when configured, a county parcel service for lot size. We do not put it in the page URL, browser storage, or analytics.</p>
       </div>
       <div class="yard-card">
-        <form id="yard-price-form" novalidate>
+        <div id="yard-intro" class="yard-intro">
+          <span class="yard-kicker">How it works</span>
+          <h3>Your yard, priced in under a minute.</h3>
+          <ol class="yard-steps">
+            <li><span class="yard-step-num">1</span><div><strong>Drop your address</strong><p>Tell us where the yard is — that’s all we need to start.</p></div></li>
+            <li><span class="yard-step-num">2</span><div><strong>We measure the lot</strong><p>County parcel records size your property for us.</p></div></li>
+            <li><span class="yard-step-num">3</span><div><strong>Pick the work</strong><p>Grass, leaves, or snow — every service priced per visit.</p></div></li>
+            <li><span class="yard-step-num">4</span><div><strong>Get your price</strong><p>One flat price, right here. Book it and Chris puts you on the schedule.</p></div></li>
+          </ol>
+          <button class="btn btn-primary" type="button" id="yard-start" aria-expanded="false" aria-controls="yard-price-form">Price my yard</button>
+          <p class="yard-help">Tap to start — no price until you ask for it.</p>
+        </div>
+        <form id="yard-price-form" novalidate hidden>
           <div class="field"><label for="yard-address">Property address</label><input id="yard-address" name="address" autocomplete="street-address" maxlength="200" required placeholder="Street, city, state, ZIP" aria-describedby="yard-address-help yard-price-error"><small id="yard-address-help" class="yard-help">Include the city and state so we can find the right property.</small></div>
           <div class="field"><label for="yard-service">What would you like priced?</label><select id="yard-service"><option value="grass">Grass cutting</option><option value="leaves">Leaf cleanup</option><option value="snow">Snow clearing</option></select></div>
           <div id="yard-leaves-options" class="field-row" hidden>

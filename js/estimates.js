@@ -30,6 +30,15 @@
     address.removeAttribute('aria-invalid');
     byId('yard-leaves-options').hidden = service.value !== 'leaves';
   }
+  var intro = byId('yard-intro'), startBtn = byId('yard-start');
+  function openTool() {
+    if (intro) intro.hidden = true;
+    form.hidden = false;
+    if (startBtn) startBtn.setAttribute('aria-expanded', 'true');
+    address.focus();
+  }
+  if (startBtn) startBtn.addEventListener('click', openTool);
+  if (intro) intro.addEventListener('click', function (event) { if (event.target !== startBtn) openTool(); });
   form.addEventListener('input', clear);
   form.addEventListener('change', clear);
   function fail(message, field) {
