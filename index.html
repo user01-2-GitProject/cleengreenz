@@ -442,6 +442,28 @@
   .faq details[open] summary::after { transform: rotate(45deg); }
   .faq details p { padding: 0 24px 20px; margin: 0; color: var(--bark-soft); }
 
+  /* Instant yard estimate */
+  .yard-estimator { background: var(--cream); }
+  .yard-price-grid { display:grid; grid-template-columns:.8fr 1.2fr; gap:40px; align-items:start; }
+  .yard-card { background:var(--paper); border:2px solid var(--cream-2); border-radius:28px; padding:32px; box-shadow:0 18px 44px -30px var(--forest); }
+  .yard-card h3 { color:var(--forest); }
+  .yard-kicker { color:var(--pumpkin-2); font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:.85rem; }
+  .yard-estimator details { margin:18px 0; padding:14px; border:1px solid var(--cream-2); border-radius:14px; }
+  .yard-estimator summary { cursor:pointer; font-weight:700; color:var(--forest); }
+  .yard-estimator details .field:first-of-type { margin-top:16px; }
+  .yard-help { font-size:.9rem; color:var(--bark-soft); }
+  .yard-review { border-top:2px dashed var(--cream-2); margin-top:24px; padding-top:24px; }
+  .yard-review dl { display:grid; grid-template-columns:1fr 1.5fr; gap:8px 16px; }
+  .yard-review dt { font-weight:700; }
+  .yard-review dd { margin:0; }
+  .yard-confirm { display:flex; align-items:flex-start; gap:10px; margin:20px 0; }
+  .yard-confirm input { width:20px; height:20px; flex:none; margin-top:3px; accent-color:var(--forest); }
+  .yard-range { color:var(--forest); font-family:"Fredoka",sans-serif; font-size:clamp(2rem,5vw,3rem); margin:8px 0; }
+  .yard-error { color:var(--maple); font-weight:700; }
+  .yard-estimator [hidden] { display:none !important; }
+  .yard-estimator button:disabled { opacity:.6; cursor:wait; }
+  @media(max-width:900px) { .yard-price-grid { grid-template-columns:1fr; gap:24px; } .yard-card { padding:24px; } }
+
   /* Estimate */
   .estimate-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 56px; align-items: start; }
   .contact-lines { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; font-weight: 700; }
@@ -606,7 +628,7 @@
         <h1><span class="hi">Hey neighbor!</span>Beautiful lawns without giving up your weekend.</h1>
         <p class="lead">I'm Chris. We mow, rake, seed and plow all over Michiana, so you can spend Saturday doing literally anything else.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#estimate" data-lead-location="hero">Get my free estimate
+          <a class="btn btn-primary" href="#price-your-yard">Price your yard
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
           <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="hero" aria-label="Call or text Chris at (269) 362-8286">
@@ -791,6 +813,40 @@
   </section>
 
   <!-- Estimate -->
+  <section class="section yard-estimator" id="price-your-yard" aria-labelledby="yard-heading" tabindex="-1">
+    <div class="wrap yard-price-grid">
+      <div>
+        <span class="yard-kicker">A little less guesswork</span>
+        <h2 id="yard-heading">Price your yard.</h2>
+        <p class="lead">Get a rough per-visit range for mowing, leaves, or snow. Check the address and yard size, then ask Chris to confirm your quote.</p>
+        <p>Every yard is different. Access, obstacles, and the work needed can change the final price. Mowing starts at $50 per stop.</p>
+        <p class="yard-help">Your address is sent to the US Census Geocoder for a match and, when configured, a county parcel service for lot size. We do not put it in the page URL, browser storage, or analytics.</p>
+      </div>
+      <div class="yard-card">
+        <form id="yard-price-form" novalidate>
+          <div class="field"><label for="yard-address">Property address</label><input id="yard-address" name="address" autocomplete="street-address" maxlength="200" required placeholder="Street, city, state, ZIP" aria-describedby="yard-address-help yard-price-error"><small id="yard-address-help" class="yard-help">Include the city and state so we can find the right property.</small></div>
+          <div class="field"><label for="yard-service">What would you like priced?</label><select id="yard-service"><option value="grass">Grass cutting</option><option value="leaves">Leaf cleanup</option><option value="snow">Snow clearing</option></select></div>
+          <div id="yard-leaves-options" class="field-row" hidden>
+            <div class="field"><label for="yard-cover">Tree cover</label><select id="yard-cover"><option value="light">Light — a few trees</option><option value="moderate" selected>Moderate</option><option value="heavy">Heavy — many trees</option></select></div>
+            <div class="field"><label for="yard-amount">Leaves to clear this visit</label><select id="yard-amount"><option value="light">Light touch-up</option><option value="moderate" selected>Moderate cleanup</option><option value="full">Full cleanup</option></select></div>
+          </div>
+          <details id="yard-area-details"><summary>Know your yard size? Add it here</summary><p class="yard-help">Optional, in square feet. A lot includes the house and other surfaces; lawn and driveway sizes describe just the area to service.</p>
+            <div class="field"><label for="yard-lot">Total lot area <span class="opt">(sq ft)</span></label><input id="yard-lot" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="e.g. 7840"></div>
+            <div class="field-row"><div class="field"><label for="yard-lawn">Mowable lawn <span class="opt">(sq ft)</span></label><input id="yard-lawn" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="If known"></div><div class="field"><label for="yard-driveway">Driveway + walk <span class="opt">(sq ft)</span></label><input id="yard-driveway" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="If known"></div></div>
+          </details>
+          <p id="yard-price-error" class="yard-error" role="alert" hidden></p>
+          <button class="btn btn-primary" id="yard-price-submit" type="submit">Find my rough estimate</button>
+          <p id="yard-price-status" class="yard-help" role="status" aria-live="polite"></p>
+        </form>
+        <div id="yard-price-review" class="yard-review" tabindex="-1" hidden>
+          <h3>First, check your property</h3><p id="yard-matched-address"></p><dl id="yard-surfaces"></dl><p id="yard-source" class="yard-help"></p><ul id="yard-warnings" class="yard-help"></ul>
+          <label class="yard-confirm" for="yard-confirm"><input id="yard-confirm" type="checkbox"><span>I confirm this address is correct and these areas are reasonable for my property. I understand any assumed areas are not measurements.</span></label>
+          <div id="yard-price-result" tabindex="-1" hidden><p class="yard-kicker">Rough estimate · per visit</p><p id="yard-price-range" class="yard-range"></p><p id="yard-price-context"></p><p class="yard-help">This is a planning range, not a binding quote. Chris will confirm the scope and final price with you.</p><button class="btn btn-primary" type="button" id="yard-quote-handoff">Ask Chris to confirm this quote</button><p id="yard-handoff-status" role="status" class="yard-help"></p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section green" id="estimate" tabindex="-1">
     <div class="wrap estimate-grid">
       <div class="estimate-side reveal">
@@ -1871,5 +1927,6 @@
   })();
 </script>
 <script src="js/leads.js" defer></script>
+<script src="js/estimates.js" defer></script>
 </body>
 </html>
