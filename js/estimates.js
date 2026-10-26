@@ -7,6 +7,11 @@
   var submit = byId('yard-price-submit'), error = byId('yard-price-error');
   var status = byId('yard-price-status'), review = byId('yard-price-review');
   var confirmation = byId('yard-confirm'), result = byId('yard-price-result');
+  // Cache form inputs and leaf options element references to eliminate repeated DOM lookups on every keystroke
+  var lotInput = byId('yard-lot'), lawnInput = byId('yard-lawn'), drivewayInput = byId('yard-driveway');
+  var leavesOptions = byId('yard-leaves-options');
+  var inputFields = [address, lotInput, lawnInput, drivewayInput];
+
   var version = 0, controller, pending = false, candidate = null, previousSummary = '';
   var serviceNames = { grass: 'Grass cutting', leaves: 'Leaf cleanup', snow: 'Snow clearing' };
   var leadServices = { grass: 'Weekly mowing and edging', leaves: 'Fall leaf cleanup', snow: 'Snow removal' };
@@ -18,6 +23,9 @@
     submit.textContent = value ? 'Checking your property…' : 'Get my price';
     form.setAttribute('aria-busy', String(value));
   }
+  // Performance optimization: Guard DOM attribute modification and string manipulation with
+  // attribute presence checks (hasAttribute('aria-invalid') and describedBy.indexOf('yard-price-error')).
+  // This bypasses DOM mutations, string regex splits, and array allocations on valid user keystrokes.
   function clear() {
     version++;
     if (controller) controller.abort();
@@ -27,15 +35,20 @@
     review.hidden = result.hidden = true;
     error.hidden = true;
     status.textContent = '';
-    [address, byId('yard-lot'), byId('yard-lawn'), byId('yard-driveway')].forEach(function (input) {
-      if (!input) return;
-      input.removeAttribute('aria-invalid');
-      var describedBy = input.getAttribute('aria-describedby') || '';
-      var ids = describedBy.split(/\s+/).filter(function (id) { return id && id !== 'yard-price-error'; });
-      if (ids.length) input.setAttribute('aria-describedby', ids.join(' '));
-      else input.removeAttribute('aria-describedby');
-    });
-    byId('yard-leaves-options').hidden = service.value !== 'leaves';
+    for (var i = 0; i < inputFields.length; i++) {
+      var input = inputFields[i];
+      if (!input) continue;
+      if (input.hasAttribute('aria-invalid')) {
+        input.removeAttribute('aria-invalid');
+      }
+      var describedBy = input.getAttribute('aria-describedby');
+      if (describedBy && describedBy.indexOf('yard-price-error') !== -1) {
+        var ids = describedBy.split(/\s+/).filter(function (id) { return id && id !== 'yard-price-error'; });
+        if (ids.length) input.setAttribute('aria-describedby', ids.join(' '));
+        else input.removeAttribute('aria-describedby');
+      }
+    }
+    if (leavesOptions) leavesOptions.hidden = service.value !== 'leaves';
   }
   var intro = byId('yard-intro'), startBtn = byId('yard-start');
   function openTool() {
