@@ -19,9 +19,25 @@ function setup(fetchImpl) {
   return { window, d, get, input, change, submit, calls, flush, confirm };
 }
 test('calculator validates address and area before making requests', () => {
-  const e = setup(); e.submit(); assert.equal(e.calls.length, 0); assert.equal(e.d.activeElement.id, 'yard-address');
-  e.input('yard-address', '123 Main St, Niles MI'); e.input('yard-lot', '-1'); e.submit();
+  const e = setup();
+  assert.equal(e.get('yard-address').getAttribute('aria-required'), 'true');
+  const reqSpan = e.d.querySelector('label[for="yard-address"] .req');
+  assert.ok(reqSpan, 'yard address label contains required visual indicator');
+  e.submit(); assert.equal(e.calls.length, 0); assert.equal(e.d.activeElement.id, 'yard-address');
+  assert.equal(e.get('yard-address').getAttribute('aria-invalid'), 'true');
+  assert.match(e.get('yard-address').getAttribute('aria-describedby'), /yard-price-error/);
+
+  e.input('yard-address', '123 Main St, Niles MI');
+  assert.equal(e.get('yard-address').hasAttribute('aria-invalid'), false);
+
+  e.input('yard-lot', '-1'); e.submit();
   assert.equal(e.calls.length, 0); assert.equal(e.d.activeElement.id, 'yard-lot'); assert.equal(e.get('yard-area-details').open, true);
+  assert.equal(e.get('yard-lot').getAttribute('aria-invalid'), 'true');
+  assert.match(e.get('yard-lot').getAttribute('aria-describedby'), /yard-price-error/);
+
+  e.input('yard-lot', '8000');
+  assert.equal(e.get('yard-lot').hasAttribute('aria-invalid'), false);
+  assert.doesNotMatch(e.get('yard-lot').getAttribute('aria-describedby') || '', /yard-price-error/);
 });
 test('confirmation gate, safe property rendering, and grass job minimum', async () => {
   const data = fixture(); data.property.matchedAddress = '<img src=x onerror=alert(1)>'; data.property.warnings = ['<script>bad()</script>'];
