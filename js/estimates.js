@@ -15,7 +15,13 @@
   function loading(value) {
     pending = value;
     submit.disabled = value;
-    submit.textContent = value ? 'Checking your property…' : 'Get my price';
+    if (value) {
+      submit.setAttribute('aria-busy', 'true');
+      submit.innerHTML = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Checking your property…';
+    } else {
+      submit.removeAttribute('aria-busy');
+      submit.textContent = 'Get my price';
+    }
     form.setAttribute('aria-busy', String(value));
   }
   function clear() {
