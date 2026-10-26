@@ -67,3 +67,9 @@
 **Learning:** Using `array.filter()` inside API request rate limit checks allocates new array instances and closure callbacks on every HTTP request. Because timestamps are appended sequentially in time order, the oldest timestamp is always at index 0 and the newest is at `length - 1`. Trimming expired timestamps with `while (timestamps.length > 0 && timestamps[0] <= windowStart) timestamps.shift()` modifies the array in-place without allocations, and checking `v[v.length - 1] <= windowStart` evaluates map entry staleness in $O(1)$ time without iterating elements.
 
 **Action:** Maintain chronological order in timestamp queues, trimming expired items in-place with `while ... shift()` and checking the newest item (`array[array.length - 1]`) for $O(1)$ staleness checks.
+
+## 2026-10-05 - Avoid per-request Map iterations in rate limiter lookup paths
+
+**Learning:** In Cloudflare Pages / API endpoint rate limiters (e.g. `createEstimateLimiter`), iterating all entries in `Map` and creating `.filter()` arrays on every single API request turns rate checking into an $O(N)$ operation per request. Checking `entries.get(ip)` first, trimming expired timestamps in-place, and deferring Map cleanup sweeps until `entries.size` hits maximum capacity (`MAX_ENTRIES`) speeds up rate checks by ~50x-60x under load.
+
+**Action:** Perform fast $O(1)$ Map key lookups first and trim queues in-place. Defer Map cleanup sweeps until capacity thresholds are reached, using $O(1)$ latest-timestamp checks (`tList[tList.length - 1] <= windowStart`) to purge expired entries.

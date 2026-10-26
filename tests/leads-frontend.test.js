@@ -561,7 +561,7 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
     );
   });
 
-  await t.test('tracks clicks on free estimate links, pre-selects service option if data-service set, and shifts focus to first input field', async () => {
+  await t.test('tracks clicks on contact links, pre-selects service option if data-service set, and shifts focus to first input field', async () => {
     const tracked = [];
     const { window, document } = setupEnvironment({
       trackLead: (type, location) => {
