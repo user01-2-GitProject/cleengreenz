@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cleen Greenz Lawn Care | Niles, MI</title>
-<meta name="description" content="Friendly, reliable lawn care in Niles, Michigan and the Michiana area since 2009. Mowing, edging, leaf cleanup, seeding and fertilizing, and snow removal. Free estimates.">
+<meta name="description" content="Friendly, reliable lawn care in Niles, Michigan and the Michiana area since 2009. Mowing, edging, leaf cleanup, seeding and fertilizing, and snow removal.">
 <link rel="canonical" href="https://cleengreenz.com/">
 <meta name="theme-color" content="#1f4d2b">
 <meta property="og:title" content="Cleen Greenz Lawn Care">
@@ -458,6 +458,14 @@
   .yard-review dd { margin:0; }
   .yard-confirm { display:flex; align-items:flex-start; gap:10px; margin:20px 0; }
   .yard-confirm input { width:20px; height:20px; flex:none; margin-top:3px; accent-color:var(--forest); }
+  .yard-intro { cursor:pointer; }
+  .yard-intro h3 { font-size:1.5rem; margin:6px 0 4px; }
+  .yard-steps { list-style:none; margin:20px 0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .yard-steps li { display:flex; gap:12px; align-items:flex-start; }
+  .yard-step-num { flex:none; width:34px; height:34px; border-radius:50%; background:var(--forest); color:var(--paper); font-family:"Fredoka",sans-serif; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .yard-steps strong { display:block; color:var(--forest); }
+  .yard-steps p { margin:2px 0 0; font-size:.92rem; color:var(--bark-soft); }
+  @media(max-width:600px) { .yard-steps { grid-template-columns:1fr; } }
   .yard-range { color:var(--forest); font-family:"Fredoka",sans-serif; font-size:clamp(2rem,5vw,3rem); margin:8px 0; }
   .yard-error { color:var(--maple); font-weight:700; }
   .yard-estimator [hidden] { display:none !important; }
@@ -613,7 +621,7 @@
     </ul>
     <div class="nav-cta">
       <a class="phone-link" href="tel:+12693628286" data-lead="call" data-lead-location="header" aria-label="Call (269) 362-8286">(269) 362-8286</a>
-      <a class="btn btn-primary" href="#estimate" data-lead-location="header">Free estimate</a>
+      <a class="btn btn-primary" href="#estimate" data-lead-location="header">Contact</a>
     </div>
   </nav>
 </header>
@@ -741,7 +749,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><div>Quick replies<span>Text or call and hear back fast, not in three days.</span></div></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><div>We sweat the details<span>Clippings blown off the driveway, edges crisp, gates closed behind us.</span></div></li>
         </ul>
-        <a class="btn btn-primary" href="#estimate" data-lead-location="meet">Get a free estimate</a>
+        <a class="btn btn-primary" href="#estimate" data-lead-location="meet">Contact Chris</a>
       </div>
     </div>
   </section>
@@ -818,30 +826,42 @@
       <div>
         <span class="yard-kicker">A little less guesswork</span>
         <h2 id="yard-heading">Price your yard.</h2>
-        <p class="lead">Get a rough per-visit range for mowing, leaves, or snow. Check the address and yard size, then ask Chris to confirm your quote.</p>
-        <p>Every yard is different. Access, obstacles, and the work needed can change the final price. Mowing starts at $50 per stop.</p>
+        <p class="lead">Get your per-visit price for mowing, leaves, or snow. Check the address and yard size, and you're ready to book.</p>
+        <p>One flat per-visit price, right here on the page — no callback, no waiting. Mowing starts at $50 per stop.</p>
         <p class="yard-help">Your address is sent to the US Census Geocoder for a match and, when configured, a county parcel service for lot size. We do not put it in the page URL, browser storage, or analytics.</p>
       </div>
       <div class="yard-card">
-        <form id="yard-price-form" novalidate>
-          <div class="field"><label for="yard-address">Property address <span class="req" aria-hidden="true">*</span></label><input id="yard-address" name="address" autocomplete="street-address" maxlength="200" required aria-required="true" placeholder="Street, city, state, ZIP" aria-describedby="yard-address-help yard-price-error"><small id="yard-address-help" class="yard-help">Include the city and state so we can find the right property.</small></div>
+        <div id="yard-intro" class="yard-intro">
+          <span class="yard-kicker">How it works</span>
+          <h3>Your yard, priced in under a minute.</h3>
+          <ol class="yard-steps">
+            <li><span class="yard-step-num">1</span><div><strong>Drop your address</strong><p>Tell us where the yard is — that’s all we need to start.</p></div></li>
+            <li><span class="yard-step-num">2</span><div><strong>We measure the lot</strong><p>County parcel records size your property for us.</p></div></li>
+            <li><span class="yard-step-num">3</span><div><strong>Pick the work</strong><p>Grass, leaves, or snow — every service priced per visit.</p></div></li>
+            <li><span class="yard-step-num">4</span><div><strong>Get your price</strong><p>One flat price, right here. Book it and Chris puts you on the schedule.</p></div></li>
+          </ol>
+          <button class="btn btn-primary" type="button" id="yard-start" aria-expanded="false" aria-controls="yard-price-form">Price my yard</button>
+          <p class="yard-help">Tap to start — no price until you ask for it.</p>
+        </div>
+        <form id="yard-price-form" novalidate hidden>
+          <div class="field"><label for="yard-address">Property address <span class="req" aria-hidden="true">*</span></label><input id="yard-address" name="address" autocomplete="street-address" autocapitalize="words" enterkeyhint="search" maxlength="200" required aria-required="true" placeholder="Street, city, state, ZIP" aria-describedby="yard-address-help yard-price-error"><small id="yard-address-help" class="yard-help">Include the city and state so we can find the right property.</small></div>
           <div class="field"><label for="yard-service">What would you like priced?</label><select id="yard-service"><option value="grass">Grass cutting</option><option value="leaves">Leaf cleanup</option><option value="snow">Snow clearing</option></select></div>
           <div id="yard-leaves-options" class="field-row" hidden>
             <div class="field"><label for="yard-cover">Tree cover</label><select id="yard-cover"><option value="light">Light — a few trees</option><option value="moderate" selected>Moderate</option><option value="heavy">Heavy — many trees</option></select></div>
             <div class="field"><label for="yard-amount">Leaves to clear this visit</label><select id="yard-amount"><option value="light">Light touch-up</option><option value="moderate" selected>Moderate cleanup</option><option value="full">Full cleanup</option></select></div>
           </div>
-          <details id="yard-area-details"><summary>Know your yard size? Add it here</summary><p class="yard-help">Optional, in square feet. A lot includes the house and other surfaces; lawn and driveway sizes describe just the area to service.</p>
+          <details id="yard-area-details"><summary aria-expanded="false">Know your yard size? Add it here</summary><p class="yard-help">Optional, in square feet. A lot includes the house and other surfaces; lawn and driveway sizes describe just the area to service.</p>
             <div class="field"><label for="yard-lot">Total lot area <span class="opt">(sq ft)</span></label><input id="yard-lot" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="e.g. 7840"></div>
             <div class="field-row"><div class="field"><label for="yard-lawn">Mowable lawn <span class="opt">(sq ft)</span></label><input id="yard-lawn" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="If known"></div><div class="field"><label for="yard-driveway">Driveway + walk <span class="opt">(sq ft)</span></label><input id="yard-driveway" type="number" min="1" max="10000000" step="any" inputmode="decimal" placeholder="If known"></div></div>
           </details>
           <p id="yard-price-error" class="yard-error" role="alert" hidden></p>
-          <button class="btn btn-primary" id="yard-price-submit" type="submit">Find my rough estimate</button>
+          <button class="btn btn-primary" id="yard-price-submit" type="submit">Get my price</button>
           <p id="yard-price-status" class="yard-help" role="status" aria-live="polite"></p>
         </form>
         <div id="yard-price-review" class="yard-review" tabindex="-1" hidden>
           <h3>First, check your property</h3><p id="yard-matched-address"></p><dl id="yard-surfaces"></dl><p id="yard-source" class="yard-help"></p><ul id="yard-warnings" class="yard-help"></ul>
-          <label class="yard-confirm" for="yard-confirm"><input id="yard-confirm" type="checkbox"><span>I confirm this address is correct and these areas are reasonable for my property. I understand any assumed areas are not measurements.</span></label>
-          <div id="yard-price-result" tabindex="-1" hidden><p class="yard-kicker">Rough estimate · per visit</p><p id="yard-price-range" class="yard-range"></p><p id="yard-price-context"></p><p class="yard-help">This is a planning range, not a binding quote. Chris will confirm the scope and final price with you.</p><button class="btn btn-primary" type="button" id="yard-quote-handoff">Ask Chris to confirm this quote</button><p id="yard-handoff-status" role="status" class="yard-help"></p></div>
+          <label class="yard-confirm" for="yard-confirm"><input id="yard-confirm" type="checkbox"><span>I confirm this address is correct and these areas look right for my property.</span></label>
+          <div id="yard-price-result" tabindex="-1" hidden><p class="yard-kicker">Your price · per visit</p><p id="yard-price-range" class="yard-range"></p><p id="yard-price-context"></p><button class="btn btn-primary" type="button" id="yard-quote-handoff">Book this price</button><p id="yard-handoff-status" role="status" class="yard-help"></p></div>
         </div>
       </div>
     </div>
@@ -850,9 +870,9 @@
   <section class="section green" id="estimate" tabindex="-1">
     <div class="wrap estimate-grid">
       <div class="estimate-side reveal">
-        <div class="eyebrow">Free, no pressure</div>
+        <div class="eyebrow">Get in touch</div>
         <h2>Let's get your yard looking great</h2>
-        <p class="lead">Send a few details and Chris will get back to you quickly with a quote.</p>
+        <p class="lead">Send a few details and Chris will get back to you fast.</p>
         <ul class="contact-lines">
           <li>
             <a href="tel:+12693628286" data-lead="call" data-lead-location="estimate" aria-label="Call (269) 362-8286"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>(269) 362-8286</a>
@@ -864,7 +884,7 @@
       </div>
       <form class="estimate reveal" id="estimate-form" novalidate>
         <div class="form-fields">
-          <h3>Request a free estimate</h3>
+          <h3>Contact Chris</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
             <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" autocapitalize="words" enterkeyhint="next" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
@@ -884,15 +904,15 @@
             </select>
           </div>
           <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="off"></span></label><textarea id="f-notes" name="notes" maxlength="500" enterkeyhint="done" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
-          <button class="btn btn-primary" type="submit">Send my request</button>
-          <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
+          <button class="btn btn-primary" type="submit">Send message</button>
+          <p class="form-note">Your message goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
         </div>
         <div class="form-done" role="status" aria-live="polite">
           <h3 tabindex="-1">Thanks, got it!</h3>
-          <p>Chris has your request and will be in touch soon.</p>
+          <p>Chris has your message and will be in touch soon.</p>
           <p>Need him sooner? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-done" aria-label="Call or text (269) 362-8286"><strong>(269) 362-8286</strong></a>.</p>
           <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="form-fallback" aria-label="Call Chris at (269) 362-8286">Call Chris instead</a>
-          <button type="button" class="btn btn-ghost" id="form-reset-btn">Send another request</button>
+          <button type="button" class="btn btn-ghost" id="form-reset-btn">Send another message</button>
         </div>
       </form>
     </div>
@@ -931,7 +951,7 @@
 
 <nav class="mobile-bar" aria-label="Quick contact">
   <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="mobile-bar" aria-label="Call Chris at (269) 362-8286"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call Chris</a>
-  <a class="btn btn-primary" href="#estimate" data-lead-location="mobile-bar">Free estimate</a>
+  <a class="btn btn-primary" href="#estimate" data-lead-location="mobile-bar">Contact</a>
 </nav>
 
 <script>
@@ -990,9 +1010,9 @@
       if (a) trackLead(a.dataset.lead, a.dataset.leadLocation);
     });
 
-    // Sync aria-expanded state on FAQ disclosure summaries on toggle and allow Escape key dismissal.
-    var faqDetails = document.querySelectorAll('.faq details');
-    faqDetails.forEach(function (det) {
+    // Sync aria-expanded state on disclosure summaries on toggle and allow Escape key dismissal.
+    var allDetails = document.querySelectorAll('details');
+    allDetails.forEach(function (det) {
       det.addEventListener('toggle', function () {
         var summary = det.querySelector('summary');
         if (summary) {
@@ -1232,7 +1252,7 @@
       var lines = [
         'Hi neighbor! I keep the leaves off the buttons around here.',
         'Snow removal starts at $30 a visit. Just saying.',
-        'Want a free estimate? <a href="#estimate" data-pet-go>Let\'s do it</a>',
+        'Questions about your yard? <a href="#estimate" data-pet-go>Let\'s do it</a>',
         'Fall is the best time to seed. Your lawn will thank you in spring.',
         'Getting tired of me? <button type="button" data-pet-hide aria-label="Hide Pet Chris mascot">Hide me</button>'
       ];

@@ -24,6 +24,10 @@ test('public API uses approved model and all responses include security headers'
 test('API rejects wrong method, cross-site requests and media type', async () => {
   assert.equal((await onRequest({ request: request(null, { method: 'GET' }) })).status, 405);
   assert.equal((await onRequest({ request: request(known, { headers: { origin: 'https://other.example' } }) })).status, 403);
+  assert.equal((await onRequest({ request: request(known, { headers: { origin: 'null' } }) })).status, 403);
+  assert.equal((await onRequest({ request: request(known, { headers: { origin: 'invalid-origin' } }) })).status, 403);
+  assert.equal((await onRequest({ request: request(known, { headers: { referer: 'https://other.example/page' } }) })).status, 403);
+  assert.equal((await onRequest({ request: request(known, { headers: { referer: 'not-a-url' } }) })).status, 403);
   assert.equal((await onRequest({ request: request(known, { headers: { 'sec-fetch-site': 'cross-site' } }) })).status, 403);
   assert.equal((await onRequest({ request: request(known, { headers: { 'content-type': 'text/plain' } }) })).status, 415);
 });
