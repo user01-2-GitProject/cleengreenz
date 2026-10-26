@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cleen Greenz Lawn Care | Niles, MI</title>
 <meta name="description" content="Friendly, reliable lawn care in Niles, Michigan and the Michiana area since 2009. Mowing, edging, leaf cleanup, seeding and fertilizing, and snow removal. Free estimates.">
+<link rel="canonical" href="https://cleengreenz.com/">
 <meta name="theme-color" content="#1f4d2b">
 <meta property="og:title" content="Cleen Greenz Lawn Care">
 <meta property="og:description" content="Beautiful lawns without giving up your weekend. Serving Niles and Michiana since 2009.">
@@ -308,9 +309,10 @@
   .pet-bubble .bubble-close {
     position: absolute; top: 6px; right: 8px; background: none; border: 0; padding: 0;
     width: 20px; height: 20px; font-size: .85rem; line-height: 20px; text-align: center; color: var(--bark-soft);
-    cursor: pointer; border-radius: 50%; opacity: .7; transition: opacity .15s ease, color .15s ease;
+    cursor: pointer; border-radius: 50%; opacity: .7; transition: opacity .15s ease, color .15s ease, transform .15s ease;
   }
   .pet-bubble .bubble-close:hover { opacity: 1; color: var(--pumpkin-2); }
+  .pet-bubble .bubble-close:active { transform: scale(0.92); }
   .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; opacity: 1; }
   .pet-bubble.is-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
@@ -357,6 +359,7 @@
     transition: transform .2s ease, box-shadow .2s ease;
   }
   .season-card:hover { transform: translateY(-3px); }
+  .season-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .season-card h3 { color: var(--forest); }
   .season-card p { color: var(--bark-soft); margin: 0; }
   .season-card .icon {
@@ -379,6 +382,7 @@
     text-decoration: none; color: inherit;
   }
   .service:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
+  .service:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #e3f3d6; color: var(--forest); }
   .service .icon svg { width: 26px; height: 26px; }
   .service h3 { font-size: 1.2rem; margin-bottom: .25em; }
@@ -470,9 +474,10 @@
   .copy-phone-btn {
     background: rgba(255, 255, 255, 0.15); border: none; color: #fff; border-radius: 999px;
     padding: 3px 10px; font-size: .8rem; font-family: inherit; font-weight: 700; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease;
+    display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease, color .2s ease, transform .15s ease;
   }
   .copy-phone-btn:hover { background: rgba(255, 255, 255, 0.28); color: var(--gold); }
+  .copy-phone-btn:active { transform: scale(0.95); }
   .copy-phone-btn.copied { background: rgba(108, 191, 58, 0.28); color: var(--gold); }
   .copy-phone-btn svg { width: 14px; height: 14px; color: currentColor; }
   .copy-feedback { font-size: .8rem; color: var(--gold); font-weight: 700; }
@@ -545,12 +550,45 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
-    .btn:hover, .service:hover, .season-card:hover { transform: none; }
+    .btn:hover, .service:hover, .season-card:hover, .copy-phone-btn:active, .pet-bubble .bubble-close:active { transform: none; }
     .grass-patch { transition: none; }
     .grass-blade { animation: none; }
     .pet-mower { display: none !important; }
   }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": "https://cleengreenz.com/#business",
+  "name": "Cleen Greenz Lawn Care",
+  "description": "Lawn care in Niles, Michigan and the Michiana area.",
+  "url": "https://cleengreenz.com/",
+  "telephone": "+1-269-362-8286",
+  "image": "https://cleengreenz.com/media/mascot-trimmer.jpg",
+  "logo": "https://cleengreenz.com/media/logo.png",
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Niles, Michigan"
+    },
+    {
+      "@type": "AdministrativeArea",
+      "name": "Michiana (Southwest Michigan and Northern Indiana)"
+    }
+  ],
+  "knowsAbout": [
+    "Lawn mowing",
+    "Edging",
+    "Leaf cleanup",
+    "Seeding and fertilizing",
+    "Snow removal"
+  ],
+  "sameAs": [
+    "https://www.instagram.com/cglawncare_niles/"
+  ]
+}
+</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -731,7 +769,7 @@
         <h2>Proudly serving Michiana</h2>
         <p class="lead">Based in Niles, we take care of homes and businesses across southwest Michigan and northern Indiana. Not sure if you're in range? Just ask.</p>
       </div>
-      <ul class="towns reveal">
+      <ul class="towns reveal" aria-label="Towns served">
         <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Niles</li>
         <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Buchanan</li>
         <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Edwardsburg</li>
@@ -829,10 +867,10 @@
           <h3>Request a free estimate</h3>
           <p class="sub">Takes about a minute.</p>
           <div class="field-row">
-            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
-            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err" role="alert">Please enter your phone number</span></div>
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" autocapitalize="words" enterkeyhint="next" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" enterkeyhint="next" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err" role="alert">Please enter your phone number</span></div>
           </div>
-          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err" role="alert">Please enter your street address</span></div>
+          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" autocapitalize="words" enterkeyhint="next" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err" role="alert">Please enter your street address</span></div>
           <div class="field">
             <label for="f-service">What do you need?</label>
             <select id="f-service" name="service">
@@ -845,7 +883,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="off"></span></label><textarea id="f-notes" name="notes" maxlength="500" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="off"></span></label><textarea id="f-notes" name="notes" maxlength="500" enterkeyhint="done" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
           <button class="btn btn-primary" type="submit">Send my request</button>
           <p class="form-note">Your request goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
         </div>
