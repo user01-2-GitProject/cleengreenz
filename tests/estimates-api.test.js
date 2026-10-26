@@ -128,3 +128,11 @@ test('a custom county URL retains the generic ACREAGE field unless overridden', 
     assert.equal((await result.json()).property.source, 'county-parcel');
   } finally { globalThis.fetch = saved; }
 });
+
+test('API sanitizes internal runtime TypeError messages to prevent object/stack detail leakage', async () => {
+  const resultInvalidOpt = await onRequest({ request: request({ address, cover: 'invalid_cover' }) });
+  assert.equal(resultInvalidOpt.status, 400);
+  const jsonInvalidOpt = await resultInvalidOpt.json();
+  assert.equal(jsonInvalidOpt.ok, false);
+  assert.equal(jsonInvalidOpt.message, 'Choose light, moderate or heavy tree cover.');
+});

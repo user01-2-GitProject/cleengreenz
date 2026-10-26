@@ -130,7 +130,12 @@ export async function onRequestPost({ request, env = {} }) {
       } });
     return json(result);
   } catch (error) {
-    if (error instanceof TypeError) return json({ ok: false, error: 'invalid_input', message: error.message }, 400);
+    if (error instanceof TypeError) {
+      // Security: Prevent internal JS engine runtime error messages (e.g., property access on undefined/null)
+      // from leaking stack/object details to API clients while keeping domain validation messages.
+      const isRuntimeError = /^(Cannot (read|set|destructure)|[a-zA-Z0-9_$]+ is not a (function|constructor)|[a-zA-Z0-9_$]+ is not defined)/i.test(error.message);
+      return json({ ok: false, error: 'invalid_input', message: isRuntimeError ? 'Invalid input.' : error.message }, 400);
+    }
     // No provider details, submitted addresses or configuration are logged or echoed.
     return json({ ok: false, error: 'estimate_unavailable' }, 503);
   }
