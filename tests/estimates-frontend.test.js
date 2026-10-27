@@ -68,8 +68,12 @@ test('full notes are preserved and customer is told the summary did not fit', as
 test('loading prevents duplicate requests and changed inputs discard stale replies', async () => {
   let resolve; const e = setup(() => new Promise(r => { resolve = r; }));
   e.input('yard-address', '123 Main St, Niles MI'); e.submit(); e.submit(); assert.equal(e.calls.length, 1); assert.equal(e.get('yard-price-submit').disabled, true);
+  assert.equal(e.get('yard-price-submit').getAttribute('aria-busy'), 'true');
+  assert.ok(e.get('yard-price-submit').querySelector('.spinner'));
   e.input('yard-address', '456 Other St, Niles MI'); resolve({ ok: true, json: async () => fixture() }); await e.flush();
   assert.equal(e.get('yard-price-review').hidden, true); assert.equal(e.get('yard-price-submit').disabled, false);
+  assert.equal(e.get('yard-price-submit').hasAttribute('aria-busy'), false);
+  assert.equal(e.get('yard-price-submit').querySelector('.spinner'), null);
 });
 test('service change clears a confirmed result and reveals leaf inputs', async () => {
   const e = setup(); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm();
