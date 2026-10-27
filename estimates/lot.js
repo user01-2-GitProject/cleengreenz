@@ -9,6 +9,11 @@ export async function parcelSqftFromArcGIS(lat, lon, fetchImpl = fetch, config =
   if (!config.layerUrl) return null;
   const url = new URL(config.layerUrl);
   if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid parcel configuration.');
+  // Prevent SSRF / untrusted outbound requests by restricting parcel layer hosts to trusted domains (.gov, .us, .arcgis.com, .example, localhost).
+  const host = url.hostname.toLowerCase();
+  if (!host.endsWith('.gov') && !host.endsWith('.us') && !host.endsWith('.arcgis.com') && host !== 'arcgis.com' && !host.endsWith('.example') && host !== 'localhost') {
+    throw new Error('Invalid parcel configuration host.');
+  }
   const acresField = config.acresField || 'ACREAGE';
   if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/u.test(acresField)) throw new Error('Invalid parcel field.');
   const params = { geometry: `${lon},${lat}`, geometryType: 'esriGeometryPoint', inSR: '4326',

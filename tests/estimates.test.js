@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { surfaceAreas } from "../estimates/lot.js";
+import { surfaceAreas, parcelSqftFromArcGIS } from "../estimates/lot.js";
 import { grassEstimate } from "../estimates/grass/grass.js";
 import { leavesEstimate } from "../estimates/leaves/leaves.js";
 import { snowEstimate } from "../estimates/snow/snow.js";
@@ -65,6 +65,17 @@ test("snow: bigger driveway costs more per visit", () => {
   const big = snowEstimate(1200);
   assert.equal(small.perVisit.mid, 35);
   assert.ok(big.perVisit.mid > small.perVisit.mid);
+});
+
+test("parcelSqftFromArcGIS rejects untrusted host domains for parcel config", async () => {
+  await assert.rejects(
+    async () => {
+      await parcelSqftFromArcGIS(42.0, -86.5, fetch, {
+        layerUrl: "https://evil.com/arcgis/rest/services/FeatureServer/0/query",
+      });
+    },
+    { message: "Invalid parcel configuration host." }
+  );
 });
 
 test("estimateFromAreas prices all three services", () => {
