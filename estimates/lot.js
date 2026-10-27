@@ -3,12 +3,19 @@
 import { SURFACE } from './rates.js';
 import { area, coordinates, fetchJson } from './validation.js';
 const SQFT_PER_ACRE = 43560;
+const TRUSTED_HOST_PATTERNS = [/\.gov$/i, /\.us$/i, /(^|\.)arcgis\.com$/i, /\.example$/i, /^localhost$/i];
+
+function isTrustedParcelHost(hostname) {
+  return TRUSTED_HOST_PATTERNS.some(pattern => pattern.test(hostname));
+}
 
 export async function parcelSqftFromArcGIS(lat, lon, fetchImpl = fetch, config = {}) {
   coordinates(lat, lon);
   if (!config.layerUrl) return null;
   const url = new URL(config.layerUrl);
-  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid parcel configuration.');
+  if (url.protocol !== 'https:' || url.username || url.password || !isTrustedParcelHost(url.hostname)) {
+    throw new Error('Invalid parcel configuration.');
+  }
   const acresField = config.acresField || 'ACREAGE';
   if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/u.test(acresField)) throw new Error('Invalid parcel field.');
   const params = { geometry: `${lon},${lat}`, geometryType: 'esriGeometryPoint', inSR: '4326',

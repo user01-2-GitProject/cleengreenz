@@ -106,6 +106,15 @@ test('county errors, ambiguous features and invalid acreage become explicit assu
   const lot = await resolveLotSqft(41, -86, async () => new Response('', { status: 503 }), { layerUrl: 'https://county.example/query' });
   assert.deepEqual(lot.warnings, ['parcel-lookup-unavailable']);
 });
+
+test('parcel lookup rejects untrusted layerUrl hostnames to prevent SSRF', async () => {
+  for (const untrustedUrl of ['https://untrusted-site.com/query', 'https://169.254.169.254/latest/meta-data', 'https://internal.corp/query']) {
+    await assert.rejects(
+      parcelSqftFromArcGIS(41.83, -86.25, async () => assert.fail('should not fetch untrusted host'), { layerUrl: untrustedUrl }),
+      /Invalid parcel configuration/u
+    );
+  }
+});
 test('browser-compatible module import does not depend on process globals', async () => {
   const saved = globalThis.process;
   try { globalThis.process = undefined; await import('../estimates/lot.js?browser-test'); }
