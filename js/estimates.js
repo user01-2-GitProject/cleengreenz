@@ -7,6 +7,9 @@
   var submit = byId('yard-price-submit'), error = byId('yard-price-error');
   var status = byId('yard-price-status'), review = byId('yard-price-review');
   var confirmation = byId('yard-confirm'), result = byId('yard-price-result');
+  var yardLot = byId('yard-lot'), yardLawn = byId('yard-lawn'), yardDriveway = byId('yard-driveway');
+  var leavesOptions = byId('yard-leaves-options');
+  var yardInputs = [address, yardLot, yardLawn, yardDriveway];
   var version = 0, controller, pending = false, candidate = null, previousSummary = '';
   var serviceNames = { grass: 'Grass cutting', leaves: 'Leaf cleanup', snow: 'Snow clearing' };
   var leadServices = { grass: 'Weekly mowing and edging', leaves: 'Fall leaf cleanup', snow: 'Snow removal' };
@@ -27,15 +30,25 @@
     review.hidden = result.hidden = true;
     error.hidden = true;
     status.textContent = '';
-    [address, byId('yard-lot'), byId('yard-lawn'), byId('yard-driveway')].forEach(function (input) {
-      if (!input) return;
-      input.removeAttribute('aria-invalid');
-      var describedBy = input.getAttribute('aria-describedby') || '';
-      var ids = describedBy.split(/\s+/).filter(function (id) { return id && id !== 'yard-price-error'; });
-      if (ids.length) input.setAttribute('aria-describedby', ids.join(' '));
-      else input.removeAttribute('aria-describedby');
-    });
-    byId('yard-leaves-options').hidden = service.value !== 'leaves';
+    // Performance optimization: Guard aria-invalid and aria-describedby cleanup with presence checks
+    // to bypass redundant DOM queries, string splitting/joining, and attribute mutations on input events.
+    for (var i = 0; i < yardInputs.length; i++) {
+      var input = yardInputs[i];
+      if (!input) continue;
+      if (input.getAttribute('aria-invalid') === 'true') {
+        input.removeAttribute('aria-invalid');
+      }
+      var describedBy = input.getAttribute('aria-describedby');
+      if (describedBy && describedBy.indexOf('yard-price-error') !== -1) {
+        var ids = describedBy.split(/\s+/).filter(function (id) { return id && id !== 'yard-price-error'; });
+        if (ids.length) input.setAttribute('aria-describedby', ids.join(' '));
+        else input.removeAttribute('aria-describedby');
+      }
+    }
+    var shouldHideLeaves = service.value !== 'leaves';
+    if (leavesOptions && leavesOptions.hidden !== shouldHideLeaves) {
+      leavesOptions.hidden = shouldHideLeaves;
+    }
   }
   var intro = byId('yard-intro'), startBtn = byId('yard-start');
   function openTool() {
