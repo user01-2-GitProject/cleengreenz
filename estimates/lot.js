@@ -8,7 +8,11 @@ export async function parcelSqftFromArcGIS(lat, lon, fetchImpl = fetch, config =
   coordinates(lat, lon);
   if (!config.layerUrl) return null;
   const url = new URL(config.layerUrl);
-  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid parcel configuration.');
+  // SSRF Protection: Restrict hostnames to trusted ArcGIS/government domain suffixes or local/test endpoints.
+  const host = url.hostname.toLowerCase();
+  const isTrustedHost = host === 'localhost' || host === '127.0.0.1' || host === '::1' ||
+    host.endsWith('.gov') || host.endsWith('.us') || host === 'arcgis.com' || host.endsWith('.arcgis.com') || host.endsWith('.example');
+  if (url.protocol !== 'https:' || url.username || url.password || !isTrustedHost) throw new Error('Invalid parcel configuration.');
   const acresField = config.acresField || 'ACREAGE';
   if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/u.test(acresField)) throw new Error('Invalid parcel field.');
   const params = { geometry: `${lon},${lat}`, geometryType: 'esriGeometryPoint', inSR: '4326',
