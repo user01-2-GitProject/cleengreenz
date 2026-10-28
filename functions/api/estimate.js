@@ -130,7 +130,24 @@ export async function onRequestPost({ request, env = {} }) {
       } });
     return json(result);
   } catch (error) {
-    if (error instanceof TypeError) return json({ ok: false, error: 'invalid_input', message: error.message }, 400);
+    if (error instanceof TypeError) {
+      const knownDomainMessages = new Set([
+        'Enter a street address between 5 and 200 characters.',
+        'Options must be an object.',
+        'properties must be a whole number between 1 and 20.',
+        'Choose light, moderate or heavy tree cover.',
+        'Choose light, moderate or full leaf cleanup.',
+        'Invalid coordinates.',
+        'Invalid fetch implementation.',
+        'Invalid lookup timeout.',
+        'Provide surface areas.',
+      ]);
+      const isKnownDomainMessage =
+        knownDomainMessages.has(error.message) ||
+        /^.+ must be a positive number no greater than \d+\.$/.test(error.message);
+      const safeMessage = isKnownDomainMessage ? error.message : 'Invalid input.';
+      return json({ ok: false, error: 'invalid_input', message: safeMessage }, 400);
+    }
     // No provider details, submitted addresses or configuration are logged or echoed.
     return json({ ok: false, error: 'estimate_unavailable' }, 503);
   }

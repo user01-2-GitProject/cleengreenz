@@ -128,3 +128,33 @@ test('a custom county URL retains the generic ACREAGE field unless overridden', 
     assert.equal((await result.json()).property.source, 'county-parcel');
   } finally { globalThis.fetch = saved; }
 });
+
+test('API sanitizes internal engine TypeErrors while preserving domain validation messages', async () => {
+  // Domain validation message preserved:
+  const domainRes = await onRequest({ request: request({ address: 'abc' }) });
+  assert.equal(domainRes.status, 400);
+  const domainBody = await domainRes.json();
+  assert.equal(domainBody.ok, false);
+  assert.equal(domainBody.error, 'invalid_input');
+  assert.equal(domainBody.message, 'Enter a street address between 5 and 200 characters.');
+
+  // Simulated unexpected engine TypeError sanitized:
+  const mockContext = {
+    request: new Request('https://cleengreenz.example/api/estimate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': '198.51.100.999' },
+      body: JSON.stringify({ address: '100 Example St, Niles, MI' }),
+    }),
+    env: {
+      get PARCEL_LAYER_URL() {
+        throw new TypeError('Cannot read properties of undefined (reading foo)');
+      },
+    },
+  };
+  const engineRes = await onRequest(mockContext);
+  assert.equal(engineRes.status, 400);
+  const engineBody = await engineRes.json();
+  assert.equal(engineBody.ok, false);
+  assert.equal(engineBody.error, 'invalid_input');
+  assert.equal(engineBody.message, 'Invalid input.');
+});
