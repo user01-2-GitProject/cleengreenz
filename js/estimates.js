@@ -27,8 +27,10 @@
     review.hidden = result.hidden = true;
     error.hidden = true;
     status.textContent = '';
+    // Performance optimization: guard aria-invalid cleanup with attribute presence check
+    // to bypass string regex/split operations and DOM attribute mutations during valid input keystrokes
     [address, byId('yard-lot'), byId('yard-lawn'), byId('yard-driveway')].forEach(function (input) {
-      if (!input) return;
+      if (!input || input.getAttribute('aria-invalid') !== 'true') return;
       input.removeAttribute('aria-invalid');
       var describedBy = input.getAttribute('aria-describedby') || '';
       var ids = describedBy.split(/\s+/).filter(function (id) { return id && id !== 'yard-price-error'; });
