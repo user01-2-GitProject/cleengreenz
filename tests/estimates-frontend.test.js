@@ -106,3 +106,24 @@ test('infographic gates the tool until it is touched', async () => {
   assert.equal(e.get('yard-price-form').hidden, false);
   assert.equal(e.get('yard-price-result').hidden, true);
 });
+
+test('submit button renders loading spinner SVG during estimation request', async () => {
+  let resolveFetch;
+  const e = setup(() => new Promise((resolve) => { resolveFetch = resolve; }));
+  e.input('yard-address', '123 Main St, Niles MI');
+  e.submit();
+
+  const submitBtn = e.get('yard-price-submit');
+  assert.equal(submitBtn.disabled, true);
+  const spinner = submitBtn.querySelector('svg.spinner');
+  assert.ok(spinner, 'submit button contains SVG spinner while loading');
+  assert.equal(spinner.getAttribute('aria-hidden'), 'true');
+  assert.match(submitBtn.textContent, /Checking your property/);
+
+  resolveFetch({ ok: true, json: async () => fixture() });
+  await e.flush();
+
+  assert.equal(submitBtn.disabled, false);
+  assert.equal(submitBtn.querySelector('svg.spinner'), null);
+  assert.equal(submitBtn.textContent.trim(), 'Get my price');
+});
