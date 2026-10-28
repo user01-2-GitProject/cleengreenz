@@ -79,6 +79,31 @@ test('lookups time out even when a provider ignores abort', async () => {
   const result = await estimateFromAddress(address, { timeoutMs: 5, fetchImpl: () => new Promise(() => {}) });
   assert.ok(result.property.warnings.includes('address-lookup-unavailable'));
 });
+test('parcelSqftFromArcGIS validates layerUrl domain and rejects untrusted or internal hosts', async () => {
+  for (const untrustedUrl of [
+    'https://evil.com/query',
+    'https://internal.service/query',
+    'https://169.254.169.254/latest/meta-data',
+    'https://attacker.arcgis.com.evil.com/query',
+    'http://gis.berriencountymi.gov/query',
+  ]) {
+    await assert.rejects(
+      parcelSqftFromArcGIS(41.83, -86.25, async () => assert.fail('should not fetch untrusted host'), { layerUrl: untrustedUrl }),
+      /Invalid parcel configuration/u
+    );
+  }
+
+  for (const trustedUrl of [
+    'https://gis.berriencountymi.gov/query',
+    'https://county.example/query',
+    'https://services.arcgis.com/query',
+    'https://localhost/query',
+  ]) {
+    const sqft = await parcelSqftFromArcGIS(41.83, -86.25, async () => response({ features: [{ attributes: { ACREAGE: 0.25 } }] }), { layerUrl: trustedUrl });
+    assert.equal(sqft, 10890);
+  }
+});
+
 test('county query explicitly requests geographic coordinates and configured acreage', async () => {
   const config = { layerUrl: 'https://county.example/MapServer/0/query?existing=yes', acresField: 'ACRES' };
   const sqft = await parcelSqftFromArcGIS(41.83, -86.25, async url => {
