@@ -9,3 +9,7 @@
 ## 2026-10-22 - App-Wide Disclosure Accordion Accessibility Observer
 **Learning:** Scoping disclosure accordion event listeners to section-specific classes (e.g., `.faq details`) leaves other `<details>` elements on the page (such as form option disclosures like `#yard-area-details`) without proper `aria-expanded` synchronization and `Escape` key focus restoration.
 **Action:** Attach disclosure toggle and keyboard handlers to all `details` elements (`document.querySelectorAll('details')`) across the document rather than scoped section selectors.
+
+## 2026-10-28 - Checkbox-Controlled Disclosure State ARIA Attributes
+**Learning:** Interactive checkboxes that reveal or hide content sections (such as property address/area confirmation toggling price results) must maintain `aria-controls` pointing to the target container and dynamically synchronize `aria-expanded="true"` or `"false"` on state changes so screen readers understand the relationship and visibility state.
+**Action:** Associate disclosing checkboxes with their controlled container via `aria-controls` and update `aria-expanded` whenever the checkbox `change` or form `reset` events fire.

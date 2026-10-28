@@ -12,10 +12,17 @@
   var leadServices = { grass: 'Weekly mowing and edging', leaves: 'Fall leaf cleanup', snow: 'Snow removal' };
   var number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
   var money = function (value) { return '$' + number.format(value); };
+  var spinnerSvg = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ';
   function loading(value) {
     pending = value;
     submit.disabled = value;
-    submit.textContent = value ? 'Checking your property…' : 'Get my price';
+    if (value) {
+      submit.setAttribute('aria-busy', 'true');
+      submit.innerHTML = spinnerSvg + 'Checking your property…';
+    } else {
+      submit.removeAttribute('aria-busy');
+      submit.textContent = 'Get my price';
+    }
     form.setAttribute('aria-busy', String(value));
   }
   function clear() {
@@ -24,6 +31,7 @@
     loading(false);
     candidate = null;
     confirmation.checked = false;
+    confirmation.setAttribute('aria-expanded', 'false');
     review.hidden = result.hidden = true;
     error.hidden = true;
     status.textContent = '';
@@ -134,7 +142,9 @@
     }
   });
   confirmation.addEventListener('change', function () {
-    if (!candidate || !confirmation.checked) { result.hidden = true; return; }
+    var checked = confirmation.checked;
+    confirmation.setAttribute('aria-expanded', checked ? 'true' : 'false');
+    if (!candidate || !checked) { result.hidden = true; return; }
     var range = candidate.range;
     byId('yard-price-range').textContent = money(range.mid);
     byId('yard-price-context').textContent = serviceNames[candidate.service] + ' for one property, one visit.' + (candidate.service === 'grass' ? ' Includes the $50 minimum per stop.' : candidate.service === 'leaves' ? ' Based on ' + candidate.payload.cover + ' tree cover and a ' + candidate.payload.amount + ' amount of leaf work.' : ' Based on the driveway and walk area above.');

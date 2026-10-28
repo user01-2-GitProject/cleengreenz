@@ -43,10 +43,14 @@ test('confirmation gate, safe property rendering, and grass job minimum', async 
   const data = fixture(); data.property.matchedAddress = '<img src=x onerror=alert(1)>'; data.property.warnings = ['<script>bad()</script>'];
   const e = setup(async () => ({ ok: true, json: async () => data }));
   e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush();
+  assert.equal(e.get('yard-confirm').getAttribute('aria-controls'), 'yard-price-result');
+  assert.equal(e.get('yard-confirm').getAttribute('aria-expanded'), 'false');
   assert.equal(e.get('yard-price-review').hidden, false); assert.equal(e.get('yard-price-result').hidden, true);
   assert.match(e.get('yard-surfaces').textContent, /typical for the area/); assert.match(e.get('yard-source').textContent, /typical lot for the area/);
   assert.equal(e.get('yard-price-review').querySelectorAll('img,script').length, 0);
-  e.confirm(); assert.equal(e.get('yard-price-result').hidden, false); assert.equal(e.get('yard-price-range').textContent, '$50');
+  e.confirm();
+  assert.equal(e.get('yard-confirm').getAttribute('aria-expanded'), 'true');
+  assert.equal(e.get('yard-price-result').hidden, false); assert.equal(e.get('yard-price-range').textContent, '$50');
   assert.match(e.get('yard-price-context').textContent, /\$50 minimum/); assert.equal(e.d.activeElement.id, 'yard-price-result');
   assert.equal(e.window.localStorage.length, 0); assert.equal(e.window.location.search, '');
 });
@@ -68,8 +72,11 @@ test('full notes are preserved and customer is told the summary did not fit', as
 test('loading prevents duplicate requests and changed inputs discard stale replies', async () => {
   let resolve; const e = setup(() => new Promise(r => { resolve = r; }));
   e.input('yard-address', '123 Main St, Niles MI'); e.submit(); e.submit(); assert.equal(e.calls.length, 1); assert.equal(e.get('yard-price-submit').disabled, true);
+  assert.equal(e.get('yard-price-submit').getAttribute('aria-busy'), 'true');
+  assert.ok(e.get('yard-price-submit').querySelector('.spinner'), 'submit button contains spinner during loading');
   e.input('yard-address', '456 Other St, Niles MI'); resolve({ ok: true, json: async () => fixture() }); await e.flush();
   assert.equal(e.get('yard-price-review').hidden, true); assert.equal(e.get('yard-price-submit').disabled, false);
+  assert.equal(e.get('yard-price-submit').hasAttribute('aria-busy'), false);
 });
 test('service change clears a confirmed result and reveals leaf inputs', async () => {
   const e = setup(); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm();
