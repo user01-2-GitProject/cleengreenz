@@ -73,3 +73,9 @@
 **Learning:** In Cloudflare Pages / API endpoint rate limiters (e.g. `createEstimateLimiter`), iterating all entries in `Map` and creating `.filter()` arrays on every single API request turns rate checking into an $O(N)$ operation per request. Checking `entries.get(ip)` first, trimming expired timestamps in-place, and deferring Map cleanup sweeps until `entries.size` hits maximum capacity (`MAX_ENTRIES`) speeds up rate checks by ~50x-60x under load.
 
 **Action:** Perform fast $O(1)$ Map key lookups first and trim queues in-place. Defer Map cleanup sweeps until capacity thresholds are reached, using $O(1)$ latest-timestamp checks (`tList[tList.length - 1] <= windowStart`) to purge expired entries.
+
+## 2026-10-06 - Track element visual states with JS flags to avoid classList queries in requestAnimationFrame
+
+**Learning:** Calling `wrap.classList.contains(...)` or `bubble.classList.contains(...)` inside high-frequency `requestAnimationFrame` ticks (60–120 FPS) triggers DOM element class string parsing and DOM node lookups on every single frame. Tracking state changes (`p.isReacting`, `p.bubbleVisible`) via boolean state properties updated only when state changes occur eliminates DOM read overhead in the hot animation loop.
+
+**Action:** Maintain boolean state variables on animation state objects for classes or states toggled via events, and query those primitive JS flags instead of calling `classList.contains()` inside `requestAnimationFrame` render loops.
