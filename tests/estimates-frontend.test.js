@@ -65,11 +65,19 @@ test('full notes are preserved and customer is told the summary did not fit', as
   const e = setup(); e.get('f-notes').value = 'x'.repeat(500); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm(); e.get('yard-quote-handoff').click();
   assert.equal(e.get('f-notes').value, 'x'.repeat(500)); assert.match(e.get('yard-handoff-status').textContent, /shorten/);
 });
-test('loading prevents duplicate requests and changed inputs discard stale replies', async () => {
+test('loading prevents duplicate requests, displays animated spinner SVG with aria-busy, and restores button text when complete', async () => {
   let resolve; const e = setup(() => new Promise(r => { resolve = r; }));
-  e.input('yard-address', '123 Main St, Niles MI'); e.submit(); e.submit(); assert.equal(e.calls.length, 1); assert.equal(e.get('yard-price-submit').disabled, true);
+  e.input('yard-address', '123 Main St, Niles MI'); e.submit(); e.submit(); assert.equal(e.calls.length, 1);
+  assert.equal(e.get('yard-price-submit').disabled, true);
+  assert.equal(e.get('yard-price-form').getAttribute('aria-busy'), 'true');
+  assert.ok(e.get('yard-price-submit').querySelector('svg.spinner'), 'submit button renders inline spinner SVG');
+  assert.match(e.get('yard-price-submit').textContent, /Checking your property…/);
   e.input('yard-address', '456 Other St, Niles MI'); resolve({ ok: true, json: async () => fixture() }); await e.flush();
-  assert.equal(e.get('yard-price-review').hidden, true); assert.equal(e.get('yard-price-submit').disabled, false);
+  assert.equal(e.get('yard-price-review').hidden, true);
+  assert.equal(e.get('yard-price-submit').disabled, false);
+  assert.equal(e.get('yard-price-form').hasAttribute('aria-busy'), false);
+  assert.equal(e.get('yard-price-submit').querySelector('svg.spinner'), null);
+  assert.equal(e.get('yard-price-submit').textContent, 'Get my price');
 });
 test('service change clears a confirmed result and reveals leaf inputs', async () => {
   const e = setup(); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm();
