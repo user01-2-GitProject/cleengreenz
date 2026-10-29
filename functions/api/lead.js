@@ -37,6 +37,7 @@ export function isRateLimited(ip, now = Date.now()) {
     for (const [k, v] of ipRequestLogs.entries()) {
       if (v.length === 0 || v[v.length - 1] <= windowStart) ipRequestLogs.delete(k);
     }
+    if (ipRequestLogs.size > 1000 && !ipRequestLogs.has(ip)) return true;
   }
   return false;
 }
@@ -138,8 +139,8 @@ async function emailChris(env, lead) {
 
 export async function onRequestPost({ request, env, waitUntil }) {
   // Rate Limiting: Prevent automated spam and DoS attacks by limiting requests per IP address
-  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  if (clientIp && isRateLimited(clientIp)) {
+  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
     return json({ ok: false, error: 'rate_limited' }, 429);
   }
 
