@@ -21,6 +21,10 @@ function setup(fetchImpl) {
 test('calculator validates address and area before making requests', () => {
   const e = setup();
   assert.equal(e.get('yard-address').getAttribute('aria-required'), 'true');
+  assert.equal(e.get('yard-address').getAttribute('aria-describedby'), 'yard-address-help');
+  const summary = e.get('yard-area-details').querySelector('summary');
+  assert.equal(summary.getAttribute('aria-controls'), 'yard-area-fields');
+  assert.ok(e.get('yard-area-fields'), 'yard area fields container exists for aria-controls');
   const reqSpan = e.d.querySelector('label[for="yard-address"] .req');
   assert.ok(reqSpan, 'yard address label contains required visual indicator');
   e.submit(); assert.equal(e.calls.length, 0); assert.equal(e.d.activeElement.id, 'yard-address');
