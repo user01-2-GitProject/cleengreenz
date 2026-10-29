@@ -94,4 +94,23 @@ test('FAQ details/summary accessibility attributes', async (t) => {
     assert.equal(addressInput.getAttribute('autocapitalize'), 'words');
     assert.equal(addressInput.getAttribute('enterkeyhint'), 'search');
   });
+
+  await t.test('yard estimator controls have explicit aria-controls relationships for disclosed sections', () => {
+    const dom = new JSDOM(htmlTemplate);
+    const { document } = dom.window;
+
+    const yardService = document.getElementById('yard-service');
+    assert.ok(yardService, '#yard-service element exists');
+    const serviceControls = yardService.getAttribute('aria-controls');
+    assert.equal(serviceControls, 'yard-leaves-options', '#yard-service controls #yard-leaves-options');
+    assert.ok(document.getElementById(serviceControls), 'controlled element #yard-leaves-options exists');
+
+    const yardAreaDetails = document.getElementById('yard-area-details');
+    assert.ok(yardAreaDetails, '#yard-area-details element exists');
+    const yardAreaSummary = yardAreaDetails.querySelector('summary');
+    assert.ok(yardAreaSummary, '#yard-area-details summary exists');
+    const areaControls = yardAreaSummary.getAttribute('aria-controls');
+    assert.equal(areaControls, 'yard-area-fields', '#yard-area-details summary controls #yard-area-fields');
+    assert.ok(document.getElementById(areaControls), 'controlled element #yard-area-fields exists');
+  });
 });
