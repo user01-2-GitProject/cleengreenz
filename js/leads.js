@@ -125,7 +125,12 @@
       notesCount.textContent = '· ' + remaining + ' character' + (remaining === 1 ? '' : 's') + ' remaining';
       var nearLimit = remaining <= 20;
       notesCount.classList.toggle('near-limit', nearLimit);
-      notesCount.setAttribute('aria-live', nearLimit ? 'polite' : 'off');
+      // Performance optimization: Guard aria-live attribute updates with a value check to bypass
+      // redundant setAttribute mutations and accessibility tree recalculations on every keystroke.
+      var liveState = nearLimit ? 'polite' : 'off';
+      if (notesCount.getAttribute('aria-live') !== liveState) {
+        notesCount.setAttribute('aria-live', liveState);
+      }
     }
     notesInput.addEventListener('input', updateNotesCount);
     updateNotesCount();
@@ -150,7 +155,12 @@
   var phoneInput = form.querySelector('#f-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', function () {
-      phoneInput.value = formatPhone(phoneInput.value);
+      // Performance optimization: Set input value only when formatted string differs to avoid
+      // redundant DOM value property mutations and selection caret resets.
+      var formatted = formatPhone(phoneInput.value);
+      if (phoneInput.value !== formatted) {
+        phoneInput.value = formatted;
+      }
     });
   }
 
@@ -266,8 +276,12 @@
       }
       return false;
     } else {
-      field.removeAttribute('aria-invalid');
-      if (errEl) {
+      // Performance optimization: Guard error state cleanup with attribute presence and class checks
+      // to bypass redundant DOM queries, string regex splitting/joining, and attribute mutations when blurring valid fields.
+      if (field.getAttribute('aria-invalid') === 'true') {
+        field.removeAttribute('aria-invalid');
+      }
+      if (errEl && errEl.classList.contains('show')) {
         errEl.classList.remove('show');
         var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
           .filter(function (id) { return id && id !== errEl.id; }).join(' ');
