@@ -150,7 +150,12 @@
   var phoneInput = form.querySelector('#f-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', function () {
-      phoneInput.value = formatPhone(phoneInput.value);
+      // Performance optimization: Guard DOM value assignment with an equality check
+      // to bypass redundant property mutations and browser layout/caret updates on keystrokes.
+      var formatted = formatPhone(phoneInput.value);
+      if (phoneInput.value !== formatted) {
+        phoneInput.value = formatted;
+      }
     });
   }
 
@@ -281,7 +286,10 @@
   form.addEventListener('focusout', function (e) {
     var field = e.target;
     if (field && field.id === 'f-phone' && field.value) {
-      field.value = formatPhone(field.value);
+      var formatted = formatPhone(field.value);
+      if (field.value !== formatted) {
+        field.value = formatted;
+      }
     }
     if (field && field.hasAttribute && field.hasAttribute('required')) {
       if (field.value.trim() !== '' || field.getAttribute('aria-invalid') === 'true') {
