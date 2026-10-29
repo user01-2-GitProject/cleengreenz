@@ -13,6 +13,10 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 10;
 const ipRequestLogs = new Map();
 
+export function _resetRateLimits() {
+  ipRequestLogs.clear();
+}
+
 export function isRateLimited(ip, now = Date.now()) {
   if (!ip) return false;
   let timestamps = ipRequestLogs.get(ip);
@@ -138,8 +142,8 @@ async function emailChris(env, lead) {
 
 export async function onRequestPost({ request, env, waitUntil }) {
   // Rate Limiting: Prevent automated spam and DoS attacks by limiting requests per IP address
-  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  if (clientIp && isRateLimited(clientIp)) {
+  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
     return json({ ok: false, error: 'rate_limited' }, 429);
   }
 
