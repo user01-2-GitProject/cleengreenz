@@ -144,6 +144,7 @@ export async function onRequestGet({ request, env }) {
       status: 429,
       headers: {
         'content-type': 'text/plain; charset=utf-8',
+        'retry-after': '60',
         ...SECURITY_HEADERS,
       },
     });
