@@ -120,18 +120,29 @@
   var notesCount = form.querySelector('#f-notes-count');
   if (notesInput && notesCount) {
     var maxLen = notesInput.maxLength > 0 ? notesInput.maxLength : 500;
+    var lastLiveVal = null;
     function updateNotesCount() {
       var remaining = maxLen - notesInput.value.length;
       notesCount.textContent = '· ' + remaining + ' character' + (remaining === 1 ? '' : 's') + ' remaining';
       var nearLimit = remaining <= 20;
       notesCount.classList.toggle('near-limit', nearLimit);
-      notesCount.setAttribute('aria-live', nearLimit ? 'polite' : 'off');
+      // Performance optimization: Guard aria-live attribute updates with value check
+      // to avoid redundant DOM attribute mutations on every keystroke.
+      var liveVal = nearLimit ? 'polite' : 'off';
+      if (lastLiveVal !== liveVal) {
+        notesCount.setAttribute('aria-live', liveVal);
+        lastLiveVal = liveVal;
+      }
     }
     notesInput.addEventListener('input', updateNotesCount);
     updateNotesCount();
   }
 
   function formatPhone(val) {
+    if (!val) return '';
+    // Performance optimization: Fast-path check for empty or already-formatted (XXX) XXX-XXXX strings
+    // to bypass regex string replacement and string slicing allocations.
+    if (/^\(\d{3}\) \d{3}-\d{4}$/.test(val)) return val;
     var digits = val.replace(/\D/g, '');
     if (!digits) return '';
     if (digits.length >= 11 && digits[0] === '1') {
@@ -150,7 +161,12 @@
   var phoneInput = form.querySelector('#f-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', function () {
-      phoneInput.value = formatPhone(phoneInput.value);
+      // Performance optimization: Guard phoneInput.value assignment with equality check
+      // to bypass redundant string allocations and DOM mutations on keystrokes.
+      var formatted = formatPhone(phoneInput.value);
+      if (phoneInput.value !== formatted) {
+        phoneInput.value = formatted;
+      }
     });
   }
 
@@ -266,8 +282,13 @@
       }
       return false;
     } else {
-      field.removeAttribute('aria-invalid');
-      if (errEl) {
+      // Performance optimization: Guard error cleanup and aria-describedby string operations with
+      // presence checks (field.getAttribute and errEl.classList.contains) to bypass redundant DOM queries,
+      // string splitting/joining, and attribute mutations on valid keystrokes and focusout events.
+      if (field.getAttribute('aria-invalid') === 'true') {
+        field.removeAttribute('aria-invalid');
+      }
+      if (errEl && errEl.classList.contains('show')) {
         errEl.classList.remove('show');
         var descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/)
           .filter(function (id) { return id && id !== errEl.id; }).join(' ');
