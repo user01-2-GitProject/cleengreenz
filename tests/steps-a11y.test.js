@@ -19,5 +19,21 @@ test('How it works section steps accessibility', () => {
   assert.equal(stepItems.length, 3, 'contains 3 step items');
   stepItems.forEach((item) => {
     assert.equal(item.tagName.toLowerCase(), 'li', 'each .step item is an <li> element');
+    const numEl = item.querySelector('.num');
+    assert.ok(numEl, 'step item has .num element');
+    assert.equal(numEl.getAttribute('aria-hidden'), 'true', '.num is aria-hidden="true"');
+  });
+
+  const yardStepsList = document.querySelector('.yard-steps');
+  assert.ok(yardStepsList, 'found .yard-steps element');
+  assert.equal(yardStepsList.tagName.toLowerCase(), 'ol', '.yard-steps is an ordered list <ol>');
+  assert.equal(yardStepsList.getAttribute('aria-label'), 'Yard estimator steps', '.yard-steps has aria-label="Yard estimator steps"');
+
+  const yardStepItems = yardStepsList.querySelectorAll('li');
+  assert.equal(yardStepItems.length, 4, 'contains 4 yard step items');
+  yardStepItems.forEach((item) => {
+    const numEl = item.querySelector('.yard-step-num');
+    assert.ok(numEl, 'yard step item has .yard-step-num element');
+    assert.equal(numEl.getAttribute('aria-hidden'), 'true', '.yard-step-num is aria-hidden="true"');
   });
 });
