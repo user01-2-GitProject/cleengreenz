@@ -539,6 +539,15 @@
   footer.site a:hover { color: var(--gold); }
   .foot-logo { background: var(--paper); border-radius: 18px; padding: 10px 14px; display: inline-block; margin-bottom: 16px; }
   .foot-logo img { height: 56px; width: auto; }
+  .pawating-link {
+    display: block; width: 64px; margin: 16px auto 0; opacity: .72;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .pawating-link:hover {
+    opacity: 1; transform: translateY(-2px);
+  }
+  .pawating-link:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+  .pawating-link img { display: block; width: 100%; height: auto; }
   .copyright { border-top: 1px solid rgba(255,255,255,.1); margin-top: 40px; padding-top: 22px; font-size: .88rem; text-align: center; }
   @media (max-width: 900px) { .foot-grid { grid-template-columns: 1fr; gap: 28px; } }
 
@@ -949,6 +958,9 @@
       </div>
     </div>
     <div class="copyright">© <span id="year">2026</span> Cleen Greenz Lawn Care · Established 2009</div>
+    <a class="pawating-link" href="https://pawating.com" aria-label="Visit Pawating.com">
+      <img src="media/al-ellum.webp" alt="" width="770" height="1099" loading="lazy">
+    </a>
   </div>
 </footer>
 
