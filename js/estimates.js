@@ -67,6 +67,10 @@
   }
   if (startBtn) startBtn.addEventListener('click', openTool);
   if (intro) intro.addEventListener('click', function (event) { if (event.target !== startBtn) openTool(); });
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest('a[href="#price-your-yard"]');
+    if (link) openTool();
+  });
   form.addEventListener('input', clear);
   form.addEventListener('change', clear);
   function fail(message, field) {

@@ -113,3 +113,15 @@ test('infographic gates the tool until it is touched', async () => {
   assert.equal(e.get('yard-price-form').hidden, false);
   assert.equal(e.get('yard-price-result').hidden, true);
 });
+
+test('clicking link targeting #price-your-yard opens estimator tool and focuses address field', async () => {
+  const e = setup();
+  assert.equal(e.get('yard-intro').hidden, false);
+  assert.equal(e.get('yard-price-form').hidden, true);
+  const heroLink = e.d.querySelector('a[href="#price-your-yard"]');
+  assert.ok(heroLink, 'link targeting #price-your-yard exists');
+  heroLink.click();
+  assert.equal(e.get('yard-intro').hidden, true);
+  assert.equal(e.get('yard-price-form').hidden, false);
+  assert.equal(e.d.activeElement.id, 'yard-address');
+});
