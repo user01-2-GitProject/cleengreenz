@@ -138,12 +138,13 @@ export async function onRequest(context) {
 
 export async function onRequestGet({ request, env }) {
   // Rate Limiting: Prevent basic authentication brute-force attempts and DoS attacks by limiting requests per IP address
-  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  if (clientIp && isRateLimited(clientIp)) {
+  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
     return new Response('Too Many Requests', {
       status: 429,
       headers: {
         'content-type': 'text/plain; charset=utf-8',
+        'retry-after': '60',
         ...SECURITY_HEADERS,
       },
     });
