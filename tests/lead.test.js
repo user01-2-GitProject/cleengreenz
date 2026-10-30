@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { isRateLimited, json, onRequest, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { isRateLimited, json, onRequest, onRequestPost, sanitizePhone, _resetRateLimits } from '../functions/api/lead.js';
 import { authorized, onRequest as onRequestLeads, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 // js/leads.js is a classic browser script (loaded via <script src>), so it
@@ -48,7 +48,7 @@ test('isRateLimited helper and IP rate limiting behavior', async (t) => {
     assert.equal(isRateLimited(testIp, now + 61000), false);
   });
 
-  await t.test('onRequestPost returns 429 Too Many Requests when IP rate limit is exceeded', async () => {
+  await t.test('onRequestPost returns 429 Too Many Requests with retry-after header when IP rate limit is exceeded', async () => {
     const testIp = '198.51.100.13';
     const makeReq = () => new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
@@ -64,6 +64,25 @@ test('isRateLimited helper and IP rate limiting behavior', async (t) => {
     const rateLimitedRes = await onRequestPost({ request: makeReq(), env: {}, waitUntil: () => {} });
     assert.equal(rateLimitedRes.status, 429);
     assert.equal(rateLimitedRes.headers.get('content-type'), 'application/json');
+    assert.equal(rateLimitedRes.headers.get('retry-after'), '60');
+    assert.deepEqual(await rateLimitedRes.json(), { ok: false, error: 'rate_limited' });
+  });
+
+  await t.test('onRequestPost enforces rate limiting on requests lacking client IP headers using unknown fallback', async () => {
+    const makeReq = () => new Request('https://cleengreenz.com/api/lead', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'call' }),
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const res = await onRequestPost({ request: makeReq(), env: {}, waitUntil: () => {} });
+      assert.equal(res.status, 200);
+    }
+
+    const rateLimitedRes = await onRequestPost({ request: makeReq(), env: {}, waitUntil: () => {} });
+    assert.equal(rateLimitedRes.status, 429);
+    assert.equal(rateLimitedRes.headers.get('retry-after'), '60');
     assert.deepEqual(await rateLimitedRes.json(), { ok: false, error: 'rate_limited' });
   });
 });
@@ -142,7 +161,7 @@ test('onRequest method restrictions and 405 responses in functions/api/lead.js',
   await t.test('dispatches POST request to onRequestPost successfully', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'origin': 'https://cleengreenz.com' },
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': '198.51.100.150', 'origin': 'https://cleengreenz.com' },
       body: JSON.stringify({ type: 'call' }),
     });
     const res = await onRequest({ request, env: {}, waitUntil: () => {} });
@@ -153,7 +172,7 @@ test('onRequest method restrictions and 405 responses in functions/api/lead.js',
   await t.test('returns 405 Method Not Allowed with Allow header and security headers for non-POST methods', async () => {
     const methods = ['GET', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'];
     for (const method of methods) {
-      const request = new Request('https://cleengreenz.com/api/lead', { method });
+      const request = new Request('https://cleengreenz.com/api/lead', { method, headers: { 'cf-connecting-ip': '198.51.100.150' } });
       const res = await onRequest({ request, env: {}, waitUntil: () => {} });
 
       assert.equal(res.status, 405, `Expected 405 for HTTP method ${method}`);
@@ -171,7 +190,7 @@ test('onRequest method restrictions and 405 responses in functions/api/lead.js',
 
 test('onRequest method restrictions and 405 responses in functions/leads.js', async (t) => {
   await t.test('dispatches GET request to onRequestGet', async () => {
-    const request = new Request('https://cleengreenz.com/leads', { method: 'GET' });
+    const request = new Request('https://cleengreenz.com/leads', { method: 'GET', headers: { 'cf-connecting-ip': '198.51.100.151' } });
     const res = await onRequestLeads({ request, env: {} });
     assert.equal(res.status, 401);
   });
@@ -179,7 +198,7 @@ test('onRequest method restrictions and 405 responses in functions/leads.js', as
   await t.test('returns 405 Method Not Allowed with Allow header and security headers for non-GET methods', async () => {
     const methods = ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'];
     for (const method of methods) {
-      const request = new Request('https://cleengreenz.com/leads', { method });
+      const request = new Request('https://cleengreenz.com/leads', { method, headers: { 'cf-connecting-ip': '198.51.100.151' } });
       const res = await onRequestLeads({ request, env: {} });
 
       assert.equal(res.status, 405, `Expected 405 for HTTP method ${method}`);
@@ -237,8 +256,18 @@ test('authorized authentication helper function', async (t) => {
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
+  let postIpCounter = 400;
+
+  function makePostReq(url, init = {}) {
+    const headers = new Headers(init.headers || {});
+    if (!headers.has('cf-connecting-ip')) {
+      headers.set('cf-connecting-ip', `198.51.100.${++postIpCounter}`);
+    }
+    return new Request(url, { ...init, headers });
+  }
+
   await t.test('returns 400 JSON response with security headers when Content-Type is not application/json', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'text/plain' },
       body: JSON.stringify({ type: 'call' }),
@@ -255,7 +284,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 413 JSON response when Content-Length exceeds 64KB limit', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'content-length': '70000' },
       body: JSON.stringify({ type: 'call' }),
@@ -268,7 +297,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 413 JSON response when Content-Length is invalid or negative', async () => {
-    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+    const reqInvalid = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'content-length': 'invalid' },
       body: JSON.stringify({ type: 'call' }),
@@ -277,7 +306,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(resInvalid.status, 413);
     assert.deepEqual(await resInvalid.json(), { ok: false, error: 'payload_too_large' });
 
-    const reqNegative = new Request('https://cleengreenz.com/api/lead', {
+    const reqNegative = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'content-length': '-10' },
       body: JSON.stringify({ type: 'call' }),
@@ -289,7 +318,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
   await t.test('returns 413 JSON response when body length exceeds 64KB even if Content-Length header is omitted', async () => {
     const largeBody = JSON.stringify({ type: 'call', padding: 'x'.repeat(70000) });
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: largeBody,
@@ -301,7 +330,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 400 JSON response on invalid JSON request body or non-object payload', async () => {
-    const invalidJsonRequest = new Request('https://cleengreenz.com/api/lead', {
+    const invalidJsonRequest = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: 'invalid-json-{',
@@ -310,7 +339,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res1.status, 400);
     assert.deepEqual(await res1.json(), { ok: false, error: 'bad_request' });
 
-    const nullRequest = new Request('https://cleengreenz.com/api/lead', {
+    const nullRequest = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: 'null',
@@ -319,7 +348,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res2.status, 400);
     assert.deepEqual(await res2.json(), { ok: false, error: 'bad_request' });
 
-    const arrayRequest = new Request('https://cleengreenz.com/api/lead', {
+    const arrayRequest = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(['call', 'form']),
@@ -330,7 +359,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 400 JSON response on invalid lead type', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ type: 'invalid_type' }),
@@ -343,7 +372,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 403 JSON response when sec-fetch-site is cross-site', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'sec-fetch-site': 'cross-site' },
       body: JSON.stringify({ type: 'call' }),
@@ -356,7 +385,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 403 JSON response when Origin does not match request origin or uses invalid protocol', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'origin': 'https://evil-attacker.com' },
       body: JSON.stringify({ type: 'call' }),
@@ -367,7 +396,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
 
-    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+    const reqInvalid = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'origin': 'javascript:alert(1)' },
       body: JSON.stringify({ type: 'call' }),
@@ -377,7 +406,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 403 JSON response when Referer does not match request origin or uses invalid protocol', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'referer': 'https://evil-attacker.com/phishing' },
       body: JSON.stringify({ type: 'call' }),
@@ -388,7 +417,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     assert.equal(res.headers.get('content-type'), 'application/json');
     assert.deepEqual(await res.json(), { ok: false, error: 'forbidden' });
 
-    const reqInvalid = new Request('https://cleengreenz.com/api/lead', {
+    const reqInvalid = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'referer': 'not-a-valid-url' },
       body: JSON.stringify({ type: 'call' }),
@@ -398,7 +427,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 200 JSON response on valid click event with same origin', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'origin': 'https://cleengreenz.com' },
       body: JSON.stringify({ type: 'call' }),
@@ -419,7 +448,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     };
 
     try {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -479,7 +508,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     };
 
     try {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -527,7 +556,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     ];
 
     for (const { field, value } of trackingCases) {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ type: 'call', [field]: value }),
@@ -559,7 +588,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     };
 
     for (const { field, value } of overLimitCases) {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ ...baseForm, [field]: value }),
@@ -584,7 +613,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     ];
 
     for (const { body, missing } of testCases) {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
@@ -609,7 +638,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       },
     };
 
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -634,7 +663,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
   });
 
   await t.test('returns 503 with stored: false when email failed and not stored in DB', async () => {
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -659,7 +688,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
       }),
     };
 
-    const request = new Request('https://cleengreenz.com/api/lead', {
+    const request = makePostReq('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -680,7 +709,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     globalThis.fetch = async () => new Response('Internal Server Error', { status: 500 });
 
     try {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -710,7 +739,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     };
 
     try {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -765,7 +794,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
     };
 
     try {
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -817,7 +846,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
           throw new Error('D1 connection failed');
         },
       };
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ type: 'call' }),
@@ -840,7 +869,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
           throw new Error('D1 insert failed');
         },
       };
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -871,7 +900,7 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
           throw new Error('D1 insert failed');
         },
       };
-      const request = new Request('https://cleengreenz.com/api/lead', {
+      const request = makePostReq('https://cleengreenz.com/api/lead', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -898,12 +927,20 @@ test('onRequestPost uses json response formatting correctly', async (t) => {
 
 test('onRequestGet authorization and response handling', async (t) => {
   const secret = 'super-secret-password-123';
+  let ipCounter = 200;
 
   function basicAuth(username, password) {
     return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
 
-  await t.test('returns 429 Too Many Requests when IP rate limit is exceeded on /leads', async () => {
+  function getReq(url, extraHeaders = {}) {
+    return new Request(url, {
+      method: 'GET',
+      headers: { 'cf-connecting-ip': `198.51.100.${++ipCounter}`, ...extraHeaders },
+    });
+  }
+
+  await t.test('returns 429 Too Many Requests with retry-after header when IP rate limit is exceeded on /leads', async () => {
     const testIp = '198.51.100.99';
     const makeReq = () => new Request('https://cleengreenz.com/leads', {
       method: 'GET',
@@ -918,15 +955,32 @@ test('onRequestGet authorization and response handling', async (t) => {
     const rateLimitedRes = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
     assert.equal(rateLimitedRes.status, 429);
     assert.equal(rateLimitedRes.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(rateLimitedRes.headers.get('retry-after'), '60');
     assert.equal(rateLimitedRes.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(rateLimitedRes.headers.get('x-frame-options'), 'DENY');
     assert.equal(await rateLimitedRes.text(), 'Too Many Requests');
   });
 
-  await t.test('returns 401 with security headers when LEADS_PASSWORD env is missing', async () => {
-    const request = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: basicAuth('admin', secret) },
+  await t.test('enforces rate limiting on /leads for requests lacking client IP headers using unknown fallback', async () => {
+    _resetRateLimits();
+
+    const makeReq = () => new Request('https://cleengreenz.com/leads', {
+      method: 'GET',
     });
+
+    for (let i = 0; i < 10; i++) {
+      const res = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+      assert.equal(res.status, 401);
+    }
+
+    const rateLimitedRes = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
+    assert.equal(rateLimitedRes.status, 429);
+    assert.equal(rateLimitedRes.headers.get('retry-after'), '60');
+    assert.equal(await rateLimitedRes.text(), 'Too Many Requests');
+  });
+
+  await t.test('returns 401 with security headers when LEADS_PASSWORD env is missing', async () => {
+    const request = getReq('https://cleengreenz.com/leads', { authorization: basicAuth('admin', secret) });
     const res = await onRequestGet({ request, env: {} });
 
     assert.equal(res.status, 401);
@@ -953,7 +1007,7 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('returns 401 when authorization header is missing', async () => {
-    const request = new Request('https://cleengreenz.com/leads');
+    const request = getReq('https://cleengreenz.com/leads');
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
 
     assert.equal(res.status, 401);
@@ -965,9 +1019,7 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('returns 401 when authorization header has invalid password or format', async () => {
-    const reqWrongPass = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: basicAuth('admin', 'wrong-password') },
-    });
+    const reqWrongPass = getReq('https://cleengreenz.com/leads', { authorization: basicAuth('admin', 'wrong-password') });
     const resWrongPass = await onRequestGet({ request: reqWrongPass, env: { LEADS_PASSWORD: secret } });
     assert.equal(resWrongPass.status, 401);
     assert.equal(
@@ -975,9 +1027,7 @@ test('onRequestGet authorization and response handling', async (t) => {
       'Basic realm="Cleen Greenz leads", charset="UTF-8"'
     );
 
-    const reqInvalidHeader = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: 'Bearer token123' },
-    });
+    const reqInvalidHeader = getReq('https://cleengreenz.com/leads', { authorization: 'Bearer token123' });
     const resInvalidHeader = await onRequestGet({ request: reqInvalidHeader, env: { LEADS_PASSWORD: secret } });
     assert.equal(resInvalidHeader.status, 401);
   });
@@ -987,6 +1037,7 @@ test('onRequestGet authorization and response handling', async (t) => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
+        'cf-connecting-ip': `198.51.100.${++ipCounter}`,
         'origin': 'https://cleengreenz.com',
         'referer': 'https://evil-attacker.com/phishing',
       },
@@ -1000,9 +1051,7 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('allows request when authorization header is valid', async () => {
-    const request = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: basicAuth('admin', secret) },
-    });
+    const request = getReq('https://cleengreenz.com/leads', { authorization: basicAuth('admin', secret) });
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
 
     // Should pass authorization check and hit DB missing check (503)
@@ -1029,9 +1078,7 @@ test('onRequestGet authorization and response handling', async (t) => {
         },
       };
 
-      const request = new Request('https://cleengreenz.com/leads', {
-        headers: { authorization: basicAuth('admin', secret) },
-      });
+      const request = getReq('https://cleengreenz.com/leads', { authorization: basicAuth('admin', secret) });
       const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: failingDb } });
 
       assert.equal(res.status, 500);
@@ -1157,7 +1204,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     const secret = 'test-pass';
     const authHeader = 'Basic ' + Buffer.from(`admin:${secret}`).toString('base64');
     const request = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: authHeader },
+      headers: { authorization: authHeader, 'cf-connecting-ip': '198.51.100.250' },
     });
 
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: mockDb } });
