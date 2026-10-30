@@ -13,3 +13,7 @@
 ## 2026-10-28 - Checkbox-Controlled Disclosure State ARIA Attributes
 **Learning:** Interactive checkboxes that reveal or hide content sections (such as property address/area confirmation toggling price results) must maintain `aria-controls` pointing to the target container and dynamically synchronize `aria-expanded="true"` or `"false"` on state changes so screen readers understand the relationship and visibility state.
 **Action:** Associate disclosing checkboxes with their controlled container via `aria-controls` and update `aria-expanded` whenever the checkbox `change` or form `reset` events fire.
+
+## 2026-11-04 - Visual Step Numbers in Ordered Lists
+**Learning:** In ordered lists (`<ol>`), rendering visual step numbers as text inside `<li>` elements (e.g. `<div class="num">1</div>`) causes screen readers to redundantly announce numbers twice (e.g. "1. 1 Tell us about your yard").
+**Action:** Mark visual step number elements inside `<ol>` list items as `aria-hidden="true"` so screen readers convey list structure cleanly without duplicate number announcements.
