@@ -131,6 +131,63 @@ test('county errors, ambiguous features and invalid acreage become explicit assu
   const lot = await resolveLotSqft(41, -86, async () => new Response('', { status: 503 }), { layerUrl: 'https://county.example/query' });
   assert.deepEqual(lot.warnings, ['parcel-lookup-unavailable']);
 });
+test('zeroed county acreage is measured from the parcel geometry instead', async () => {
+  // Berrien County's live layer reports acres: 0 for whole neighborhoods
+  // (found 2026-10-30); the parcel polygon still measures the lot.
+  const ring = [[-86.25, 41.83], [-86.249, 41.83], [-86.249, 41.831], [-86.25, 41.831], [-86.25, 41.83]];
+  const sqft = await parcelSqftFromArcGIS(41.8305, -86.2495,
+    async () => response({ features: [{ attributes: { ACREAGE: 0 }, geometry: { rings: [ring] } }] }),
+    { layerUrl: 'https://county.example/query' });
+  assert.ok(sqft > 50_000 && sqft < 200_000, `expected roughly 99k sq ft, got ${sqft}`);
+  const lot = await resolveLotSqft(41.8305, -86.2495,
+    async () => response({ features: [{ attributes: { ACREAGE: 0 }, geometry: { rings: [ring] } }] }),
+    { layerUrl: 'https://county.example/query' });
+  assert.equal(lot.source, 'county-parcel');
+});
+test('catch-all placeholder polygons are not measured as lots', async () => {
+  // County layers carry multipart placeholder features for unparceled land;
+  // a many-ring or oversized polygon must fall back, not price a township.
+  const small = [[-86.25, 41.83], [-86.249, 41.83], [-86.249, 41.831], [-86.25, 41.831], [-86.25, 41.83]];
+  const manyRings = { rings: Array.from({ length: 9 }, () => small) };
+  const oversized = { rings: [[[-86.25, 41.83], [-86.23, 41.83], [-86.23, 41.85], [-86.25, 41.85], [-86.25, 41.83]]] };
+  for (const geometry of [manyRings, oversized]) {
+    const lot = await resolveLotSqft(41.84, -86.24,
+      async () => response({ features: [{ attributes: { ACREAGE: 0 }, geometry }] }),
+      { layerUrl: 'https://county.example/query' });
+    assert.equal(lot.source, 'typical-lot-fallback');
+  }
+});
+test('zeroed acreage without usable geometry still falls back', async () => {
+  const lot = await resolveLotSqft(41, -86,
+    async () => response({ features: [{ attributes: { ACREAGE: 0 } }] }),
+    { layerUrl: 'https://county.example/query' });
+  assert.equal(lot.source, 'typical-lot-fallback');
+});
+test('a point on the county catch-all retries nearby and takes a lone real parcel', async () => {
+  // Found live 2026-10-30: address points often land on the county layer's
+  // multipart catch-all placeholder (or in the road), while the house's real
+  // parcel sits a few meters away with its acreage zeroed.
+  const ring = [[-86.25, 41.83], [-86.249, 41.83], [-86.249, 41.831], [-86.25, 41.831], [-86.25, 41.83]];
+  const catchAll = { attributes: { ACREAGE: 0 }, geometry: { rings: Array.from({ length: 40 }, () => ring) } };
+  const realParcel = { attributes: { ACREAGE: 0 }, geometry: { rings: [ring] } };
+  const fetchImpl = async (url) => {
+    const buffered = new URL(url).searchParams.has('distance');
+    return response({ features: buffered ? [catchAll, realParcel] : [catchAll] });
+  };
+  const lot = await resolveLotSqft(41.8305, -86.2495, fetchImpl, { layerUrl: 'https://county.example/query' });
+  assert.equal(lot.source, 'county-parcel');
+  assert.ok(lot.lotSqft > 50_000 && lot.lotSqft < 200_000, `expected roughly 99k sq ft, got ${lot.lotSqft}`);
+});
+test('two real parcels near the point stay ambiguous and fall back', async () => {
+  const ring = [[-86.25, 41.83], [-86.249, 41.83], [-86.249, 41.831], [-86.25, 41.831], [-86.25, 41.83]];
+  const parcel = { attributes: { ACREAGE: 0 }, geometry: { rings: [ring] } };
+  const fetchImpl = async (url) => {
+    const buffered = new URL(url).searchParams.has('distance');
+    return response({ features: buffered ? [parcel, parcel] : [] });
+  };
+  const lot = await resolveLotSqft(41.8305, -86.2495, fetchImpl, { layerUrl: 'https://county.example/query' });
+  assert.equal(lot.source, 'typical-lot-fallback');
+});
 test('browser-compatible module import does not depend on process globals', async () => {
   const saved = globalThis.process;
   try { globalThis.process = undefined; await import('../estimates/lot.js?browser-test'); }
