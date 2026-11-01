@@ -141,6 +141,7 @@ export async function onRequestPost({ request, env = {} }) {
         'Invalid fetch implementation.',
         'Invalid lookup timeout.',
         'Provide surface areas.',
+        'Lawn and driveway areas together cannot exceed the total lot area.',
       ]);
       const isKnownDomainMessage =
         knownDomainMessages.has(error.message) ||
@@ -152,3 +153,4 @@ export async function onRequestPost({ request, env = {} }) {
     return json({ ok: false, error: 'estimate_unavailable' }, 503);
   }
 }
+
