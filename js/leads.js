@@ -131,7 +131,12 @@
     updateNotesCount();
   }
 
+  // Performance optimization: Fast check for empty or already-formatted (XXX) XXX-XXXX strings
+  // to avoid running regex digit extraction, string slicing, and DOM mutations on valid keystrokes.
+  var FORMATTED_PHONE_REGEX = /^\(\d{3}\) \d{3}-\d{4}$/;
   function formatPhone(val) {
+    if (!val) return '';
+    if (val.length === 14 && FORMATTED_PHONE_REGEX.test(val)) return val;
     var digits = val.replace(/\D/g, '');
     if (!digits) return '';
     if (digits.length >= 11 && digits[0] === '1') {
@@ -150,7 +155,8 @@
   var phoneInput = form.querySelector('#f-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', function () {
-      phoneInput.value = formatPhone(phoneInput.value);
+      var formatted = formatPhone(phoneInput.value);
+      if (formatted !== phoneInput.value) phoneInput.value = formatted;
     });
   }
 
