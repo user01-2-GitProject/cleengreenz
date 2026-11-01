@@ -64,6 +64,7 @@ test('isRateLimited helper and IP rate limiting behavior', async (t) => {
     const rateLimitedRes = await onRequestPost({ request: makeReq(), env: {}, waitUntil: () => {} });
     assert.equal(rateLimitedRes.status, 429);
     assert.equal(rateLimitedRes.headers.get('content-type'), 'application/json');
+    assert.equal(rateLimitedRes.headers.get('retry-after'), '60');
     assert.deepEqual(await rateLimitedRes.json(), { ok: false, error: 'rate_limited' });
   });
 });
@@ -918,6 +919,7 @@ test('onRequestGet authorization and response handling', async (t) => {
     const rateLimitedRes = await onRequestGet({ request: makeReq(), env: { LEADS_PASSWORD: secret } });
     assert.equal(rateLimitedRes.status, 429);
     assert.equal(rateLimitedRes.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(rateLimitedRes.headers.get('retry-after'), '60');
     assert.equal(rateLimitedRes.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(rateLimitedRes.headers.get('x-frame-options'), 'DENY');
     assert.equal(await rateLimitedRes.text(), 'Too Many Requests');

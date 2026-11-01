@@ -140,7 +140,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Rate Limiting: Prevent automated spam and DoS attacks by limiting requests per IP address
   const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   if (clientIp && isRateLimited(clientIp)) {
-    return json({ ok: false, error: 'rate_limited' }, 429);
+    return json({ ok: false, error: 'rate_limited' }, 429, { 'retry-after': '60' });
   }
 
   // CSRF Protection: Block cross-site requests to prevent unauthorized lead submissions/spam.
