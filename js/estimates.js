@@ -57,6 +57,9 @@
     if (leavesOptions && leavesOptions.hidden !== shouldHideLeaves) {
       leavesOptions.hidden = shouldHideLeaves;
     }
+    if (service) {
+      service.setAttribute('aria-expanded', shouldHideLeaves ? 'false' : 'true');
+    }
   }
   var intro = byId('yard-intro'), startBtn = byId('yard-start');
   function openTool() {

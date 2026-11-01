@@ -13,3 +13,7 @@
 ## 2026-10-28 - Checkbox-Controlled Disclosure State ARIA Attributes
 **Learning:** Interactive checkboxes that reveal or hide content sections (such as property address/area confirmation toggling price results) must maintain `aria-controls` pointing to the target container and dynamically synchronize `aria-expanded="true"` or `"false"` on state changes so screen readers understand the relationship and visibility state.
 **Action:** Associate disclosing checkboxes with their controlled container via `aria-controls` and update `aria-expanded` whenever the checkbox `change` or form `reset` events fire.
+
+## 2026-11-04 - Select-Controlled Disclosure State ARIA Attributes
+**Learning:** Form select elements that dynamically reveal or hide additional form field sections based on option selection (e.g. selecting "Leaf cleanup" in `#yard-service` revealing `#yard-leaves-options`) require `aria-controls` referencing the disclosed element container and synchronized `aria-expanded` attributes on value changes so assistive technologies recognize the expansion state of dependent form controls.
+**Action:** Connect disclosing select controls with `aria-controls` to target option fields and update `aria-expanded` ("true"/"false") inside selection change and form reset/clear handlers.

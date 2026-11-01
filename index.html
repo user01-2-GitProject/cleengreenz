@@ -848,7 +848,7 @@
         </div>
         <form id="yard-price-form" novalidate hidden>
           <div class="field"><label for="yard-address">Property address <span class="req" aria-hidden="true">*</span></label><input id="yard-address" name="address" autocomplete="street-address" autocapitalize="words" enterkeyhint="search" maxlength="200" required aria-required="true" placeholder="Street, city, state, ZIP" aria-describedby="yard-address-help yard-price-error"><small id="yard-address-help" class="yard-help">Include the city and state so we can find the right property.</small></div>
-          <div class="field"><label for="yard-service">What would you like priced?</label><select id="yard-service"><option value="grass">Grass cutting</option><option value="leaves">Leaf cleanup</option><option value="snow">Snow clearing</option></select></div>
+          <div class="field"><label for="yard-service">What would you like priced?</label><select id="yard-service" aria-controls="yard-leaves-options" aria-expanded="false"><option value="grass">Grass cutting</option><option value="leaves">Leaf cleanup</option><option value="snow">Snow clearing</option></select></div>
           <div id="yard-leaves-options" class="field-row" hidden>
             <div class="field"><label for="yard-cover">Tree cover</label><select id="yard-cover"><option value="light">Light — a few trees</option><option value="moderate" selected>Moderate</option><option value="heavy">Heavy — many trees</option></select></div>
             <div class="field"><label for="yard-amount">Leaves to clear this visit</label><select id="yard-amount"><option value="light">Light touch-up</option><option value="moderate" selected>Moderate cleanup</option><option value="full">Full cleanup</option></select></div>
