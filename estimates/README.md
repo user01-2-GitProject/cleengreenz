@@ -41,8 +41,8 @@ Honest version: there is no free national parcel database. The chain in
    A coordinate match is not confirmation of surveyed parcel boundaries.
 2. **Typical-lot fallback (low confidence).** If no parcel layer answers,
    the tool assumes a typical in-town lot (7,840 sq ft, in `rates.js`) and
-   the result is labeled `confidence: "low"` with source
-   `"typical-lot-fallback"` so it is never quoted as measured. A caller who
+   the property metadata is labeled `confidence: "low"` with source
+   `"typical-lot-fallback"` and unsupported service estimates are `null`. This example size is never shown or quoted as the customer’s property. Supplied lawn or driveway measurements can still be priced during an outage. A caller who
    knows the real lot size can pass `lotSqft` and skip the lookup entirely.
 
 Lawn and driveway areas are shares of the lot (house/drive/beds removed):
@@ -92,8 +92,9 @@ email. A preliminary estimate is not Chris's final quote or service-area approva
 - A parcel's acreage is its total lot area, not measured lawn or driveway area.
   The 72% / 9% split remains an explicit assumption unless the customer supplies
   those surface measurements.
-- Missing or unavailable parcel data uses the labeled 7,840 sq ft example from
-  `rates.js`. It must never be described as a measured property size.
+- Missing or unavailable parcel data retains the 7,840 sq ft example only as internal
+  metadata. It cannot generate a customer price: the customer must provide a lot
+  size or the relevant service measurement, or request a quote directly.
 - The Pages endpoint defaults to Berrien County's current public parcel layer,
   querying only its numeric `acres` field. Its [official metadata](https://gis.berriencountymi.gov/server/rest/services/Hosted/Parcels_Current/FeatureServer/0?f=pjson)
   and [county portal item](https://gis.berriencountymi.gov/portal/sharing/rest/content/items/8c8ff545a18449118d25616955f5f9d6?f=json)
@@ -127,3 +128,20 @@ Review the branch preview before merging the calculator to production. County
 data is supplied as-is; a coordinate match and parcel acreage do not verify the
 customer's service area or exact mowing/snow surfaces. The customer confirmation
 and Chris's final quote remain necessary.
+
+
+### Estimator corrections (November 1, 2026)
+
+- Public estimates require a county lot estimate or customer-supplied area. On
+  failed lookup, grass can use a supplied lawn and snow a supplied driveway;
+  leaves requires a lot. Unsupported services return `null`, not an example price.
+- Review distinguishes provided areas, approximate county parcels, and the
+  assumed 72% lawn / 9% driveway split. Unknown areas are not displayed as numbers
+  or passed into request notes. A Census location still does not verify boundaries.
+- Supplied lawn plus driveway cannot exceed a supplied total lot.
+- Results and contact notes show the low–high range (one number when equal).
+  Existing rates and Chris's $50 mowing minimum are unchanged. Requesting a quote
+  does not promise a booking, fixed price, or availability.
+- Hash links open the calculator; requests have a 20-second browser deadline;
+  edits clear confirmation and stale handoff messages. Editing requires another
+  press of “Get my estimate”, which the review text now explains.

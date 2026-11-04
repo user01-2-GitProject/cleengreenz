@@ -19,6 +19,9 @@ export async function estimateFromAddress(address, options = {}) {
   for (const field of ['lotSqft', 'lawnSqft', 'drivewaySqft']) {
     if (options[field] !== undefined) area(options[field], field);
   }
+  if (options.lotSqft !== undefined && (options.lawnSqft ?? 0) + (options.drivewaySqft ?? 0) > options.lotSqft) {
+    throw new TypeError('Lawn and driveway areas together cannot exceed the total lot area.');
+  }
   const warnings = [];
   let geo = null;
   let lot;
@@ -42,5 +45,14 @@ export async function estimateFromAddress(address, options = {}) {
     requiresConfirmation: lot.source !== 'provided' || options.lawnSqft === undefined || options.drivewaySqft === undefined,
     warnings: [...warnings, ...lot.warnings],
   };
-  return { ok: true, property, estimates: estimateFromAreas(property, options) };
+  const estimates = estimateFromAreas(property, options);
+  // A default example lot cannot support a quote for a real property. Known
+  // service measurements still work when the address/county lookup is down.
+  if (lot.source === 'typical-lot-fallback') {
+    estimates.leaves = null;
+    if (options.lawnSqft === undefined) estimates.grass = null;
+    if (options.drivewaySqft === undefined) estimates.snow = null;
+  }
+  return { ok: true, property, estimates };
 }
+

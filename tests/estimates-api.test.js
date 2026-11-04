@@ -102,7 +102,8 @@ test('API defaults to verified Berrien acreage and keeps parcel confirmation req
       const parcelUrl = new URL(url);
       assert.equal(parcelUrl.origin + parcelUrl.pathname, 'https://gis.berriencountymi.gov/server/rest/services/Hosted/Parcels_Current/FeatureServer/0/query');
       assert.equal(parcelUrl.searchParams.get('outFields'), 'acres');
-      assert.equal(parcelUrl.searchParams.get('returnGeometry'), 'false');
+      assert.equal(parcelUrl.searchParams.get('returnGeometry'), 'true');
+      assert.equal(parcelUrl.searchParams.get('outSR'), '4326');
       return new Response(JSON.stringify({ features: [{ attributes: { acres: 1.7 } }] }));
     };
     const result = await onRequest({ request: request({ address }) });
@@ -157,4 +158,20 @@ test('API sanitizes internal engine TypeErrors while preserving domain validatio
   assert.equal(engineBody.ok, false);
   assert.equal(engineBody.error, 'invalid_input');
   assert.equal(engineBody.message, 'Invalid input.');
+});
+
+
+test('public API with no property measurement returns no fabricated estimates', async () => {
+  const saved = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response(JSON.stringify({ result: { addressMatches: [] } }));
+    const result = await onRequest({ request: request({ address }) });
+    assert.equal(result.status, 200);
+    assert.deepEqual((await result.json()).estimates, { grass: null, leaves: null, snow: null });
+  } finally { globalThis.fetch = saved; }
+});
+test('public API reports inconsistent supplied areas as a validation error', async () => {
+  const result = await onRequest({ request: request({ address, lotSqft: 1000, lawnSqft: 900, drivewaySqft: 200 }) });
+  assert.equal(result.status, 400);
+  assert.match((await result.json()).message, /cannot exceed/);
 });

@@ -208,3 +208,12 @@ test('provider fetch uses Workers-compatible manual redirects and rejects redire
     return new Response(null, { status: 302, headers: { location: 'https://other.example/' } });
   }), /Lookup unavailable/u);
 });
+
+
+test('unknown lot does not generate prices from the example lot', async () => {
+  const result = await estimateFromAddress(address, { fetchImpl: async () => response({ result: { addressMatches: [] } }) });
+  assert.deepEqual(result.estimates, { grass: null, leaves: null, snow: null });
+});
+test('manual lawn and driveway cannot exceed a supplied lot', async () => {
+  await assert.rejects(estimateFromAddress(address, { lotSqft: 1000, lawnSqft: 900, drivewaySqft: 200 }), /cannot exceed/);
+});
