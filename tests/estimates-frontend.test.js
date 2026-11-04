@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 const html = fs.readFileSync('index.html', 'utf8');
 const source = fs.readFileSync('js/estimates.js', 'utf8');
-const fixture = () => ({ ok: true, property: { input: '123 Main St, Niles MI', matchedAddress: '123 MAIN ST, NILES MI', lotSqft: 7840, lawnSqft: 5645, drivewaySqft: 706, source: 'typical-lot-fallback', confidence: 'low', surfaceBasis: { lot: 'assumed', lawn: 'assumed', driveway: 'assumed' }, warnings: ['Typical lot assumed.'] }, estimates: { grass: { job: { low: 50, mid: 50, high: 50 } }, leaves: { perVisit: { low: 50, mid: 60, high: 70 } }, snow: { perVisit: { low: 45, mid: 50, high: 55 } } } });
+const fixture = () => ({ ok: true, property: { input: '123 Main St, Niles MI', matchedAddress: '123 MAIN ST, NILES MI', lotSqft: 7840, lawnSqft: 5645, drivewaySqft: 706, source: 'county-parcel', confidence: 'medium', surfaceBasis: { lot: 'assumed', lawn: 'assumed', driveway: 'assumed' }, warnings: ['Typical lot assumed.'] }, estimates: { grass: { job: { low: 50, mid: 50, high: 50 } }, leaves: { perVisit: { low: 50, mid: 60, high: 70 } }, snow: { perVisit: { low: 45, mid: 50, high: 55 } } } });
 function setup(fetchImpl) {
   const dom = new JSDOM(html, { url: 'https://cleengreenz.com/', runScripts: 'outside-only' });
   const { window } = dom; const calls = [];
@@ -50,7 +50,7 @@ test('confirmation gate, safe property rendering, and grass job minimum', async 
   assert.equal(e.get('yard-confirm').getAttribute('aria-controls'), 'yard-price-result');
   assert.equal(e.get('yard-confirm').getAttribute('aria-expanded'), 'false');
   assert.equal(e.get('yard-price-review').hidden, false); assert.equal(e.get('yard-price-result').hidden, true);
-  assert.match(e.get('yard-surfaces').textContent, /typical for the area/); assert.match(e.get('yard-source').textContent, /typical lot for the area/);
+  assert.match(e.get('yard-surfaces').textContent, /assumed share of total lot/); assert.match(e.get('yard-source').textContent, /County parcel area/);
   assert.equal(e.get('yard-price-review').querySelectorAll('img,script').length, 0);
   e.confirm();
   assert.equal(e.get('yard-confirm').getAttribute('aria-expanded'), 'true');
@@ -105,12 +105,12 @@ test('handoff reopens an already completed quote form before prefilling it', asy
   const e = setup(); const done = e.d.querySelector('#estimate-form .form-done'); done.classList.add('show');
   let reset = false; e.get('form-reset-btn').addEventListener('click', () => { reset = true; e.get('estimate-form').reset(); done.classList.remove('show'); });
   e.input('yard-address', '123 Main St, Niles MI'); e.change('yard-service', 'leaves'); e.submit(); await e.flush(); e.confirm(); e.get('yard-quote-handoff').click();
-  assert.equal(reset, true); assert.equal(e.get('f-service').value, 'Fall leaf cleanup'); assert.match(e.get('f-notes').value, /assumed lot; moderate cover\/moderate leaves/);
+  assert.equal(reset, true); assert.equal(e.get('f-service').value, 'Fall leaf cleanup'); assert.match(e.get('f-notes').value, /county lot; moderate cover\/moderate leaves/);
 });
 test('technical warning codes have plain language explanations', async () => {
   const data = fixture(); data.property.warnings = ['parcel-not-configured', 'address-not-matched'];
   const e = setup(async () => ({ ok: true, json: async () => data })); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush();
-  assert.match(e.get('yard-warnings').textContent, /typical lot for the area/); assert.doesNotMatch(e.get('yard-warnings').textContent, /parcel-not-configured|address-not-matched/);
+  assert.match(e.get('yard-warnings').textContent, /County lot lookup is not configured/); assert.doesNotMatch(e.get('yard-warnings').textContent, /parcel-not-configured|address-not-matched/);
 });
 
 test('infographic gates the tool until it is touched', async () => {
@@ -134,4 +134,77 @@ test('clicking link targeting #price-your-yard opens estimator tool and focuses 
   assert.equal(e.get('yard-intro').hidden, true);
   assert.equal(e.get('yard-price-form').hidden, false);
   assert.equal(e.d.activeElement.id, 'yard-address');
+});
+
+
+for (const service of ['grass', 'leaves', 'snow']) {
+  test(`failed lot lookup cannot show an invented ${service} price`, async () => {
+    const data = fixture(); data.property.source = 'typical-lot-fallback';
+    data.property.confidence = 'low'; data.estimates[service] = null;
+    const e = setup(async () => ({ ok: true, json: async () => data }));
+    e.input('yard-address', '123 Main St, Niles MI'); e.change('yard-service', service);
+    e.submit(); await e.flush(); e.confirm();
+    assert.equal(e.get('yard-price-review').hidden, true);
+    assert.equal(e.get('yard-price-result').hidden, true);
+    assert.match(e.get('yard-price-error').textContent, /could not verify/);
+    assert.equal(e.get('yard-area-details').open, true);
+    assert.equal(e.get('yard-price-submit').disabled, false);
+  });
+}
+test('known service area works during lookup outage without showing invented areas', async () => {
+  const data = fixture(); data.property.source = 'typical-lot-fallback';
+  data.property.confidence = 'low'; data.property.matchedAddress = undefined;
+  const e = setup(async () => ({ ok: true, json: async () => data }));
+  e.input('yard-address', '123 Main St, Niles MI'); e.change('yard-service', 'snow');
+  e.input('yard-driveway', '706'); e.submit(); await e.flush(); e.confirm();
+  assert.equal(e.get('yard-price-range').textContent, '$45–$55');
+  assert.match(e.get('yard-surfaces').textContent, /Unknown — not used/);
+  assert.doesNotMatch(e.get('yard-surfaces').textContent, /7,840|5,645/);
+  e.get('yard-quote-handoff').click();
+  assert.match(e.get('f-notes').value, /\$45–\$55/);
+  assert.match(e.get('f-notes').value, /lot unknown/);
+  assert.doesNotMatch(e.get('f-notes').value, /7,840/);
+});
+test('provided lot is labeled honestly and estimate range survives handoff', async () => {
+  const data = fixture(); data.property.source = 'provided'; data.property.confidence = 'provided';
+  data.property.matchedAddress = undefined;
+  const e = setup(async () => ({ ok: true, json: async () => data }));
+  e.input('yard-address', '123 Main St, Niles MI'); e.change('yard-service', 'leaves');
+  e.input('yard-lot', '7840'); e.submit(); await e.flush(); e.confirm();
+  assert.equal(e.get('yard-price-range').textContent, '$50–$70');
+  assert.match(e.get('yard-source').textContent, /lot size you entered/);
+  assert.doesNotMatch(e.get('yard-source').textContent, /County parcel/);
+  e.get('yard-quote-handoff').click();
+  assert.match(e.get('f-notes').value, /\$50–\$70/);
+  assert.match(e.get('f-notes').value, /lawn 5,645 sq ft \(assumed\)/);
+  e.input('yard-lot', '9000');
+  assert.equal(e.get('yard-handoff-status').textContent, '');
+  assert.equal(e.get('yard-price-result').hidden, true);
+});
+test('impossible manual areas and short addresses are rejected before lookup', () => {
+  const e = setup(); e.input('yard-address', 'abc'); e.submit();
+  assert.equal(e.calls.length, 0);
+  e.input('yard-address', '123 Main St, Niles MI'); e.input('yard-lot', '1000');
+  e.input('yard-lawn', '900'); e.input('yard-driveway', '200'); e.submit();
+  assert.equal(e.calls.length, 0); assert.match(e.get('yard-price-error').textContent, /cannot exceed/);
+});
+test('hash navigation opens tool and unconfirming hides result', async () => {
+  const e = setup(); e.window.location.hash = '#price-your-yard';
+  e.window.dispatchEvent(new e.window.Event('hashchange'));
+  assert.equal(e.get('yard-price-form').hidden, false);
+  e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm();
+  e.get('yard-confirm').checked = false;
+  e.get('yard-confirm').dispatchEvent(new e.window.Event('change', { bubbles: true }));
+  assert.equal(e.get('yard-price-result').hidden, true);
+});
+test('timed out request recovers controls and allows retry', async () => {
+  const e = setup((_url, options) => new Promise((_resolve, reject) => {
+    options.signal.addEventListener('abort', () => reject(new e.window.DOMException('Aborted', 'AbortError')));
+  }));
+  let timeout;
+  e.window.setTimeout = (callback) => { timeout = callback; return 123; };
+  e.window.clearTimeout = () => {};
+  e.input('yard-address', '123 Main St, Niles MI'); e.submit(); timeout(); await e.flush();
+  assert.equal(e.get('yard-price-submit').disabled, false);
+  assert.match(e.get('yard-price-error').textContent, /took too long/);
 });
