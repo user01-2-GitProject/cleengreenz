@@ -83,8 +83,14 @@ test('loading prevents duplicate requests and changed inputs discard stale repli
   assert.equal(e.get('yard-price-submit').hasAttribute('aria-busy'), false);
 });
 test('service change clears a confirmed result and reveals leaf inputs', async () => {
-  const e = setup(); e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm();
+  const e = setup();
+  assert.equal(e.get('yard-service').getAttribute('aria-controls'), 'yard-leaves-options');
+  assert.equal(e.get('yard-service').getAttribute('aria-expanded'), 'false');
+  e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush(); e.confirm();
   e.change('yard-service', 'leaves'); assert.equal(e.get('yard-price-result').hidden, true); assert.equal(e.get('yard-confirm').checked, false); assert.equal(e.get('yard-leaves-options').hidden, false);
+  assert.equal(e.get('yard-service').getAttribute('aria-expanded'), 'true');
+  e.change('yard-service', 'grass');
+  assert.equal(e.get('yard-service').getAttribute('aria-expanded'), 'false');
 });
 test('failed lookup offers retry and manual areas without destroying input', async () => {
   let fail = true; const e = setup(async () => fail ? { ok: false, status: 503, json: async () => ({ ok: false }) } : { ok: true, json: async () => fixture() });
@@ -116,4 +122,16 @@ test('infographic gates the tool until it is touched', async () => {
   assert.equal(e.get('yard-intro').hidden, true);
   assert.equal(e.get('yard-price-form').hidden, false);
   assert.equal(e.get('yard-price-result').hidden, true);
+});
+
+test('clicking link targeting #price-your-yard opens estimator tool and focuses address field', async () => {
+  const e = setup();
+  assert.equal(e.get('yard-intro').hidden, false);
+  assert.equal(e.get('yard-price-form').hidden, true);
+  const heroLink = e.d.querySelector('a[href="#price-your-yard"]');
+  assert.ok(heroLink, 'link targeting #price-your-yard exists');
+  heroLink.click();
+  assert.equal(e.get('yard-intro').hidden, true);
+  assert.equal(e.get('yard-price-form').hidden, false);
+  assert.equal(e.d.activeElement.id, 'yard-address');
 });
