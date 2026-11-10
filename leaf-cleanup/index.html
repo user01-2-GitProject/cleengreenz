@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fall Leaf Cleanup in Niles &amp; Michiana | Cleen Greenz</title>
+<meta name="description" content="Leaf cleanup in Niles and Michiana: we rake, blow and haul away leaves so they don't smother your grass over winter. Book your fall cleanup with Cleen Greenz.">
+<link rel="canonical" href="https://cleengreenz.com/leaf-cleanup/">
+<meta name="theme-color" content="#1f4d2b">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cleengreenz.com/leaf-cleanup/">
+<meta property="og:title" content="Fall Leaf Cleanup in Niles &amp; Michiana">
+<meta property="og:description" content="Leaf cleanup in Niles and Michiana: we rake, blow and haul away leaves so they don't smother your grass over winter. Book your fall cleanup with Cleen Greenz.">
+<meta property="og:image" content="https://cleengreenz.com/media/mascot-trimmer.jpg">
+<meta property="og:image:alt" content="Cleen Greenz lawn-care mascot trimming a lawn">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fall Leaf Cleanup in Niles &amp; Michiana">
+<meta name="twitter:description" content="Leaf cleanup in Niles and Michiana: we rake, blow and haul away leaves so they don't smother your grass over winter. Book your fall cleanup with Cleen Greenz.">
+<meta name="twitter:image" content="https://cleengreenz.com/media/mascot-trimmer.jpg">
+<link rel="icon" type="image/png" href="/media/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fbf5e9;
+    --cream-2: #f4ead6;
+    --paper: #fffdf8;
+    --forest: #1f4d2b;
+    --forest-2: #163a20;
+    --leaf: #6cbf3a;
+    --leaf-2: #8fd35a;
+    --pumpkin: #e2702a;
+    --pumpkin-2: #c95b18;
+    --maple: #b8431e;
+    --gold: #f2b134;
+    --bark: #3b2f24;
+    --bark-soft: #6b5b4b;
+    --radius: 22px;
+    --shadow: 0 18px 40px -18px rgba(59, 47, 36, .35);
+    --max: 1180px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Nunito", system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--bark);
+    background: var(--cream);
+    -webkit-font-smoothing: antialiased;
+  }
+  img, video { max-width: 100%; display: block; }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: "Fredoka", "Nunito", sans-serif; line-height: 1.1; margin: 0 0 .5em; color: var(--forest); }
+  h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 700; }
+  h2 { font-size: clamp(2rem, 4.2vw, 3rem); font-weight: 700; }
+  h3 { font-size: 1.4rem; font-weight: 600; }
+  p { margin: 0 0 1em; }
+  .wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .5em;
+    font-weight: 800; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--pumpkin-2); margin-bottom: .9em;
+  }
+  .lead { font-size: 1.2rem; color: var(--bark-soft); max-width: 36em; }
+  .skip { position: absolute; left: -999px; top: 8px; background: var(--forest); color: #fff; padding: 8px 14px; border-radius: 8px; z-index: 100; }
+  .skip:focus { left: 8px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .55em;
+    font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.1rem;
+    padding: .85em 1.5em; border-radius: 999px; border: 0; cursor: pointer;
+    text-decoration: none; transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn:hover { transform: translateY(-2px) rotate(-1deg); }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
+  button:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--gold); outline-offset: 3px;
+  }
+  .btn-primary { background: var(--pumpkin); color: #fff; box-shadow: 0 6px 0 var(--pumpkin-2); }
+  .btn-primary:hover { box-shadow: 0 8px 0 var(--pumpkin-2); }
+  .btn-ghost { background: var(--paper); color: var(--forest); box-shadow: 0 6px 0 #d9ccb3; }
+  .ext-icon { display: inline-block; width: .85em; height: .85em; margin-left: .3em; vertical-align: -0.05em; flex: none; }
+  .btn svg { width: 1.1em; height: 1.1em; }
+  .btn .spinner { animation: btn-spin 0.8s linear infinite; }
+  @keyframes btn-spin { to { transform: rotate(360deg); } }
+
+  /* Season ribbon */
+  .ribbon {
+    background: var(--forest); color: #fff; text-align: center;
+    font-weight: 700; font-size: .95rem; padding: .6em 20px;
+  }
+  .ribbon a { color: var(--gold); }
+
+  /* Header */
+  header.site {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(251, 245, 233, .92);
+    border-bottom: 1px solid rgba(59, 47, 36, .08);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .header-town-media {
+    position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none;
+    background: var(--cream-2);
+  }
+  .header-town-media video,
+  .header-town-media img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 54%;
+  }
+  .header-town-media video { opacity: 0; transition: opacity 1.2s ease; }
+  .header-town-media.is-playing video { opacity: 1; }
+  .header-town-media.is-fading video { opacity: 0; }
+  .header-town-media::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(251,245,233,.88), rgba(251,245,233,.64) 42%, rgba(251,245,233,.72));
+    backdrop-filter: blur(1.5px);
+  }
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; }
+  .brand img { height: 56px; width: auto; }
+  .nav-links { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; font-weight: 700; }
+  .nav-links a { text-decoration: none; color: var(--bark); position: relative; padding-bottom: 4px; transition: color .2s ease; }
+  .nav-links a:hover { color: var(--pumpkin-2); }
+  .nav-links a[aria-current="true"], .nav-links a[aria-current="page"] {
+    color: var(--pumpkin-2);
+  }
+  .nav-links a[aria-current="true"]::after, .nav-links a[aria-current="page"]::after {
+    content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: var(--pumpkin-2); border-radius: 2px;
+  }
+  .nav-cta { display: flex; gap: 10px; align-items: center; }
+  .nav-cta .btn { font-size: 1rem; padding: .65em 1.2em; }
+  .phone-link { font-weight: 800; text-decoration: none; color: var(--forest); white-space: nowrap; }
+  @media (max-width: 900px) {
+    .nav-links, .phone-link { display: none; }
+    .brand img { height: 46px; }
+  }
+
+  /* Hero */
+  .hero { position: relative; overflow: hidden; padding: 56px 0 120px; }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+  .hero h1 .hi { color: var(--pumpkin); display: block; font-size: .55em; margin-bottom: .2em; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin: 28px 0 22px; }
+  .hero-facts { display: flex; flex-wrap: wrap; gap: 10px 22px; list-style: none; padding: 0; margin: 0; font-weight: 700; color: var(--bark-soft); font-size: .98rem; }
+  .hero-facts li { display: flex; align-items: center; gap: .4em; }
+  .hero-facts svg { width: 20px; height: 20px; color: var(--leaf); flex: none; }
+  .mascot-frame { position: relative; }
+  .mascot-frame .video-card {
+    position: relative; border-radius: 28px; overflow: hidden; background: var(--cream-2);
+    border: 8px solid var(--paper); box-shadow: var(--shadow); transform: rotate(1.5deg);
+    aspect-ratio: 16 / 9;
+  }
+  .mascot-frame video { width: 100%; height: 100%; object-fit: cover; }
+  .speech {
+    position: absolute; left: -26px; top: -30px; z-index: 2;
+    background: var(--paper); color: var(--forest); font-family: "Fredoka", sans-serif; font-weight: 600;
+    font-size: 1.1rem; padding: 14px 20px; border-radius: 20px; box-shadow: var(--shadow);
+    transform: rotate(-4deg); max-width: 250px; line-height: 1.25;
+  }
+  .speech::after {
+    content: ""; position: absolute; bottom: -12px; left: 40px; border: 12px solid transparent;
+    border-top-color: var(--paper); border-bottom: 0;
+  }
+  .badge {
+    position: absolute; right: -18px; bottom: -26px; z-index: 2; width: 118px; height: 118px;
+    border-radius: 50%; background: var(--gold); color: var(--bark); display: grid; place-content: center;
+    text-align: center; font-family: "Fredoka", sans-serif; font-weight: 700; line-height: 1;
+    box-shadow: var(--shadow); transform: rotate(10deg);
+  }
+  .badge small { font-size: .8rem; font-weight: 600; display: block; margin-bottom: 4px; }
+  .badge span { font-size: 1.9rem; }
+  @media (max-width: 900px) {
+    .hero { padding: 36px 0 100px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+    .mascot-frame { margin: 0 8px; }
+    .speech { left: -4px; top: -34px; font-size: 1rem; }
+    .badge { right: -4px; width: 96px; height: 96px; }
+    .badge span { font-size: 1.5rem; }
+  }
+
+  /* ===== LEAVES + PET CHRIS: styles start ===== */
+  /* Falling leaves (drawn by script across the whole viewport) */
+  .hero .wrap { position: relative; z-index: 1; }
+  .leaf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
+  .leaf { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  .leaf svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+
+  /* Pet Chris */
+  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; transform: translate3d(var(--x, 0px), var(--y, 0px), 0); --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
+  .pet {
+    pointer-events: auto; display: block; position: relative; width: var(--pet-w); height: var(--pet-h);
+    padding: 0; border: 0; background: none; cursor: grab; touch-action: none;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  .pet:active { cursor: grabbing; }
+  .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+  /* --air/--shadow-s/--shadow-o are set from JS while Chris is held or thrown, so the shadow
+     stays on the ground and shrinks as he rises. */
+  .pet-shadow { position: absolute; left: 12%; right: 12%; bottom: -2px; height: 10px;
+    border-radius: 50%; background: rgba(35, 42, 22, .22); filter: blur(3px);
+    transform: translateY(var(--air, 0px)) scale(var(--shadow-s, 1)); opacity: var(--shadow-o, 1); }
+  /* Turning around squeezes through zero width, like a quick about-face, instead of a hard flip. */
+  .pet-body { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 91%;
+    transition: scale .15s cubic-bezier(.45, 0, .25, 1); }
+  .pet-wrap.face-left .pet-body { scale: -1 1; }
+  .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
+  /* Poses 0-11 built by pet/build-sheet.py (idle, the old walk keyframes, notice-the-pile, three blower
+     poses, wave, blink), then from pet/walk-rig.py the 16-frame walk cycle and a standing frame, twice:
+     facing right, and with the shirt logo pre-flipped for walking left (the page mirrors him); last,
+     poses 0-11 again with the logo pre-flipped, for the other poses facing left. The art is larger than
+     the hit area so the blower can extend past Chris. */
+  .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
+    transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
+  .pet-sprite { display: block; width: 192px; height: 200px;
+    background: url("media/pet-chris-poses-v22.png") 0 0 / 11136px 200px no-repeat;
+    image-rendering: pixelated; pointer-events: none; }
+  /* Walking is driven from JS: the walk frame follows distance walked, so a planted boot stays put,
+     and --lean follows speed, so Chris leans into a start and rocks back on a stop. The hip bob is
+     drawn into the frames. */
+  .pet-wrap.walking .pet-inner { animation: none; transform: rotate(var(--lean, 0deg)); }
+  /* Held or thrown: hangs from the spot he was grabbed and swings (angle is a spring in JS). */
+  .pet-wrap.grabbed .pet-inner { animation: none; transform-origin: var(--grab-origin, 50% 20%);
+    transform: rotate(var(--drag-tilt, 0deg)) scale(var(--drag-scale, 1)); }
+  .pet-wrap.reacting .pet-inner { animation: pet-wave .66s both; }
+  .pet-wrap.cheering .pet-inner { animation: pet-cheer .76s both; }
+  .pet-wrap.windup .pet-inner { animation: pet-windup .26s ease-out both; }
+  .pet-wrap.clearing .pet-inner { animation: pet-kick .26s cubic-bezier(.2, .9, .3, 1) both, pet-work .09s ease-in-out .26s infinite alternate; }
+  .pet-wrap.landing .pet-inner { animation: pet-land .36s both; transform-origin: 50% 91%; }
+  .pet-wrap.cheering .pet-shadow { animation: pet-shadow-cheer .76s both; }
+  @keyframes pet-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.006,1.003); } }
+  /* Small crouch first, then the jump, a soft landing and a settle: anticipation and follow-through. */
+  @keyframes pet-wave {
+    0% { transform: none; animation-timing-function: ease-out; }
+    16% { transform: translateY(2px) scale(1.04,.94); animation-timing-function: cubic-bezier(.2,.8,.3,1); }
+    40% { transform: translateY(-9px) rotate(-6deg) scale(.97,1.05); animation-timing-function: ease-in; }
+    64% { transform: translateY(0) rotate(3deg) scale(1.03,.97); animation-timing-function: ease-out; }
+    82% { transform: translateY(-1px) rotate(-1deg); animation-timing-function: ease-in-out; }
+    100% { transform: none; } }
+  @keyframes pet-cheer {
+    0% { transform: none; animation-timing-function: ease-out; }
+    14% { transform: translateY(3px) scale(1.06,.9); animation-timing-function: cubic-bezier(.15,.8,.3,1); }
+    40% { transform: translateY(-20px) rotate(-5deg) scale(.96,1.06); animation-timing-function: ease-in; }
+    62% { transform: translateY(0) rotate(3deg) scale(1.08,.9); animation-timing-function: ease-out; }
+    80% { transform: translateY(-4px) rotate(-2deg) scale(.99,1.01); animation-timing-function: ease-in-out; }
+    100% { transform: none; } }
+  @keyframes pet-shadow-cheer { 0%,100% { transform: scale(1); opacity: 1; } 40% { transform: scale(.65); opacity: .45; } 62% { transform: scale(1.05); opacity: 1; } }
+  /* Blower: the pickup pose supplies the reach; this is just a small settle, then a kick as it fires,
+     then a fine constant shudder. */
+  @keyframes pet-windup { from { transform: none; } to { transform: rotate(-2deg) scale(1.02,.97); } }
+  @keyframes pet-kick { 0% { transform: rotate(-3.5deg) scale(1.03,.95); } 40% { transform: rotate(3deg) translateX(2px) scale(.98,1.03); } 100% { transform: none; } }
+  @keyframes pet-work { from { transform: translateX(-.6px) rotate(-.4deg); } to { transform: translateX(.6px) rotate(.4deg); } }
+  @keyframes pet-land {
+    0% { transform: scale(1.14,.84); animation-timing-function: ease-out; }
+    38% { transform: scale(.97,1.04); animation-timing-function: ease-in-out; }
+    68% { transform: scale(1.02,.99); }
+    100% { transform: none; } }
+  .pet-particle { position: absolute; left: 55%; top: 18%; z-index: 2; pointer-events: none;
+    color: var(--forest); font: 800 16px/1 "Fredoka", sans-serif;
+    animation: pet-float 1.1s ease-out forwards; }
+  .pet-particle.leaf-bit { top: 60%; color: var(--pumpkin); }
+  .pet-particle.grass-bit { top: 62%; color: var(--leaf-2); }
+  @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
+    20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
+
+  /* Grass patches are scattered across the dark-green lawn sections, behind their content. */
+  .green > .wrap { position: relative; z-index: 1; }
+  .lawn-grass-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 0; }
+  .grass-patch { position: absolute; width: 64px; height: 44px; pointer-events: none; transition: transform .4s ease, opacity .4s ease; transform-origin: bottom center; }
+  .grass-patch.mowed { transform: scale(var(--grass-scale, 1)) scaleY(0.15); opacity: 0.35; }
+  .grass-patch svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .grass-patch.mowing { transform: none; opacity: 1; }
+  .grass-patch.mowing svg { clip-path: inset(0 var(--cut-right, 0%) 0 var(--cut, 0%)); }
+  .pet-mower { display: none; position: absolute; left: -24px; bottom: -20px; width: 220px; height: 220px;
+    background: url("media/chris-zero-turn-side-profile.png") center bottom / contain no-repeat; pointer-events: none; }
+  .pet-wrap.riding .pet-mower { display: block; }
+  .pet-wrap.riding .pet-visual { visibility: hidden; }
+  .pet-wrap.riding .pet-inner { animation: none; transform: none; }
+  /* These rotating overlays cover the wheels already drawn in chris-zero-turn.png. */
+  .pet-wheel { position: absolute; display: block; border: 2px solid #17181b; border-radius: 50%;
+    background: repeating-conic-gradient(#292a2e 0 9deg, #414248 9deg 16deg, #242529 16deg 24deg);
+    box-shadow: inset 0 0 0 3px #202125; transform-origin: center; }
+  .pet-wheel::before { content: ""; position: absolute; inset: 25%; border: 2px solid #a96e00; border-radius: 50%;
+    background: repeating-conic-gradient(#ffd22f 0 28deg, #d99a08 28deg 44deg); }
+  .pet-wheel::after { content: ""; position: absolute; left: 43%; top: 43%; width: 14%; height: 14%;
+    border-radius: 50%; background: #704b12; box-shadow: 0 0 0 1px #ffe07b; }
+  .pet-wheel-drive { left: 4px; top: 140px; width: 74px; height: 74px; }
+  .pet-wheel-roller { left: 125px; top: 178px; width: 20px; height: 20px; }
+  .pet-wheel-caster { left: 142px; top: 153px; width: 45px; height: 45px; }
+  .pet-wheel-front { left: 180px; top: 161px; width: 36px; height: 36px; }
+  .pet-wrap.riding .pet-wheel { animation: mower-wheel-spin .55s linear infinite; }
+  @keyframes mower-wheel-spin { to { transform: rotate(360deg); } }
+  .grass-blade { transform-origin: bottom center; animation: grass-sway 3.2s ease-in-out infinite alternate; }
+  .grass-blade-1 { animation-delay: 0s; fill: #285b35; }
+  .grass-blade-2 { animation-delay: -0.7s; fill: #245530; }
+  .grass-blade-3 { animation-delay: -1.4s; fill: #2b5d37; }
+  .grass-blade-4 { animation-delay: -2.1s; fill: #245530; }
+  .grass-blade-5 { animation-delay: -2.8s; fill: #285b35; }
+  @keyframes grass-sway {
+    0% { transform: rotate(-3.5deg); }
+    100% { transform: rotate(3.5deg); }
+  }
+  /* The sheet is drawn at .81 on phones; nearest-neighbour at a fractional scale makes pixels uneven. */
+  @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
+  .pet-bubble {
+    position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 230px;
+    pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 30px 10px 14px;
+    font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
+    box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
+    opacity: 0; visibility: hidden; transform: translateY(4px) scale(.96);
+    transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
+  }
+  .pet-bubble .bubble-close {
+    position: absolute; top: 6px; right: 8px; background: none; border: 0; padding: 0;
+    width: 20px; height: 20px; font-size: .85rem; line-height: 20px; text-align: center; color: var(--bark-soft);
+    cursor: pointer; border-radius: 50%; opacity: .7; transition: opacity .15s ease, color .15s ease, transform .15s ease;
+  }
+  .pet-bubble .bubble-close:hover { opacity: 1; color: var(--pumpkin-2); }
+  .pet-bubble .bubble-close:active { transform: scale(0.92); }
+  .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; opacity: 1; }
+  .pet-bubble.is-visible {
+    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
+    transition: opacity .16s ease, transform .16s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pet-bubble, .pet-bubble.is-visible { transition: opacity .01s linear; transform: none; }
+    .pet-body { transition: none; }
+    .pet-inner, .pet-wrap.walking .pet-inner, .pet-wrap.reacting .pet-inner, .pet-wrap.cheering .pet-inner,
+    .pet-wrap.windup .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.landing .pet-inner,
+    .pet-wrap.cheering .pet-shadow { animation: none; }
+    .pet-particle { display: none; }
+  }
+  .pet-bubble::after {
+    content: ""; position: absolute; top: 100%; left: 26px; border: 8px solid transparent; border-top-color: var(--paper);
+  }
+  .pet-wrap.bubble-left .pet-bubble { left: auto; right: -6px; }
+  .pet-wrap.bubble-left .pet-bubble::after { left: auto; right: 26px; }
+  .pet-bubble a { color: var(--pumpkin-2); }
+  .pet-bubble button { font: inherit; color: var(--pumpkin-2); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+
+  /* ===== LEAVES + PET CHRIS: styles end ===== */
+
+  /* Wavy grass dividers */
+  .grass { display: block; width: 100%; height: 70px; margin-bottom: -1px; }
+  .grass-top { position: absolute; bottom: 0; left: 0; }
+
+  /* Sections */
+  section { position: relative; }
+  section[id] { scroll-margin-top: 84px; }
+  .section { padding: 96px 0; }
+  .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
+  .section-head .lead { margin: 0 auto; }
+  .green { background: var(--forest); color: #f1ecdf; }
+  .green h2, .green h3 { color: #fff; }
+  .green .lead { color: #cfe0c7; }
+  .green .eyebrow { color: var(--gold); }
+
+  /* In season now */
+  .season-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .season-card {
+    background: var(--paper); color: var(--bark); border-radius: var(--radius); padding: 28px;
+    box-shadow: var(--shadow); position: relative; text-decoration: none; display: block;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .season-card:hover { transform: translateY(-3px); }
+  .season-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .season-card h3 { color: var(--forest); }
+  .season-card p { color: var(--bark-soft); margin: 0; }
+  .season-card .icon {
+    width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 16px;
+    background: #fde6d3; color: var(--pumpkin-2);
+  }
+  .season-card .icon svg { width: 30px; height: 30px; }
+  .tag {
+    position: absolute; top: 20px; right: 20px; font-size: .75rem; font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; background: var(--gold); color: var(--bark); padding: 4px 10px; border-radius: 999px;
+  }
+  .season-cta { text-align: center; margin-top: 48px; }
+  @media (max-width: 900px) { .season-grid { grid-template-columns: 1fr; } }
+
+  /* Services */
+  .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .service {
+    display: flex; gap: 16px; align-items: flex-start; background: var(--paper); border-radius: var(--radius);
+    padding: 22px; border: 2px solid var(--cream-2); transition: transform .2s ease, border-color .2s ease;
+    text-decoration: none; color: inherit;
+  }
+  .service:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
+  .service:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #e3f3d6; color: var(--forest); }
+  .service .icon svg { width: 26px; height: 26px; }
+  .service h3 { font-size: 1.2rem; margin-bottom: .25em; }
+  .service p { margin: 0; color: var(--bark-soft); font-size: 1rem; }
+  @media (max-width: 900px) { .services-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 600px) and (max-width: 900px) { .services-grid { grid-template-columns: 1fr 1fr; } }
+
+  /* Meet Chris */
+  .meet { background: var(--cream-2); }
+  .meet-grid { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 64px; align-items: center; }
+  .meet-photo { margin: 0; width: 100%; max-width: 380px; justify-self: center; border: 8px solid var(--paper); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); }
+  .meet-photo img { width: 100%; height: auto; }
+  .checks { list-style: none; padding: 0; margin: 24px 0 32px; display: grid; gap: 14px; }
+  .checks li { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; }
+  .checks svg { flex: none; width: 26px; height: 26px; color: var(--leaf); margin-top: 1px; }
+  .checks span { font-weight: 400; color: var(--bark-soft); display: block; }
+  @media (max-width: 900px) {
+    .meet-grid { grid-template-columns: 1fr; gap: 40px; }
+    .meet-photo { max-width: 320px; }
+  }
+
+  /* Steps */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  .step { text-align: center; padding: 0 12px; }
+  .step .num {
+    width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center;
+    font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 2rem; color: #fff; background: var(--leaf);
+    box-shadow: 0 6px 0 #4f9a27;
+  }
+  .step:nth-child(2) .num { background: var(--gold); color: var(--bark); box-shadow: 0 6px 0 #c98d1b; }
+  .step:nth-child(3) .num { background: var(--pumpkin); box-shadow: 0 6px 0 var(--pumpkin-2); }
+  .step p { color: var(--bark-soft); }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr; gap: 40px; } }
+
+  /* Area */
+  .area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .towns { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; padding: 0; margin: 0; }
+  .towns li {
+    background: var(--paper); border: 2px solid var(--cream-2); border-radius: 999px; padding: 10px 18px;
+    font-weight: 700; display: flex; align-items: center; gap: 8px;
+  }
+  .towns svg { width: 18px; height: 18px; color: var(--pumpkin); }
+  @media (max-width: 900px) { .area-grid { grid-template-columns: 1fr; gap: 28px; } }
+
+  /* FAQ */
+  .faq { max-width: 780px; margin: 0 auto; display: grid; gap: 14px; }
+  .faq details { background: var(--paper); border-radius: 18px; border: 2px solid var(--cream-2); transition: border-color .2s ease; }
+  .faq details:hover { border-color: var(--leaf-2); }
+  .faq details[open] { border-color: var(--leaf); }
+  .faq summary {
+    cursor: pointer; list-style: none; padding: 20px 24px; font-family: "Fredoka", sans-serif; font-weight: 600;
+    font-size: 1.15rem; color: var(--forest); display: flex; justify-content: space-between; gap: 16px; align-items: center;
+    border-radius: 16px;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-size: 1.6rem; line-height: 1; color: var(--pumpkin); transition: transform .2s; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq details p { padding: 0 24px 20px; margin: 0; color: var(--bark-soft); }
+
+  /* Instant yard estimate */
+  .yard-estimator { background: var(--cream); }
+  .yard-price-grid { display:grid; grid-template-columns:.8fr 1.2fr; gap:40px; align-items:start; }
+  .yard-card { background:var(--paper); border:2px solid var(--cream-2); border-radius:28px; padding:32px; box-shadow:0 18px 44px -30px var(--forest); }
+  .yard-card h3 { color:var(--forest); }
+  .yard-kicker { color:var(--pumpkin-2); font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:.85rem; }
+  .yard-estimator details { margin:18px 0; padding:14px; border:1px solid var(--cream-2); border-radius:14px; }
+  .yard-estimator summary { cursor:pointer; font-weight:700; color:var(--forest); }
+  .yard-estimator details .field:first-of-type { margin-top:16px; }
+  .yard-help { font-size:.9rem; color:var(--bark-soft); }
+  .yard-review { border-top:2px dashed var(--cream-2); margin-top:24px; padding-top:24px; }
+  .yard-review dl { display:grid; grid-template-columns:1fr 1.5fr; gap:8px 16px; }
+  .yard-review dt { font-weight:700; }
+  .yard-review dd { margin:0; }
+  .yard-confirm { display:flex; align-items:flex-start; gap:10px; margin:20px 0; }
+  .yard-confirm input { width:20px; height:20px; flex:none; margin-top:3px; accent-color:var(--forest); }
+  .yard-intro { cursor:pointer; }
+  .yard-intro h3 { font-size:1.5rem; margin:6px 0 4px; }
+  .yard-steps { list-style:none; margin:20px 0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .yard-steps li { display:flex; gap:12px; align-items:flex-start; }
+  .yard-step-num { flex:none; width:34px; height:34px; border-radius:50%; background:var(--forest); color:var(--paper); font-family:"Fredoka",sans-serif; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .yard-steps strong { display:block; color:var(--forest); }
+  .yard-steps p { margin:2px 0 0; font-size:.92rem; color:var(--bark-soft); }
+  @media(max-width:600px) { .yard-steps { grid-template-columns:1fr; } }
+  .yard-range { color:var(--forest); font-family:"Fredoka",sans-serif; font-size:clamp(2rem,5vw,3rem); margin:8px 0; }
+  .yard-error { color:var(--maple); font-weight:700; }
+  .yard-estimator [hidden] { display:none !important; }
+  .yard-estimator button:disabled { opacity:.6; cursor:wait; }
+  @media(max-width:900px) { .yard-price-grid { grid-template-columns:1fr; gap:24px; } .yard-card { padding:24px; } }
+
+  /* Estimate */
+  .estimate-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 56px; align-items: start; }
+  .contact-lines { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; font-weight: 700; }
+  .contact-lines li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .contact-lines a { color: #fff; text-decoration: none; display: inline-flex; gap: 10px; align-items: center; }
+  .contact-lines a:hover { color: var(--gold); }
+  .contact-lines svg { width: 22px; height: 22px; color: var(--gold); }
+  .copy-phone-btn {
+    background: rgba(255, 255, 255, 0.15); border: none; color: #fff; border-radius: 999px;
+    padding: 3px 10px; font-size: .8rem; font-family: inherit; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px; transition: background .2s ease, color .2s ease, transform .15s ease;
+  }
+  .copy-phone-btn:hover { background: rgba(255, 255, 255, 0.28); color: var(--gold); }
+  .copy-phone-btn:active { transform: scale(0.95); }
+  .copy-phone-btn.copied { background: rgba(108, 191, 58, 0.28); color: var(--gold); }
+  .copy-phone-btn svg { width: 14px; height: 14px; color: currentColor; }
+  .copy-feedback { font-size: .8rem; color: var(--gold); font-weight: 700; }
+  form.estimate {
+    background: var(--paper); color: var(--bark); border-radius: 28px; padding: 32px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.5);
+  }
+  form.estimate h3 { margin-bottom: .2em; color: var(--forest); }
+  form.estimate .sub { color: var(--bark-soft); margin-bottom: 22px; font-size: 1rem; }
+  .field { display: grid; gap: 6px; margin-bottom: 16px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  label { font-weight: 700; font-size: .95rem; }
+  label .opt { font-weight: 400; color: var(--bark-soft); }
+  label .opt.near-limit { color: var(--maple); font-weight: 700; }
+  label .req { color: var(--pumpkin-2); margin-left: 2px; }
+  input, select, textarea {
+    font: inherit; font-size: 1rem; color: var(--bark); background: var(--cream); border: 2px solid var(--cream-2);
+    border-radius: 14px; padding: 12px 14px; width: 100%; transition: border-color .2s ease;
+  }
+  input:hover, select:hover, textarea:hover { border-color: var(--leaf-2); }
+  input:focus, select:focus, textarea:focus { border-color: var(--leaf); }
+  main:focus { outline: none; }
+  summary:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
+  input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--maple); }
+  .field-error { display: none; color: var(--maple); font-size: .85rem; font-weight: 700; margin-top: 2px; }
+  .field-error.show { display: block; }
+  textarea { min-height: 96px; resize: vertical; }
+  form.estimate .btn { width: 100%; margin-top: 8px; }
+  .form-note { font-size: .88rem; color: var(--bark-soft); text-align: center; margin: 14px 0 0; }
+  .form-note a { color: var(--pumpkin-2); font-weight: 700; text-decoration: underline; }
+  .form-note a:hover { color: var(--pumpkin); }
+  .form-done { display: none; text-align: center; padding: 24px 0 8px; }
+  .form-done a:not(.btn) { color: var(--pumpkin-2); font-weight: 700; text-decoration: underline; }
+  .form-done a:not(.btn):hover { color: var(--pumpkin); }
+  .form-done.show { display: block; }
+  .form-done .btn { margin-top: 10px; }
+  @media (max-width: 900px) {
+    .estimate-grid { grid-template-columns: 1fr; gap: 36px; }
+    .field-row { grid-template-columns: 1fr; gap: 0; }
+    form.estimate { padding: 24px; }
+  }
+
+  /* Footer */
+  footer.site { background: var(--forest-2); color: #cfe0c7; padding: 56px 0 32px; font-size: .98rem; }
+  .foot-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; }
+  footer.site h3 { color: #fff; font-size: 1.1rem; }
+  footer.site ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  footer.site a { color: #cfe0c7; text-decoration: none; }
+  footer.site a:hover { color: var(--gold); }
+  .foot-logo { background: var(--paper); border-radius: 18px; padding: 10px 14px; display: inline-block; margin-bottom: 16px; }
+  .foot-logo img { height: 56px; width: auto; }
+  .copyright { border-top: 1px solid rgba(255,255,255,.1); margin-top: 40px; padding-top: 22px; font-size: .88rem; text-align: center; }
+  @media (max-width: 900px) { .foot-grid { grid-template-columns: 1fr; gap: 28px; } }
+
+  /* Sticky mobile call bar */
+  .mobile-bar { display: none; }
+  @media (max-width: 700px) {
+    .mobile-bar {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(251,245,233,.96);
+      border-top: 1px solid rgba(59,47,36,.12);
+    }
+    .mobile-bar .btn { font-size: 1rem; padding: .75em 1em; }
+    body { padding-bottom: 76px; }
+  }
+
+  /* Reveal on scroll */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .btn:hover, .service:hover, .season-card:hover, .copy-phone-btn:active, .pet-bubble .bubble-close:active { transform: none; }
+    .grass-patch { transition: none; }
+    .grass-blade { animation: none; }
+    .pet-mower { display: none !important; }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "LocalBusiness",
+      "@id": "https://cleengreenz.com/#business",
+      "name": "Cleen Greenz Lawn Care",
+      "description": "Lawn care in Niles, Michigan and the Michiana area.",
+      "url": "https://cleengreenz.com/",
+      "telephone": "+1-269-362-8286",
+      "image": "https://cleengreenz.com/media/mascot-trimmer.jpg",
+      "logo": "https://cleengreenz.com/media/logo.png",
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Niles, Michigan"
+        },
+        {
+          "@type": "AdministrativeArea",
+          "name": "Michiana (Southwest Michigan and Northern Indiana)"
+        }
+      ],
+      "knowsAbout": [
+        "Lawn mowing",
+        "Edging",
+        "Leaf cleanup",
+        "Seeding and fertilizing",
+        "Snow removal"
+      ],
+      "sameAs": [
+        "https://www.instagram.com/cglawncare_niles/"
+      ]
+    },
+    {
+      "@type": "Service",
+      "name": "Fall leaf cleanup",
+      "serviceType": "Leaf cleanup",
+      "url": "https://cleengreenz.com/leaf-cleanup/",
+      "description": "Raking, blowing and hauling away leaves in Niles, Michigan and Michiana, so lawns are not smothered over winter.",
+      "provider": {
+        "@id": "https://cleengreenz.com/#business"
+      },
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Niles, Michigan"
+        },
+        {
+          "@type": "AdministrativeArea",
+          "name": "Michiana (Southwest Michigan and Northern Indiana)"
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="ribbon"><span aria-hidden="true">🍂</span> Fall cleanup spots are filling up. <a href="#estimate" data-service="Fall leaf cleanup" data-lead-location="ribbon">Save your spot</a></div>
+
+<header class="site">
+  <nav class="wrap nav" aria-label="Main">
+    <a class="brand" href="/" aria-label="Cleen Greenz home"><img src="/media/logo.png" alt="Cleen Greenz" width="480" height="358"></a>
+    <ul class="nav-links">
+      <li><a href="/lawns/">Lawns</a></li>
+      <li><a href="/shoveling/">Snow removal</a></li>
+      <li><a href="/leaf-cleanup/" aria-current="page">Leaf cleanup</a></li>
+      <li><a href="/seeding/">Seeding</a></li>
+      <li><a href="/estimates/">Estimates</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a class="phone-link" href="tel:+12693628286" data-lead="call" data-lead-location="header" aria-label="Call (269) 362-8286">(269) 362-8286</a>
+      <a class="btn btn-primary" href="#estimate" data-lead-location="header">Contact</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main" tabindex="-1">
+  <section class="hero" id="top" tabindex="-1">
+    <div class="wrap">
+      <div class="eyebrow">Leaf cleanup · Niles &amp; Michiana</div>
+      <h1>Leaf cleanup that gives your lawn a head start on spring</h1>
+      <p class="lead">Fall leaf cleanup in Niles and across Michiana. We rake, blow and haul away the leaves so they don't smother your grass over the winter — and your lawn comes back healthier in spring.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="hero">Book my cleanup
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="hero" aria-label="Call or text Chris at (269) 362-8286">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+          Call or text Chris
+        </a>
+      </div>
+      <ul class="hero-facts">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Raked, blown &amp; hauled away</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Fall and spring cleanups</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>No contracts</li>
+      </ul>
+    </div>
+    <svg class="grass grass-top" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path fill="#1f4d2b" d="M0 70V36 Q60.0 18 120 30 Q180.0 40 240 30 Q300.0 18 360 30 Q420.0 40 480 30 Q540.0 18 600 30 Q660.0 40 720 30 Q780.0 18 840 30 Q900.0 40 960 30 Q1020.0 18 1080 30 Q1140.0 40 1200 30 Q1260.0 18 1320 30 Q1380.0 40 1440 30 V70z"/></svg>
+  </section>
+  <section class="section" id="included" tabindex="-1">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">What's included</div>
+        <h2>A real cleanup, start to finish</h2>
+        <p class="lead">Not a quick blow into the neighbor's yard — the whole job, done properly.</p>
+      </div>
+      <div class="services-grid">
+        <a class="service reveal" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="services">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/></svg></div>
+          <div><h3>Rake and blow out</h3><p>Leaves cleared from the lawn, beds and corners where they pile up and mat down.</p></div>
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="services">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div><h3>Hauled away</h3><p>Leaves, sticks and winter mess, cleared out and hauled off — nothing left behind for you.</p></div>
+        </a>
+        <a class="service reveal" href="#estimate" data-service="Fall leaf cleanup" data-lead-location="services">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10M12 20V10"/><path d="M12 10c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 10c3 0 5-2 5-5-3 0-5 2-5 5Z"/></svg></div>
+          <div><h3>Spring cleanups too</h3><p>We also clear the sticks and winter mess in spring, so the first mow starts clean.</p></div>
+        </a>
+      </div>
+    </div>
+  </section>
+  <section class="section meet" id="meet" tabindex="-1">
+    <div class="wrap meet-grid">
+      <figure class="meet-photo reveal">
+        <img src="/media/chris-liebetrau-clean.webp" alt="Chris Liebetrau, owner of Cleen Greenz" width="1086" height="1448" loading="lazy" decoding="async">
+      </figure>
+      <div class="reveal">
+        <div class="eyebrow">Meet the guy on the mower</div>
+        <h2>A real person, not a call center</h2>
+        <p class="lead">Cleen Greenz is Chris Liebetrau's local lawn care company. We've been taking care of Michiana lawns since 2009, and when you call, you get Chris.</p>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><div>Same day, every week<span>Rain pushes us a day at most, and we'll text you when it does.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><div>Quick replies<span>Text or call and hear back fast, not in three days.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><div>We sweat the details<span>Clippings blown off the driveway, edges crisp, gates closed behind us.</span></div></li>
+        </ul>
+        <a class="btn btn-primary" href="#estimate" data-lead-location="meet">Contact Chris</a>
+      </div>
+    </div>
+  </section>
+  <section class="section" id="how" tabindex="-1">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">Easy as 1, 2, 3</div>
+        <h2>How it works</h2>
+      </div>
+      <ol class="steps" aria-label="How it works steps">
+        <li class="step reveal"><div class="num">1</div><h3>Tell us about your yard</h3><p>Fill out the quick form or give Chris a call. It takes about a minute.</p></li>
+        <li class="step reveal"><div class="num">2</div><h3>Get a fair quote</h3><p>We take a look and send you a clear price. No contracts and no surprises.</p></li>
+        <li class="step reveal"><div class="num">3</div><h3>We haul it all away</h3><p>Your lawn goes into winter clean — and comes out of it ahead.</p></li>
+      </ol>
+    </div>
+  </section>
+  <section class="section meet" id="area" tabindex="-1">
+    <div class="wrap area-grid">
+      <div class="reveal">
+        <div class="eyebrow">Where we work</div>
+        <h2>Proudly serving Michiana</h2>
+        <p class="lead">Based in Niles, we take care of homes and businesses across southwest Michigan and northern Indiana. Not sure if you're in range? Just ask.</p>
+      </div>
+      <ul class="towns reveal" aria-label="Towns served">
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Niles</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Buchanan</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Edwardsburg</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Granger</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>South Bend</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Mishawaka</li>
+      </ul>
+    </div>
+  </section>
+  <section class="section" id="faq" tabindex="-1">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">Good questions</div>
+        <h2>Frequently asked</h2>
+      </div>
+      <div class="faq reveal">
+        <details>
+          <summary aria-controls="faq-ans-1" aria-expanded="false">Why not just leave the leaves?</summary>
+          <p id="faq-ans-1">A thick layer of leaves smothers the grass over the winter, inviting bare spots and disease in spring. Clearing them gives your lawn a head start.</p>
+        </details>
+        <details>
+          <summary aria-controls="faq-ans-2" aria-expanded="false">What does a cleanup include?</summary>
+          <p id="faq-ans-2">We rake and blow the leaves out of the lawn and beds, then haul everything away — sticks and winter mess included.</p>
+        </details>
+        <details>
+          <summary aria-controls="faq-ans-3" aria-expanded="false">When should I book?</summary>
+          <p id="faq-ans-3">Fall cleanup spots fill up fast once the leaves start falling. Booking early gets you on the route before the rush.</p>
+        </details>
+        <details>
+          <summary aria-controls="faq-ans-4" aria-expanded="false">How do I pay?</summary>
+          <p id="faq-ans-4">We take cash and Zelle. You can pay at the time of service, or we can set up monthly billing.</p>
+        </details>
+        <details>
+          <summary aria-controls="faq-ans-5" aria-expanded="false">Do I have to sign a contract?</summary>
+          <p id="faq-ans-5">No. Book one cleanup or put us on your calendar every fall — either way, no contract.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+  <section class="section green" id="estimate" tabindex="-1">
+    <div class="wrap estimate-grid">
+      <div class="estimate-side reveal">
+        <div class="eyebrow">Get in touch</div>
+        <h2>Let's get your yard looking great</h2>
+        <p class="lead">Send a few details and Chris will get back to you fast.</p>
+        <ul class="contact-lines">
+          <li>
+            <a href="tel:+12693628286" data-lead="call" data-lead-location="estimate" aria-label="Call (269) 362-8286"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>(269) 362-8286</a>
+            <button type="button" class="copy-phone-btn" data-phone="(269) 362-8286" aria-label="Copy phone number (269) 362-8286" title="Copy phone number"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+            <span class="copy-feedback" aria-live="polite" aria-atomic="true"></span>
+          </li>
+          <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="estimate" aria-label="Email chris@cleengreenz.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>chris@cleengreenz.com</a></li>
+        </ul>
+      </div>
+      <form class="estimate reveal" id="estimate-form" novalidate>
+        <div class="form-fields">
+          <h3>Contact Chris</h3>
+          <p class="sub">Takes about a minute.</p>
+          <div class="field-row">
+            <div class="field"><label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label><input id="f-name" name="name" autocomplete="name" autocapitalize="words" enterkeyhint="next" required aria-required="true" placeholder="Jane Doe"><span class="field-error" id="f-name-err" role="alert">Please enter your name</span></div>
+            <div class="field"><label for="f-phone">Phone <span class="req" aria-hidden="true">*</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel" enterkeyhint="next" required aria-required="true" placeholder="(269) 555-0199"><span class="field-error" id="f-phone-err" role="alert">Please enter your phone number</span></div>
+          </div>
+          <div class="field"><label for="f-address">Street address <span class="req" aria-hidden="true">*</span></label><input id="f-address" name="address" autocomplete="street-address" autocapitalize="words" enterkeyhint="next" required placeholder="123 Main St, Niles" aria-required="true"><span class="field-error" id="f-address-err" role="alert">Please enter your street address</span></div>
+          <div class="field">
+            <label for="f-service">What do you need?</label>
+            <select id="f-service" name="service">
+              <option selected>Fall leaf cleanup</option>
+              <option>Snow removal</option>
+              <option>Seeding and fertilizing</option>
+              <option>Weekly mowing and edging</option>
+              <option>Mulch or shrub trimming</option>
+              <option>A little of everything</option>
+              <option>Not sure yet</option>
+            </select>
+          </div>
+          <div class="field"><label for="f-notes">Anything else? <span class="opt">(optional)</span> <span class="opt" id="f-notes-count" aria-live="off"></span></label><textarea id="f-notes" name="notes" maxlength="500" enterkeyhint="done" aria-describedby="f-notes-count" placeholder="Yard size, gate code, best time to reach you..."></textarea></div>
+          <button class="btn btn-primary" type="submit">Send message</button>
+          <p class="form-note">Your message goes straight to Chris. Prefer to talk? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-note" aria-label="Call or text (269) 362-8286">(269) 362-8286</a>.</p>
+        </div>
+        <div class="form-done" role="status" aria-live="polite">
+          <h3 tabindex="-1">Thanks, got it!</h3>
+          <p>Chris has your message and will be in touch soon.</p>
+          <p>Need him sooner? Call or text <a href="tel:+12693628286" data-lead="call" data-lead-location="form-done" aria-label="Call or text (269) 362-8286"><strong>(269) 362-8286</strong></a>.</p>
+          <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="form-fallback" aria-label="Call Chris at (269) 362-8286">Call Chris instead</a>
+          <button type="button" class="btn btn-ghost" id="form-reset-btn">Send another message</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo"><img src="/media/logo.png" alt="Cleen Greenz" width="480" height="358" loading="lazy"></div>
+        <p>Friendly, reliable lawn care for Niles, Michigan and the Michiana area. Locally owned and operated since 2009.</p>
+      </div>
+      <div>
+        <h3>Explore</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/lawns/">Lawns</a></li>
+          <li><a href="/shoveling/">Snow removal</a></li>
+          <li><a href="/leaf-cleanup/">Leaf cleanup</a></li>
+          <li><a href="/seeding/">Seeding</a></li>
+          <li><a href="/estimates/">Estimates</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Say hello</h3>
+        <ul>
+          <li><a href="tel:+12693628286" data-lead="call" data-lead-location="footer" aria-label="Call (269) 362-8286">(269) 362-8286</a></li>
+          <li><a href="mailto:chris@cleengreenz.com" data-lead="email" data-lead-location="footer" aria-label="Email chris@cleengreenz.com">chris@cleengreenz.com</a></li>
+          <li><a href="https://www.instagram.com/cglawncare_niles/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @cglawncare_niles (opens in a new tab)">Instagram @cglawncare_niles<svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></li>
+          <li>Niles, Michigan 49120</li>
+        </ul>
+      </div>
+    </div>
+    <div class="copyright">© <span id="year">2026</span> Cleen Greenz Lawn Care · Established 2009</div>
+    <div style="text-align:center;margin-top:14px;font-size:.85rem">Website by <a href="https://pawating.com" target="_blank" rel="noopener">Pawating</a></div>
+  </div>
+</footer>
+
+<nav class="mobile-bar" aria-label="Quick contact">
+  <a class="btn btn-ghost" href="tel:+12693628286" data-lead="call" data-lead-location="mobile-bar" aria-label="Call Chris at (269) 362-8286"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call Chris</a>
+  <a class="btn btn-primary" href="#estimate" data-lead-location="mobile-bar">Contact</a>
+</nav>
+
+<script src="/js/leads.js" defer></script>
+<script>
+  (function () {
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Lead events, same as the homepage: call and email taps fire a
+    // `cg:lead` event that js/leads.js forwards to /api/lead.
+    window.dataLayer = window.dataLayer || [];
+    function trackLead(type, location, extra) {
+      var evt = Object.assign({ event: 'lead', lead_type: type, lead_location: location || 'unknown' }, extra || {});
+      window.dataLayer.push(evt);
+      document.dispatchEvent(new CustomEvent('cg:lead', { detail: evt }));
+    }
+    window.trackLead = trackLead;
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-lead]');
+      if (a) trackLead(a.dataset.lead, a.dataset.leadLocation);
+    });
+
+    // Sync aria-expanded on disclosure summaries; Escape closes them.
+    document.querySelectorAll('details').forEach(function (det) {
+      det.addEventListener('toggle', function () {
+        var summary = det.querySelector('summary');
+        if (summary) summary.setAttribute('aria-expanded', det.open ? 'true' : 'false');
+      });
+      det.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && det.open) {
+          det.open = false;
+          var summary = det.querySelector('summary');
+          if (summary) summary.focus();
+        }
+      });
+    });
+
+    // Reveal sections as they scroll into view.
+    var items = document.querySelectorAll('.reveal');
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+      }, { rootMargin: '0px 0px -10% 0px' });
+      items.forEach(function (el) { io.observe(el); });
+    }
+  })();
+</script>
+</body>
+</html>
