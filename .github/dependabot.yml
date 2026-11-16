@@ -1,0 +1,18 @@
+# NOTE: this repo has BOTH package-lock.json and pnpm-lock.yaml at the root.
+# The npm ecosystem below tracks package-lock.json; the stale lockfile should be removed.
+# Dependabot version updates — prepared by iggy's Dependabot sweep, 2026-11-16.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
