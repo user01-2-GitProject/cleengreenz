@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { isRateLimited, json, onRequest, onRequestPost, sanitizePhone } from '../functions/api/lead.js';
+import { isRateLimited, json, onRequest, onRequestPost, sanitizePhone, resetRateLimiter } from '../functions/api/lead.js';
 import { authorized, onRequest as onRequestLeads, onRequestGet, renderLeadsHtml } from '../functions/leads.js';
 
 // js/leads.js is a classic browser script (loaded via <script src>), so it
@@ -238,6 +238,7 @@ test('authorized authentication helper function', async (t) => {
 });
 
 test('onRequestPost uses json response formatting correctly', async (t) => {
+  resetRateLimiter();
   await t.test('returns 400 JSON response with security headers when Content-Type is not application/json', async () => {
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
@@ -926,8 +927,9 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('returns 401 with security headers when LEADS_PASSWORD env is missing', async () => {
+    const testIp = '198.51.100.100';
     const request = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: basicAuth('admin', secret) },
+      headers: { authorization: basicAuth('admin', secret), 'cf-connecting-ip': testIp },
     });
     const res = await onRequestGet({ request, env: {} });
 
@@ -955,7 +957,10 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('returns 401 when authorization header is missing', async () => {
-    const request = new Request('https://cleengreenz.com/leads');
+    const testIp = '198.51.100.101';
+    const request = new Request('https://cleengreenz.com/leads', {
+      headers: { 'cf-connecting-ip': testIp },
+    });
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
 
     assert.equal(res.status, 401);
@@ -967,8 +972,9 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('returns 401 when authorization header has invalid password or format', async () => {
+    const testIp = '198.51.100.102';
     const reqWrongPass = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: basicAuth('admin', 'wrong-password') },
+      headers: { authorization: basicAuth('admin', 'wrong-password'), 'cf-connecting-ip': testIp },
     });
     const resWrongPass = await onRequestGet({ request: reqWrongPass, env: { LEADS_PASSWORD: secret } });
     assert.equal(resWrongPass.status, 401);
@@ -978,19 +984,21 @@ test('onRequestGet authorization and response handling', async (t) => {
     );
 
     const reqInvalidHeader = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: 'Bearer token123' },
+      headers: { authorization: 'Bearer token123', 'cf-connecting-ip': testIp },
     });
     const resInvalidHeader = await onRequestGet({ request: reqInvalidHeader, env: { LEADS_PASSWORD: secret } });
     assert.equal(resInvalidHeader.status, 401);
   });
 
   await t.test('returns 403 JSON response when Origin matches but Referer is cross-origin or invalid', async () => {
+    const testIp = '198.51.100.103';
     const request = new Request('https://cleengreenz.com/api/lead', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         'origin': 'https://cleengreenz.com',
         'referer': 'https://evil-attacker.com/phishing',
+        'cf-connecting-ip': testIp,
       },
       body: JSON.stringify({ type: 'call' }),
     });
@@ -1002,8 +1010,9 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('allows request when authorization header is valid', async () => {
+    const testIp = '198.51.100.104';
     const request = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: basicAuth('admin', secret) },
+      headers: { authorization: basicAuth('admin', secret), 'cf-connecting-ip': testIp },
     });
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret } });
 
@@ -1021,6 +1030,7 @@ test('onRequestGet authorization and response handling', async (t) => {
   });
 
   await t.test('returns 500 with security headers when D1 batch query throws error', async () => {
+    const testIp = '198.51.100.105';
     const originalConsoleError = console.error;
     console.error = () => {};
     try {
@@ -1032,7 +1042,7 @@ test('onRequestGet authorization and response handling', async (t) => {
       };
 
       const request = new Request('https://cleengreenz.com/leads', {
-        headers: { authorization: basicAuth('admin', secret) },
+        headers: { authorization: basicAuth('admin', secret), 'cf-connecting-ip': testIp },
       });
       const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: failingDb } });
 
@@ -1135,6 +1145,7 @@ test('Cloudflare Pages _headers configuration file validation', async (t) => {
 
 test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
   await t.test('strips HTML attribute injection in phone numbers for tel: links', async () => {
+    const testIp = '198.51.100.106';
     const mockDb = {
       prepare: (sql) => ({ sql }),
       batch: async () => [
@@ -1159,7 +1170,7 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
     const secret = 'test-pass';
     const authHeader = 'Basic ' + Buffer.from(`admin:${secret}`).toString('base64');
     const request = new Request('https://cleengreenz.com/leads', {
-      headers: { authorization: authHeader },
+      headers: { authorization: authHeader, 'cf-connecting-ip': testIp },
     });
 
     const res = await onRequestGet({ request, env: { LEADS_PASSWORD: secret, DB: mockDb } });
@@ -1181,6 +1192,15 @@ test('onRequestGet sanitizes phone numbers in tel links', async (t) => {
 test('frontend js/leads.js event handling and form submission', async (t) => {
   const fs = await import('node:fs');
   const vm = await import('node:vm');
+  // Node.js provides Event as global but not CustomEvent; polyfill CustomEvent
+  // using native Event as base (which accepts bubbles/cancelable in constructor)
+  const NativeEvent = globalThis.Event;
+  class NativeCustomEvent extends NativeEvent {
+    constructor(type, options = {}) {
+      super(type, options);
+      this.detail = options.detail ?? null;
+    }
+  }
 
   function setupDomEnvironment() {
     class ClassList {
@@ -1364,8 +1384,8 @@ test('frontend js/leads.js event handling and form submission', async (t) => {
       JSON,
       Object,
       Blob,
-      CustomEvent,
-      Event,
+      CustomEvent: NativeCustomEvent,
+      Event: NativeEvent,
       setFetchImpl: (fn) => { fetchImpl = fn; },
       fetchCalls,
       sendBeaconCalls,
