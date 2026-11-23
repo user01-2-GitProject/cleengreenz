@@ -40,6 +40,9 @@ export function isRateLimited(ip, now = Date.now()) {
   }
   return false;
 }
+export function resetRateLimiter() {
+  ipRequestLogs.clear();
+}
 // Pre-allocated static map to prevent creating object literals inside escapeHtml during string replacement.
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 

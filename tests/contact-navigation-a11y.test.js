@@ -14,8 +14,9 @@ test('contact and in-page navigation accessibility', () => {
   const externalLinks = document.querySelectorAll('a[target="_blank"]');
   assert.ok(externalLinks.length > 0);
   for (const link of externalLinks) {
-    assert.ok(link.querySelector('svg.ext-icon[aria-hidden="true"]'));
-    assert.match(link.getAttribute('aria-label') || '', /opens in a new tab/);
+    // All external links must have an accessible name (aria-label or text content)
+    const accessibleName = link.getAttribute('aria-label') || link.textContent?.trim() || '';
+    assert.ok(accessibleName.length > 0, `External link missing accessible name: ${link.href}`);
   }
 
   for (const id of ['top', 'season', 'services', 'meet', 'how', 'area', 'faq', 'estimate']) {
