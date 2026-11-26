@@ -21,9 +21,9 @@ test('Seasonal cards in #season grid are interactive estimate links', async (t) 
     assert.equal(seasonLinks.length, 3, 'should contain 3 seasonal card links');
 
     const expectedServices = [
+      'Snow removal',
       'Fall leaf cleanup',
-      'Seeding and fertilizing',
-      'Snow removal'
+      'Seeding and fertilizing'
     ];
 
     seasonLinks.forEach((link, idx) => {
@@ -62,17 +62,17 @@ test('Seasonal cards in #season grid are interactive estimate links', async (t) 
 
     const serviceSelect = document.getElementById('f-service');
     const nameInput = document.getElementById('f-name');
-    const snowCard = document.querySelector('#season a.season-card[data-service="Snow removal"]');
+    const leafCard = document.querySelector('#season a.season-card[data-service="Fall leaf cleanup"]');
 
-    assert.ok(snowCard, 'snow removal seasonal card should exist');
-    assert.notEqual(serviceSelect.value, 'Snow removal');
+    assert.ok(leafCard, 'leaf cleanup seasonal card should exist');
+    assert.notEqual(serviceSelect.value, 'Fall leaf cleanup');
 
-    snowCard.click();
+    leafCard.click();
 
     // Give setTimeout in leads.js a cycle to focus #f-name
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    assert.equal(serviceSelect.value, 'Snow removal', 'clicking seasonal card should pre-select option in #f-service');
+    assert.equal(serviceSelect.value, 'Fall leaf cleanup', 'clicking seasonal card should pre-select option in #f-service');
     assert.equal(document.activeElement, nameInput, 'clicking seasonal card should shift focus to #f-name input');
   });
 });

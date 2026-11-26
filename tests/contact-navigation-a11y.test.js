@@ -36,5 +36,5 @@ test('contact and in-page navigation accessibility', () => {
 
   const ribbonEmoji = document.querySelector('.ribbon span[aria-hidden="true"]');
   assert.ok(ribbonEmoji, 'Ribbon decorative emoji is hidden from screen readers');
-  assert.equal(ribbonEmoji.textContent.trim(), '🍂');
+  assert.equal(ribbonEmoji.textContent.trim(), '❄️');
 });

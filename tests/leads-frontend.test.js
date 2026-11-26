@@ -626,11 +626,11 @@ test('Form initialization, honeypot field, and lead tracking events', async (t) 
 
     const seasonCta = document.querySelector('a[href="#estimate"][data-service]');
     assert.ok(seasonCta, 'seasonal estimate link with data-service should exist');
-    assert.equal(seasonCta.getAttribute('data-service'), 'Fall leaf cleanup');
+    assert.equal(seasonCta.getAttribute('data-service'), 'Snow removal');
 
     seasonCta.click();
 
-    assert.equal(serviceSelect.value, 'Fall leaf cleanup');
+    assert.equal(serviceSelect.value, 'Snow removal');
 
     await new Promise((r) => setTimeout(r, 60));
     const nameInput = document.getElementById('f-name');
