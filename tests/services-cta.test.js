@@ -21,12 +21,12 @@ test('Service cards in #services grid are interactive estimate links', async (t)
     assert.equal(serviceLinks.length, 6, 'should contain 6 service card links');
 
     const expectedServices = [
+      'Snow removal',
       'Weekly mowing and edging',
       'Weekly mowing and edging',
       'Seeding and fertilizing',
       'Fall leaf cleanup',
-      'Mulch or shrub trimming',
-      'Snow removal'
+      'Mulch or shrub trimming'
     ];
 
     serviceLinks.forEach((link, idx) => {
