@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 test('Service cards in #services grid are interactive estimate links', async (t) => {
   await t.test('CSS rules include focus-visible focus outline style for .service', () => {
     const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
-    assert.match(htmlTemplate, /\.service:focus-visible\s*\{\s*outline:\s*3px solid var\(--gold\);\s*outline-offset:\s*3px;\s*\}/);
+    assert.match(htmlTemplate, /\.service:focus-visible\s*\{\s*outline:\s*3px solid var\(--forest\);\s*outline-offset:\s*3px;\s*\}/);
   });
 
   await t.test('all .service elements are anchor links with valid href="#estimate" and data-service attributes', () => {
@@ -71,7 +71,6 @@ test('Service cards in #services grid are interactive estimate links', async (t)
     assert.notEqual(serviceSelect.value, 'Mulch or shrub trimming');
 
     serviceCard.click();
-
     // Give setTimeout in leads.js a cycle to focus #f-name
     await new Promise((resolve) => setTimeout(resolve, 100));
 
