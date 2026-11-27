@@ -6,9 +6,9 @@
 <title>Snow Removal & Lawn Care in Niles, MI | Cleen Greenz</title>
 <meta name="description" content="Snow removal sign-ups are open in Niles, MI. Single-car driveways from $30 per visit, bigger drives quoted by size. Get on the list before the first snowfall. Also: lawn care, leaf cleanup, and seeding.">
 <link rel="canonical" href="https://cleengreenz.com/">
-<meta name="theme-color" content="#1f4d2b">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf5e9">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#163a20">
+<meta name="theme-color" content="#216789">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#c0cad6">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#142443">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://cleengreenz.com/">
@@ -26,21 +26,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --cream: #fbf5e9;
-    --cream-2: #f4ead6;
-    --paper: #fffdf8;
-    --forest: #1f4d2b;
-    --forest-2: #163a20;
-    --leaf: #407030;
-    --leaf-2: #508030;
-    --pumpkin: #bc4020;
-    --pumpkin-2: #ac3020;
-    --maple: #b8431e;
-    --gold: #f2b134;
-    --bark: #3b2f24;
-    --bark-soft: #6b5b4b;
+    --cream: #c0cad6;
+    --cream-2: #dce6ed;
+    --paper: #f8fbfd;
+    --forest: #1b2d55;
+    --forest-2: #142443;
+    --leaf: #216789;
+    --leaf-2: #305473;
+    --pumpkin: #216789;
+    --pumpkin-2: #1b2d55;
+    --maple: #68aac8;
+    --gold: #68aac8;
+    --bark: #1b2d55;
+    --bark-soft: #496176;
     --radius: 22px;
-    --shadow: 0 18px 40px -18px rgba(59, 47, 36, .35);
+    --shadow: 0 18px 40px -18px rgba(27, 45, 85, .28);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --max: 1180px;
   }
@@ -79,6 +79,7 @@
 
   /* Buttons */
   .btn {
+    position: relative;
     display: inline-flex; align-items: center; justify-content: center; gap: .55em;
     font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.1rem;
     padding: .85em 1.5em; border-radius: 999px; border: 0; cursor: pointer;
@@ -94,13 +95,13 @@
   .btn:active { transform: translateY(1px); }
   .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; pointer-events: none; }
   button:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-    outline: 3px solid var(--gold); outline-offset: 3px;
+    outline: 3px solid var(--forest); outline-offset: 3px;
   }
   .btn-primary { background: var(--pumpkin); color: #fff; box-shadow: 0 6px 0 var(--pumpkin-2); }
   @media (hover: hover) and (pointer: fine) {
     .btn-primary:hover { box-shadow: 0 8px 0 var(--pumpkin-2); }
   }
-  .btn-ghost { background: var(--paper); color: var(--forest); box-shadow: 0 6px 0 #d9ccb3; }
+  .btn-ghost { background: var(--paper); color: var(--forest); box-shadow: 0 6px 0 #99b2c3; }
   .ext-icon { display: inline-block; width: .85em; height: .85em; margin-left: .3em; vertical-align: -0.05em; flex: none; }
   .btn svg { width: 1.1em; height: 1.1em; }
   .btn .spinner { animation: btn-spin 0.8s linear infinite; }
@@ -116,14 +117,14 @@
   /* Header */
   header.site {
     position: sticky; top: 0; z-index: 40;
-    background: rgba(251, 245, 233, .92);
-    border-bottom: 1px solid rgba(59, 47, 36, .08);
+    background: rgba(220, 235, 243, .94);
+    border-bottom: 1px solid rgba(27, 45, 85, .12);
     overflow: hidden;
     isolation: isolate;
   }
   .header-town-media {
     position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none;
-    background: var(--cream-2);
+    background: linear-gradient(115deg, #c0cad6, #dcebf3 52%, #a9c7d8);
   }
   .header-town-media video,
   .header-town-media img {
@@ -134,7 +135,7 @@
   .header-town-media.is-fading video { opacity: 0; }
   .header-town-media::after {
     content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, rgba(251,245,233,.88), rgba(251,245,233,.64) 42%, rgba(251,245,233,.72));
+    background: linear-gradient(90deg, rgba(220,235,243,.78), rgba(220,235,243,.42) 42%, rgba(220,235,243,.70));
     backdrop-filter: blur(1.5px);
   }
   .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; }
@@ -178,6 +179,31 @@
     aspect-ratio: 16 / 9;
   }
   .mascot-frame video { width: 100%; height: 100%; object-fit: cover; }
+  .winter-scene { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(#68aac8 0 60%, #b6d2e0 60% 100%); }
+  .winter-scene::before, .winter-scene::after { content: ""; position: absolute; left: -8%; width: 116%; height: 38%; bottom: -8%; border-radius: 50% 50% 0 0; background: #f8fbfd; }
+  .winter-scene::after { left: 38%; width: 75%; height: 28%; bottom: 4%; background: #e7f1f6; }
+  .holiday-tree { position: absolute; z-index: 1; width: 21%; height: 76%; bottom: 17%; overflow: visible; }
+  .holiday-tree--left { left: 2%; }
+  .holiday-tree--right { right: 2%; transform: scale(.82); transform-origin: bottom center; }
+  .holiday-tree .tree-wire { fill: none; stroke: #d7c58c; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .95s ease-out; }
+  .winter-scene.decorating .tree-wire, .winter-scene.ornamented .tree-wire { stroke-dashoffset: 0; }
+  .holiday-tree .tree-ornaments, .holiday-tree .tree-bulbs { opacity: 0; transition: opacity .35s ease-out; }
+  .winter-scene.ornamented .tree-ornaments { opacity: 1; }
+  .winter-scene.lights-on .tree-bulbs { opacity: 1; }
+  .holiday-tree .tree-ornaments circle { fill: #c34c4c; stroke: #fff4e9; stroke-width: 1.5; }
+  .holiday-tree .tree-bulbs circle { fill: #ffe27a; stroke: #fff8d9; stroke-width: 1.5; filter: drop-shadow(0 0 3px #ffe27a); }
+  .winter-scene.lights-on .tree-bulbs circle { animation: bulb-glow 1.4s ease-in-out infinite alternate; }
+  .winter-scene-chris { position: absolute; z-index: 2; width: 288px; height: 300px; bottom: -10px; left: 50%; margin-left: -144px;
+    background: url("media/chris-winter-sprite-sheet.png") -3456px 0 / 4608px 300px no-repeat; }
+  .santa-hat { position: absolute; z-index: 2; left: 70px; top: 2px; width: 37px; height: 23px; transform: rotate(-10deg); }
+  .santa-hat::before { content: ""; position: absolute; left: 7px; top: 0; width: 29px; height: 20px; background: linear-gradient(145deg, #ed4b50, #a82031); clip-path: polygon(0 100%, 100% 100%, 83% 0, 53% 24%); border-radius: 8px 4px 2px 2px; }
+  .santa-hat::after { content: ""; position: absolute; left: 1px; right: 0; bottom: 0; height: 7px; border-radius: 999px; background: radial-gradient(circle at calc(100% - 2px) 0, #fff 0 4px, transparent 4.5px), linear-gradient(#fff, #e8edf3); box-shadow: 0 1px 2px rgba(27,45,85,.18); }
+  .winter-scene-chris .santa-hat { transform: scale(1.5) rotate(-10deg); transform-origin: top left; }
+  .winter-scene-snow { position: absolute; z-index: 3; inset: 0; pointer-events: none; background: radial-gradient(circle at 77% 59%, #f8fbfd 0 4px, transparent 5px), radial-gradient(circle at 84% 54%, #f8fbfd 0 3px, transparent 4px), radial-gradient(circle at 70% 50%, #f8fbfd 0 3px, transparent 4px); animation: plume 1.1s ease-in-out infinite alternate; }
+  .winter-frame-lights { position: absolute; z-index: 1; inset: -5px; border: 4px dotted #ffe27a; border-radius: 34px; opacity: 0; pointer-events: none; transform: rotate(1.5deg); transition: opacity .35s ease-out; }
+  .mascot-frame.lights-on .winter-frame-lights { opacity: .95; animation: bulb-glow 1.4s ease-in-out infinite alternate; }
+  @keyframes bulb-glow { to { opacity: .58; } }
+  @keyframes plume { to { transform: translate(7px,-4px); opacity: .65; } }
   .speech {
     position: absolute; left: -26px; top: -30px; z-index: 2;
     background: var(--paper); color: var(--forest); font-family: "Fredoka", sans-serif; font-weight: 600;
@@ -205,22 +231,25 @@
     .badge span { font-size: 1.5rem; }
   }
 
-  /* ===== LEAVES + PET CHRIS: styles start ===== */
-  /* Falling leaves (drawn by script across the whole viewport) */
+  /* ===== WINTER SNOW + PET CHRIS: styles start ===== */
+  /* Falling snow gathers along the tops of interactive controls. */
   .hero .wrap { position: relative; z-index: 1; }
-  .leaf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
-  .leaf { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
-  .leaf svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+  .snow-layer { position: fixed; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
+  .snowflake { position: absolute; left: 0; top: 0; border-radius: 50%; background: #f8fbfd; box-shadow: 0 0 5px rgba(248,251,253,.7); }
+  main .btn.snowy::before, main .season-card.snowy::before, main .service.snowy::before { content: ""; position: absolute; z-index: 1; pointer-events: none;
+    left: 12%; right: 12%; top: -5px; height: 10px; border-radius: 50%; background: #f8fbfd; box-shadow: 0 1px 3px rgba(27,45,85,.18); }
+  main .btn.salted::after { content: ""; position: absolute; pointer-events: none; right: 9px; bottom: -4px; width: 30px; height: 8px;
+    background: radial-gradient(circle, #f8fbfd 1px, transparent 1.7px) 0 0 / 6px 5px; }
 
   /* Pet Chris */
-  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; transform: translate3d(var(--x, 0px), var(--y, 0px), 0); --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
+  .pet-wrap { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; will-change: transform; transform: translate3d(0, 0, 0); --pet-w: 84px; --pet-h: 198px; --sprite-scale: 1; }
   .pet {
     pointer-events: auto; display: block; position: relative; width: var(--pet-w); height: var(--pet-h);
     padding: 0; border: 0; background: none; cursor: grab; touch-action: none;
     -webkit-tap-highlight-color: transparent; user-select: none;
   }
   .pet:active { cursor: grabbing; }
-  .pet:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+  .pet:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; border-radius: 12px; }
   /* --air/--shadow-s/--shadow-o are set from JS while Chris is held or thrown, so the shadow
      stays on the ground and shrinks as he rises. */
   .pet-shadow { position: absolute; left: 12%; right: 12%; bottom: -2px; height: 10px;
@@ -231,16 +260,15 @@
     transition: scale .15s cubic-bezier(.45, 0, .25, 1); }
   .pet-wrap.face-left .pet-body { scale: -1 1; }
   .pet-inner { display: block; width: 100%; height: 100%; transform-origin: 50% 91%; animation: pet-breathe 2.8s ease-in-out infinite; }
-  /* Poses 0-11 built by pet/build-sheet.py (idle, the old walk keyframes, notice-the-pile, three blower
-     poses, wave, blink), then from pet/walk-rig.py the 16-frame walk cycle and a standing frame, twice:
-     facing right, and with the shirt logo pre-flipped for walking left (the page mirrors him); last,
-     poses 0-11 again with the logo pre-flipped, for the other poses facing left. The art is larger than
-     the hit area so the blower can extend past Chris. */
+  /* Beanie artwork uses one idle, six reference-led walk frames, then shovel, salt, blower, and wave poses. */
   .pet-visual { position: absolute; left: -34px; top: 0; width: 192px; height: 200px;
     transform: scale(var(--sprite-scale)); transform-origin: 34px 0; pointer-events: none; }
   .pet-sprite { display: block; width: 192px; height: 200px;
-    background: url("media/pet-chris-poses-v22.png") 0 0 / 11136px 200px no-repeat;
-    image-rendering: pixelated; pointer-events: none; }
+    background: url("media/chris-winter-sprite-sheet.png") 0 0 / 3072px 200px no-repeat;
+    image-rendering: auto; pointer-events: none; }
+  .pet-visual .santa-hat { left: 70px; top: 1px; }
+  .pet-wrap.holiday-visit .pet-visual { transform: scale(calc(var(--sprite-scale) * .68)); transform-origin: 34px 100%; }
+  .pet-particle.holiday-bit { top: 32%; color: #ffe27a; }
   /* Walking is driven from JS: the walk frame follows distance walked, so a planted boot stays put,
      and --lean follows speed, so Chris leans into a start and rocks back on a stop. The hip bob is
      drawn into the frames. */
@@ -284,55 +312,26 @@
   .pet-particle { position: absolute; left: 55%; top: 18%; z-index: 2; pointer-events: none;
     color: var(--forest); font: 800 16px/1 "Fredoka", sans-serif;
     animation: pet-float 1.1s ease-out forwards; }
-  .pet-particle.leaf-bit { top: 60%; color: var(--pumpkin); }
-  .pet-particle.grass-bit { top: 62%; color: var(--leaf-2); }
+  .pet-particle.snow-bit { top: 60%; color: #f8fbfd; }
+  .pet-particle.salt-bit { top: 62%; color: #dcebf3; }
   @keyframes pet-float { from { opacity: 0; transform: translate(0,8px) scale(.6); }
     20% { opacity: 1; } to { opacity: 0; transform: translate(var(--dx,18px),var(--dy,-40px)) scale(1.25); } }
 
-  /* Grass patches are scattered across the dark-green lawn sections, behind their content. */
-  .green > .wrap { position: relative; z-index: 1; }
-  .lawn-grass-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 0; }
-  .grass-patch { position: absolute; width: 64px; height: 44px; pointer-events: none; transition: transform .4s ease, opacity .4s ease; transform-origin: bottom center; }
-  .grass-patch.mowed { transform: scale(var(--grass-scale, 1)) scaleY(0.15); opacity: 0.35; }
-  .grass-patch svg { width: 100%; height: 100%; overflow: visible; display: block; }
-  .grass-patch.mowing { transform: none; opacity: 1; }
-  .grass-patch.mowing svg { clip-path: inset(0 var(--cut-right, 0%) 0 var(--cut, 0%)); }
-  .pet-mower { display: none; position: absolute; left: -24px; bottom: -20px; width: 220px; height: 220px;
-    background: url("media/chris-zero-turn-side-profile.png") center bottom / contain no-repeat; pointer-events: none; }
-  .pet-wrap.riding .pet-mower { display: block; }
-  .pet-wrap.riding .pet-visual { visibility: hidden; }
-  .pet-wrap.riding .pet-inner { animation: none; transform: none; }
-  /* These rotating overlays cover the wheels already drawn in chris-zero-turn.png. */
-  .pet-wheel { position: absolute; display: block; border: 2px solid #17181b; border-radius: 50%;
-    background: repeating-conic-gradient(#292a2e 0 9deg, #414248 9deg 16deg, #242529 16deg 24deg);
-    box-shadow: inset 0 0 0 3px #202125; transform-origin: center; }
-  .pet-wheel::before { content: ""; position: absolute; inset: 25%; border: 2px solid #a96e00; border-radius: 50%;
-    background: repeating-conic-gradient(#ffd22f 0 28deg, #d99a08 28deg 44deg); }
-  .pet-wheel::after { content: ""; position: absolute; left: 43%; top: 43%; width: 14%; height: 14%;
-    border-radius: 50%; background: #704b12; box-shadow: 0 0 0 1px #ffe07b; }
-  .pet-wheel-drive { left: 4px; top: 140px; width: 74px; height: 74px; }
-  .pet-wheel-roller { left: 125px; top: 178px; width: 20px; height: 20px; }
-  .pet-wheel-caster { left: 142px; top: 153px; width: 45px; height: 45px; }
-  .pet-wheel-front { left: 180px; top: 161px; width: 36px; height: 36px; }
-  .pet-wrap.riding .pet-wheel { animation: mower-wheel-spin .55s linear infinite; }
-  @keyframes mower-wheel-spin { to { transform: rotate(360deg); } }
-  .grass-blade { transform-origin: bottom center; animation: grass-sway 3.2s ease-in-out infinite alternate; }
-  .grass-blade-1 { animation-delay: 0s; fill: #285b35; }
-  .grass-blade-2 { animation-delay: -0.7s; fill: #245530; }
-  .grass-blade-3 { animation-delay: -1.4s; fill: #2b5d37; }
-  .grass-blade-4 { animation-delay: -2.1s; fill: #245530; }
-  .grass-blade-5 { animation-delay: -2.8s; fill: #285b35; }
-  @keyframes grass-sway {
-    0% { transform: rotate(-3.5deg); }
-    100% { transform: rotate(3.5deg); }
-  }
+  /* Snow drifts sit behind the content and shrink as Chris clears them. */
+  .winter-surface > .wrap { position: relative; z-index: 1; }
+  .snow-drift-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 0; }
+  .snow-drift { position: absolute; width: 64px; height: 44px; pointer-events: none; transition: transform .4s ease, opacity .4s ease; transform-origin: bottom center; }
+  .snow-drift.cleared { transform: scale(var(--drift-scale, 1)) scaleY(0.15); opacity: 0.35; }
+  .snow-drift svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .snow-drift.blowing { transform: none; opacity: 1; }
+  .snow-drift.blowing svg { clip-path: inset(0 var(--cut-right, 0%) 0 var(--cut, 0%)); }
   /* The sheet is drawn at .81 on phones; nearest-neighbour at a fractional scale makes pixels uneven. */
   @media (max-width: 700px) { .pet-wrap { --pet-w: 68px; --pet-h: 160px; --sprite-scale: .81; } .pet-sprite { image-rendering: auto; } }
   .pet-bubble {
     position: absolute; bottom: calc(100% + 10px); left: -6px; width: max-content; max-width: 230px;
     pointer-events: auto; background: var(--paper); color: var(--forest); border-radius: 16px; padding: 10px 30px 10px 14px;
     font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: .95rem; line-height: 1.3;
-    box-shadow: 0 12px 28px -10px rgba(59, 47, 36, .45);
+    box-shadow: 0 12px 28px -10px rgba(27, 45, 85, .32);
     opacity: 0; visibility: hidden; transform: translateY(4px) scale(.96);
     transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
   }
@@ -347,7 +346,7 @@
   }
   .pet-bubble .bubble-close:hover { opacity: 1; color: var(--pumpkin-2); }
   .pet-bubble .bubble-close:active { transform: scale(0.92); }
-  .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; opacity: 1; }
+  .pet-bubble .bubble-close:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; opacity: 1; }
   .pet-bubble.is-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
     transition: opacity .16s ease, transform .16s ease;
@@ -359,6 +358,11 @@
     .pet-wrap.windup .pet-inner, .pet-wrap.clearing .pet-inner, .pet-wrap.landing .pet-inner,
     .pet-wrap.cheering .pet-shadow { animation: none; }
     .pet-particle { display: none; }
+    .winter-scene-snow { animation: none; }
+    .holiday-tree .tree-ornaments, .holiday-tree .tree-bulbs { opacity: 1; transition: none; animation: none; }
+    .holiday-tree .tree-wire { stroke-dashoffset: 0; transition: none; }
+    .holiday-tree .tree-bulbs circle { animation: none; }
+    .winter-frame-lights { opacity: .95; transition: none; animation: none; }
   }
   .pet-bubble::after {
     content: ""; position: absolute; top: 100%; left: 26px; border: 8px solid transparent; border-top-color: var(--paper);
@@ -368,9 +372,9 @@
   .pet-bubble a { color: var(--pumpkin-2); }
   .pet-bubble button { font: inherit; color: var(--pumpkin-2); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 
-  /* ===== LEAVES + PET CHRIS: styles end ===== */
+  /* ===== WINTER SNOW + PET CHRIS: styles end ===== */
 
-  /* Wavy grass dividers */
+  /* Snowbank dividers */
   .grass { display: block; width: 100%; height: 70px; margin-bottom: -1px; }
   .grass-top { position: absolute; bottom: 0; left: 0; }
 
@@ -380,10 +384,10 @@
   .section { padding: 96px 0; }
   .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
   .section-head .lead { margin: 0 auto; }
-  .green { background: var(--forest); color: #f1ecdf; }
-  .green h2, .green h3 { color: #fff; }
-  .green .lead { color: #cfe0c7; }
-  .green .eyebrow { color: var(--gold); }
+  .winter-surface { background: #216789; color: #f8fbfd; }
+  .winter-surface h2, .winter-surface h3 { color: #fff; }
+  .winter-surface .lead { color: #e5f2f8; }
+  .winter-surface .eyebrow { color: var(--cream-2); }
 
   /* In season now */
   .season-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
@@ -396,12 +400,12 @@
   @media (hover: hover) and (pointer: fine) {
     .season-card:hover { transform: translateY(-3px); }
   }
-  .season-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .season-card:focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
   .season-card h3 { color: var(--forest); }
   .season-card p { color: var(--bark-soft); margin: 0; }
   .season-card .icon {
     width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 16px;
-    background: #fde6d3; color: var(--pumpkin-2);
+    background: #dcebf3; color: var(--pumpkin-2);
   }
   .season-card .icon svg { width: 30px; height: 30px; }
   .tag {
@@ -414,6 +418,7 @@
   /* Services */
   .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .service {
+    position: relative;
     display: flex; gap: 16px; align-items: flex-start; background: var(--paper); border-radius: var(--radius);
     padding: 22px; border: 2px solid var(--cream-2); transition: transform .2s ease, border-color .2s ease;
     text-decoration: none; color: inherit; touch-action: manipulation;
@@ -421,8 +426,8 @@
   @media (hover: hover) and (pointer: fine) {
     .service:hover { transform: translateY(-3px); border-color: var(--leaf-2); }
   }
-  .service:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-  .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #e3f3d6; color: var(--forest); }
+  .service:focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
+  .service .icon { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: #dcebf3; color: var(--forest); }
   .service .icon svg { width: 26px; height: 26px; }
   .service h3 { font-size: 1.2rem; margin-bottom: .25em; }
   .service p { margin: 0; color: var(--bark-soft); font-size: 1rem; }
@@ -449,9 +454,9 @@
   .step .num {
     width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center;
     font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 2rem; color: #fff; background: var(--leaf);
-    box-shadow: 0 6px 0 #4f9a27;
+    box-shadow: 0 6px 0 #305473;
   }
-  .step:nth-child(2) .num { background: var(--gold); color: var(--bark); box-shadow: 0 6px 0 #c98d1b; }
+  .step:nth-child(2) .num { background: var(--gold); color: var(--bark); box-shadow: 0 6px 0 #a6c9dc; }
   .step:nth-child(3) .num { background: var(--pumpkin); box-shadow: 0 6px 0 var(--pumpkin-2); }
   .step p { color: var(--bark-soft); }
   @media (max-width: 900px) { .steps { grid-template-columns: 1fr; gap: 40px; } }
@@ -575,11 +580,11 @@
   }
 
   /* Footer */
-  footer.site { background: var(--forest-2); color: #cfe0c7; padding: 56px 0 32px; font-size: .98rem; }
+  footer.site { background: var(--forest-2); color: #e5f2f8; padding: 56px 0 32px; font-size: .98rem; }
   .foot-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; }
   footer.site h3 { color: #fff; font-size: 1.1rem; }
   footer.site ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-  footer.site a { color: #cfe0c7; text-decoration: none; touch-action: manipulation; }
+  footer.site a { color: #e5f2f8; text-decoration: none; touch-action: manipulation; }
   footer.site a:hover { color: var(--gold); }
   .foot-logo { background: var(--paper); border-radius: 18px; padding: 10px 14px; display: inline-block; margin-bottom: 16px; }
   .foot-logo img { height: 56px; width: auto; }
@@ -591,8 +596,8 @@
   @media (max-width: 700px) {
     .mobile-bar {
       display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
-      padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(251,245,233,.98);
-      border-top: 1px solid rgba(59,47,36,.12);
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(248,251,253,.98);
+      border-top: 1px solid rgba(27,45,85,.12);
       backdrop-filter: blur(4px);
     }
     .mobile-bar .btn { font-size: 1.05rem; padding: .9em 1em; min-height: 48px; }
@@ -607,9 +612,8 @@
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
     .btn:hover, .service:hover, .season-card:hover, .copy-phone-btn:active, .pet-bubble .bubble-close:active { transform: none; }
-    .grass-patch { transition: none; }
-    .grass-blade { animation: none; }
-    .pet-mower { display: none !important; }
+    .snow-drift { transition: none; }
+
     .form-done { transition: opacity 0.01s linear; transform: none; }
     @starting-style { .form-done.show { opacity: 0; transform: none; } }
   }
@@ -655,12 +659,7 @@
 <div class="ribbon"><span aria-hidden="true">❄️</span> Snow removal sign-ups are open. <a href="#estimate" data-service="Snow removal" data-lead-location="ribbon">Get on the list</a> before the first snowfall.</div>
 
 <header class="site">
-  <div class="header-town-media" aria-hidden="true">
-    <img src="media/mascot-mower.jpg" alt="Cleen Greenz mascot mowing a lawn in Niles, Michigan">
-    <video muted playsinline preload="none" loading="lazy" poster="media/mascot-mower.jpg">
-      <source src="media/mascot-mower.mp4" type="video/mp4">
-    </video>
-  </div>
+  <div class="header-town-media" aria-hidden="true"></div>
   <nav class="wrap nav" aria-label="Main">
     <a class="brand" href="#top" aria-label="Cleen Greenz home"><img src="media/logo.png" alt="Cleen Greenz" width="480" height="358"></a>
     <ul class="nav-links">
@@ -702,19 +701,29 @@
       </div>
       <div class="mascot-frame">
         <div class="speech">Snow piling up? I've got a plow with your name on it.</div>
-        <div class="video-card">
-          <video autoplay muted loop playsinline preload="metadata" poster="media/mascot-trimmer.jpg" aria-label="Cartoon Chris trimming the edges of a front lawn">
-            <source src="media/mascot-trimmer.mp4" type="video/mp4">
-          </video>
+        <div class="video-card" role="img" aria-label="Chris operating a snowblower between snow-covered evergreen trees">
+          <div class="winter-scene" aria-hidden="true">
+            <svg class="holiday-tree holiday-tree--left" viewBox="0 0 100 180">
+              <path d="M44 143h12v30H44z" fill="#765039"/><path d="M50 3 29 48h13L19 83h15L8 121h84L66 83h15L58 48h13z" fill="#174b3b"/><path d="M17 118Q50 108 83 118M25 81Q50 72 75 81M34 47Q50 39 66 47" fill="none" stroke="#dcebf3" stroke-width="2.5" stroke-linecap="round"/>
+              <path class="tree-wire" pathLength="100" d="M35 53Q73 59 27 76T73 99T21 116T80 135"/><g class="tree-ornaments"><circle cx="40" cy="65" r="4"/><circle cx="62" cy="88" r="4"/><circle cx="35" cy="103" r="4"/><circle cx="68" cy="124" r="4"/></g><g class="tree-bulbs"><circle cx="43" cy="55" r="3"/><circle cx="58" cy="64" r="3"/><circle cx="37" cy="78" r="3"/><circle cx="61" cy="86" r="3"/><circle cx="45" cy="96" r="3"/><circle cx="35" cy="111" r="3"/><circle cx="60" cy="118" r="3"/><circle cx="51" cy="132" r="3"/></g>
+            </svg>
+            <svg class="holiday-tree holiday-tree--right" viewBox="0 0 100 180">
+              <path d="M44 143h12v30H44z" fill="#765039"/><path d="M50 3 29 48h13L19 83h15L8 121h84L66 83h15L58 48h13z" fill="#174b3b"/><path d="M17 118Q50 108 83 118M25 81Q50 72 75 81M34 47Q50 39 66 47" fill="none" stroke="#dcebf3" stroke-width="2.5" stroke-linecap="round"/>
+              <path class="tree-wire" pathLength="100" d="M35 53Q73 59 27 76T73 99T21 116T80 135"/><g class="tree-ornaments"><circle cx="40" cy="65" r="4"/><circle cx="62" cy="88" r="4"/><circle cx="35" cy="103" r="4"/><circle cx="68" cy="124" r="4"/></g><g class="tree-bulbs"><circle cx="43" cy="55" r="3"/><circle cx="58" cy="64" r="3"/><circle cx="37" cy="78" r="3"/><circle cx="61" cy="86" r="3"/><circle cx="45" cy="96" r="3"/><circle cx="35" cy="111" r="3"/><circle cx="60" cy="118" r="3"/><circle cx="51" cy="132" r="3"/></g>
+            </svg>
+            <span class="winter-scene-chris"><span class="santa-hat"></span></span>
+            <span class="winter-scene-snow"></span>
+          </div>
         </div>
+        <span class="winter-frame-lights" aria-hidden="true"></span>
         <div class="badge" aria-hidden="true"><small>Since</small><span>2009</span></div>
       </div>
     </div>
-    <svg class="grass grass-top" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path fill="#1f4d2b" d="M0 70V36 Q60.0 18 120 30 Q180.0 40 240 30 Q300.0 18 360 30 Q420.0 40 480 30 Q540.0 18 600 30 Q660.0 40 720 30 Q780.0 18 840 30 Q900.0 40 960 30 Q1020.0 18 1080 30 Q1140.0 40 1200 30 Q1260.0 18 1320 30 Q1380.0 40 1440 30 V70z"/></svg>
+    <svg class="grass grass-top" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path fill="#f8fbfd" d="M0 70V40 Q90 17 180 34 Q270 51 360 31 Q450 12 540 32 Q630 51 720 36 Q810 21 900 35 Q990 49 1080 31 Q1170 14 1260 32 Q1350 50 1440 31 V70z"/></svg>
   </section>
 
   <!-- In season now -->
-  <section class="section green" id="season" tabindex="-1">
+  <section class="section winter-surface" id="season" tabindex="-1">
     <div class="wrap">
       <div class="section-head reveal">
         <div class="eyebrow">In season now</div>
@@ -744,7 +753,7 @@
       </div>
     </div>
   </section>
-  <svg class="grass" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true" style="transform:scaleY(-1);background:var(--cream)"><path fill="#1f4d2b" d="M0 70V36 Q60.0 18 120 30 Q180.0 40 240 30 Q300.0 18 360 30 Q420.0 40 480 30 Q540.0 18 600 30 Q660.0 40 720 30 Q780.0 18 840 30 Q900.0 40 960 30 Q1020.0 18 1080 30 Q1140.0 40 1200 30 Q1260.0 18 1320 30 Q1380.0 40 1440 30 V70z"/></svg>
+  <svg class="grass" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true" style="transform:scaleY(-1);background:var(--cream)"><path fill="#f8fbfd" d="M0 70V40 Q90 17 180 34 Q270 51 360 31 Q450 12 540 32 Q630 51 720 36 Q810 21 900 35 Q990 49 1080 31 Q1170 14 1260 32 Q1350 50 1440 31 V70z"/></svg>
 
   <!-- All services -->
   <section class="section" id="services" tabindex="-1">
@@ -916,7 +925,7 @@
     </div>
   </section>
 
-  <section class="section green" id="estimate" tabindex="-1">
+  <section class="section winter-surface" id="estimate" tabindex="-1">
     <div class="wrap estimate-grid">
       <div class="estimate-side reveal">
         <div class="eyebrow">Get in touch</div>
@@ -1160,8 +1169,8 @@
       videos.forEach(function (v) { videoObserver.observe(v); });
     }
 
-    // ===== LEAVES + PET CHRIS: script start =====
-    // Falling leaves that pile up on buttons, and pet Chris who clears them.
+    // ===== WINTER SNOW + PET CHRIS: script start =====
+    // Falling snow gathers on controls and components; pet Chris clears it.
     (function () {
       var hidePet = false;
       try { hidePet = localStorage.getItem('cg-hide-pet') === '1'; } catch (e) {}
@@ -1180,7 +1189,7 @@
       }
       updateBarH();
 
-      var greenSections = document.querySelectorAll('section.green');
+      var greenSections = document.querySelectorAll('section.winter-surface');
       window.addEventListener('resize', function () {
         W = window.innerWidth; H = window.innerHeight;
         PET_W = W < 700 ? 68 : 84; PET_H = W < 700 ? 160 : 198;
@@ -1191,50 +1200,53 @@
         updateRects();
       });
       window.addEventListener('scroll', updateRects, { passive: true });
-      var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn'));
+      var catchers = Array.prototype.slice.call(document.querySelectorAll('main .btn, main .season-card, main .service'));
       // Direct property reference on catcherItem eliminates Map.get overhead in animation frame loop
       var catcherItems = catchers.map(function (el) {
         return { el: el, pile: [], r: null, top: 0, topMax: 0, leftMin: 0, rightMax: 0, width: 0, left: 0 };
       });
-      var MAX_PILE = 12, CLEAR_AT = 6;
+      var holidayTargetEl = document.querySelector('.winter-scene');
+      var holidayTarget = holidayTargetEl ? { el: holidayTargetEl, frame: holidayTargetEl.closest('.mascot-frame'), r: null } : null;
+      var holidayStarted = false;
+      if (holidayTarget && hidePet) {
+        holidayTarget.el.classList.add('ornamented', 'lights-on');
+        if (holidayTarget.frame) holidayTarget.frame.classList.add('lights-on');
+        holidayStarted = true;
+      }
+      var MAX_PILE = 12, CLEAR_AT = 12;
       function rnd(a, b) { return a + Math.random() * (b - a); }
 
-      // Leaves
-      var leaves = [];
+      // Snowflakes
+      var flakes = [];
       var layer = null;
       if (!reduceMotion) {
         layer = document.createElement('div');
-        layer.className = 'leaf-layer';
+        layer.className = 'snow-layer';
         layer.setAttribute('aria-hidden', 'true');
         document.body.appendChild(layer);
-        var colors = ['#e2702a', '#f2b134', '#b8431e', '#c95b18', '#d99a2b', '#a8551f'];
-        var shape = '<svg viewBox="0 0 24 24"><path d="M12 2c4 3 7 7 7 11a7 7 0 0 1-14 0c0-4 3-8 7-11Z"/><path d="M12 6v16" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/></svg>';
-        var count = W < 700 ? 20 : 36;
+        var count = W < 700 ? 28 : 42;
         for (var i = 0; i < count; i++) {
           var el = document.createElement('div');
-          el.className = 'leaf';
-          el.innerHTML = shape;
-          el.style.color = colors[i % colors.length];
-          var size = rnd(14, 28);
+          el.className = 'snowflake';
+          var size = rnd(5, 12);
           el.style.width = el.style.height = size + 'px';
           layer.appendChild(el);
-          // Pre-compute leaf sizing offsets to eliminate redundant multiplication/division in animation loops
-          var l = { el: el, size: size, halfSize: size / 2, bottomOffset: size * 0.8, topOffset: size * 0.75 };
-          resetLeaf(l, true);
-          leaves.push(l);
+          var l = { el: el, size: size, halfSize: size / 2, bottomOffset: size * 0.7, topOffset: size * 0.65 };
+          resetFlake(l, false);
+          flakes.push(l);
         }
       }
-      function resetLeaf(l, anywhere) {
+      function resetFlake(l, anywhere) {
         l.state = 'fall';
         l.landedDirty = false;
         l.bx = rnd(0, W);
         l.y = anywhere ? rnd(-H * 0.3, H) : rnd(-120, -30);
-        l.vy = rnd(48, 88);
+        l.vy = rnd(45, 82);
         l.phase = rnd(0, 6.28);
-        l.sway = rnd(12, 34);
+        l.sway = rnd(8, 24);
         l.rot = rnd(0, 360);
-        l.spin = rnd(-90, 90);
-        l.sticky = Math.random() < 0.82;
+        l.spin = rnd(-24, 24);
+        l.sticky = Math.random() < 0.9;
         l.opacity = 1;
         if (l.lastOpacity !== 1) { l.el.style.opacity = 1; l.lastOpacity = 1; }
         l.lastRx = l.lastRy = l.lastRrot = null;
@@ -1265,6 +1277,11 @@
           l.spin = rnd(-540, 540);
         }
         pile.length = 0;
+        ci.el.classList.remove('snowy');
+        if (ci.el.matches('.btn')) {
+          ci.el.classList.add('salted');
+          setTimeout(function (el) { el.classList.remove('salted'); }.bind(null, ci.el), 8500);
+        }
       }
 
       // Pet
@@ -1273,9 +1290,8 @@
       var p = { x: 4, y: H, state: 'idle', t: 0, cooldown: 5, target: null, face: 1, speed: 0,
         dragX: 0, dragY: 0, vx: 0, vy: 0, lastPointerX: 0, lastPointerY: 0, stride: 0, grab: 0,
         acc: 0, lean: 0, tilt: 0, tiltV: 0, mvx: 0, bounces: 0, stay: 0 };
-      // Pose index into media/pet-chris-poses-v22.png. The order is set in pet/build-sheet.py and
-      // pet/walk-rig.py (the walk frames follow the twelve poses).
-      var POSE = { idle: 0, notice: 6, pickup: 7, level: 8, lower: 9, wave: 10, blink: 11 };
+      // Pose index: idle, six contact/down/pass/swing walk frames, then winter-work poses.
+      var POSE = { idle: 0, notice: 10, pickup: 7, level: 8, lower: 8, salt: 9, blower: 11, plume: 12, wave: 13, blink: 15 };
       // The walk: WALK.frames frames per cycle of two steps, from pose WALK.first (facing right) or
       // WALK.firstLeft (logo pre-flipped, for when the page mirrors him); each set is followed by a
       // standing frame, shown for a beat as he sets off and when he stops. A cycle covers
@@ -1283,13 +1299,11 @@
       // picking the frame from distance walked keeps the planted boot on one spot at any speed.
       // WALK.start is the frame he sets off from and stops on: mid-stride with the boots together
       // (the frame half a cycle later is the same stance on the other foot).
-      var WALK = { first: 12, firstLeft: 29, frames: 16, step: 54 * (W < 700 ? .81 : 1), start: 4, settle: 140 };
+      var WALK = { first: 1, firstLeft: 1, frames: 6, step: 54 * (W < 700 ? .81 : 1), start: 0, settle: 140 };
       // Optimization: Pre-compute lead stride phase offset once to avoid division & multiplication on every frame
       WALK.lead = WALK.start / WALK.frames * 2 * WALK.step;
-      // Poses 0-11 facing left use the copies from LEFT_POSES on, whose logo reads right mirrored.
-      // They switch over only once the turn-around squeeze has passed zero width (FLIP_AT ms; the
-      // 150ms flip eases, so zero width comes a little after halfway).
-      var LEFT_POSES = 46, FLIP_AT = 100, shownFace = 1, faceAt = -1e9;
+      // Turnaround squeeze keeps his direction change readable.
+      var FLIP_AT = 100, shownFace = 1, faceAt = -1e9;
       var wasWalking = false, walkEdgeAt = -1e9, lastLean = 0, grabOn = false, shadowOn = false;
       // Walking feel: how fast he gets going and how hard he can brake (px/s^2), and his top speeds
       // (an easy walk: about two steps a second, 110-120 steps a minute; scaled with the sprite on
@@ -1298,12 +1312,12 @@
       // Coming and going: after STAY_FOR s on stage (p.stay; tapping or dragging him resets it) he
       // finishes what he is doing, goes home and walks off the left edge
       // (OFFSTAGE px past it). Away, he waits at least AWAY_MIN s and comes back for a pile of
-      // AWAY_PILE leaves (a bigger pile than he clears from home), or after AWAY_MAX s regardless.
-      var STAY_FOR = 25, OFFSTAGE = 60, AWAY_MIN = 12, AWAY_PILE = 10, AWAY_MAX = 45;
+      // AWAY_PILE snow (a bigger pile than he clears from home), or after AWAY_MAX s regardless.
+      var STAY_FOR = 25, OFFSTAGE = 60, AWAY_MIN = 12, AWAY_PILE = 12, AWAY_MAX = 45;
       var pointer = null, reactionTimer = null, idleAt = performance.now();
       var nextBlink = idleAt + rnd(2800, 5800), blinkUntil = 0;
       var lines = [
-        'Hi neighbor! I keep the leaves off the buttons around here.',
+        'Hi neighbor! I keep the snow off the buttons around here.',
         'Snow removal starts at $30 a visit. Just saying.',
         'Questions about your yard? <a href="#estimate" data-pet-go>Let\'s do it</a>',
         'Fall is the best time to seed. Your lawn will thank you in spring.',
@@ -1316,7 +1330,7 @@
         wrap.innerHTML =
           '<button class="pet" type="button" aria-expanded="false" aria-controls="pet-bubble" aria-label="Pet Chris. Tap to say hi.">' +
           '<span class="pet-shadow" aria-hidden="true"></span>' +
-          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span></span></span></span></button>' +
+          '<span class="pet-body"><span class="pet-inner"><span class="pet-visual" aria-hidden="true"><span class="pet-sprite"></span><span class="santa-hat"></span></span></span></span></button>' +
           '<div class="pet-bubble" role="status" id="pet-bubble"><button class="bubble-close" type="button" aria-label="Dismiss message">✕</button></div>';
         document.body.appendChild(wrap);
         pet = wrap.querySelector('.pet');
@@ -1352,8 +1366,8 @@
           p.vx = Math.max(-500, Math.min(500, (e.clientX - p.lastPointerX) / elapsed));
           p.vy = Math.max(-500, Math.min(500, (e.clientY - p.lastPointerY) / elapsed));
           p.lastPointerX = e.clientX; p.lastPointerY = e.clientY; pointer.last = now;
-          if (activeGrassMowing) stopGrassMowing();
-          p.riding = false; p.state = 'drag'; p.t = 0; p.speed = 0;
+          if (activeSnowBlowing) stopSnowBlowing();
+          p.state = 'drag'; p.t = 0; p.speed = 0;
           hideBubble();
         });
         function release(e) {
@@ -1459,11 +1473,11 @@
         el.className = 'pet-particle' + (cls ? ' ' + cls : '');
         el.textContent = text;
         el.setAttribute('aria-hidden', 'true');
-        el.style.left = cls === 'leaf-bit' ? (p.face > 0 ? '132px' : '-40px') : rnd(30, 75) + '%';
-        // The nozzle sits lower in the "lower" blower pose (tip at y=139 vs 115 when level).
-        if (cls === 'leaf-bit') el.style.top = (displayedFrame % LEFT_POSES === POSE.lower ? 131 : 107) + 'px';
-        el.style.setProperty('--dx', (cls === 'leaf-bit' ? p.face * rnd(30, 75) : rnd(-45, 45)) + 'px');
-        el.style.setProperty('--dy', (cls === 'leaf-bit' ? rnd(-15, 15) : rnd(-65, -30)) + 'px');
+        el.style.left = cls === 'snow-bit' ? (p.face > 0 ? '132px' : '-40px') : rnd(30, 75) + '%';
+        // Eject snow from the tool end as Chris clears the target.
+        if (cls === 'snow-bit') el.style.top = (displayedFrame === POSE.lower ? 131 : 107) + 'px';
+        el.style.setProperty('--dx', (cls === 'snow-bit' ? p.face * rnd(30, 75) : rnd(-45, 45)) + 'px');
+        el.style.setProperty('--dy', (cls === 'snow-bit' ? rnd(-15, 15) : rnd(-65, -30)) + 'px');
         wrap.appendChild(el);
         el.addEventListener('animationend', function () { el.remove(); }, { once: true });
         setTimeout(function () { el.remove(); }, 1300);
@@ -1477,8 +1491,8 @@
         return cachedHomeY;
       }
 
-      var GRASS_SAYINGS = ['Time for a trim!', 'Keeping the lawn looking sharp.', 'Fresh stripes coming right up!'];
-      var LEAF_SAYINGS = ['Hey, who dropped these?', 'Hold on, I got this.', 'Leaves on the button? Not on my watch.'];
+      var DRIFT_SAYINGS = ['Running the snowblower through this drift.', 'Deep snow, coming right up!', 'Making a clear path through the snow.'];
+      var SNOW_SAYINGS = ['Hey, who dropped these?', 'Hold on, I got this.', 'Snow on the button? Not on my watch.'];
       function hideBubble() {
         if (!bubble) return;
         bubble.classList.remove('is-visible');
@@ -1532,7 +1546,10 @@
         if (gx < 8) { gx = r.right - 30; face = -1; }
         return { x: Math.min(Math.max(gx, 0), W - PET_W), y: r.bottom - PET_H + 2, face: face };
       }
-      function grassGoal(r, progress) {
+      function holidayGoal(r) {
+        return { x: Math.min(Math.max(r.left + 18, 0), W - PET_W), y: r.bottom - PET_H + 2, face: 1 };
+      }
+      function snowDriftGoal(r, progress) {
         var face = r.left + r.width / 2 < W / 2 ? -1 : 1;
         return { x: face > 0 ? r.left - 120 + progress * r.width : r.right - PET_W + 120 - progress * r.width,
           y: r.bottom - PET_H + 2, face: face };
@@ -1541,89 +1558,74 @@
         // Optimization: Use cached bounding rectangle object stored on target (ci or gp) directly
         return target ? target.r : null;
       }
-      // Grass Patches on .green sections representing lawn
-      var grassPatches = [];
-      var activeGrassMowing = null;
-      var grassSvgTemplate =
+      // Deep snow drifts on winter sections
+      var snowDrifts = [];
+      var activeSnowBlowing = null;
+      var snowDriftTemplate =
         '<svg viewBox="0 0 64 44">' +
-          '<ellipse cx="32" cy="41" rx="24" ry="4" fill="#163a20" opacity="0.7"/>' +
-          '<path class="grass-blade grass-blade-1" d="M14,41 Q10,22 4,10 Q16,20 20,41 Z"/>' +
-          '<path class="grass-blade grass-blade-2" d="M20,41 Q22,18 20,6 Q26,18 26,41 Z"/>' +
-          '<path class="grass-blade grass-blade-3" d="M25,41 Q30,12 34,2 Q36,16 33,41 Z"/>' +
-          '<path class="grass-blade grass-blade-4" d="M32,41 Q38,14 44,8 Q42,22 40,41 Z"/>' +
-          '<path class="grass-blade grass-blade-5" d="M38,41 Q48,20 56,14 Q48,26 46,41 Z"/>' +
-          '<path class="grass-blade grass-blade-2" d="M8,41 Q14,28 12,18 Q16,28 16,41 Z" fill="#285b35"/>' +
+          '<ellipse cx="32" cy="40" rx="27" ry="4" fill="#142443" opacity="0.32"/>' +
+          '<path d="M4 39 Q8 30 17 31 Q22 20 32 27 Q40 17 47 29 Q56 25 61 39 Z" fill="#f8fbfd"/>' +
+          '<path d="M15 38 Q21 29 29 33 Q38 25 45 34 Q51 31 56 39 Z" fill="#dcebf3"/>' +
         '</svg>';
 
-      function placeGrass(el, sec, slot) {
-        // Spread patches across the full section; choose a new height when a mowed patch regrows.
+      function placeSnowDrift(el, sec, slot) {
+        // Place snowbanks through the blue section; cleared drifts return later.
         // Performance optimization: Use cached section height to avoid synchronous layout reads during animation frame ticks when regrowing grass.
         var secH = sec.cachedHeight || sec.clientHeight;
         var maxBottom = Math.max(24, secH - 58);
         el.style.left = (4 + slot * 31 + Math.random() * 10) + '%';
         el.style.bottom = (12 + Math.random() * maxBottom) + 'px';
-        el.style.setProperty('--grass-scale', (0.8 + Math.random() * 0.45).toFixed(2));
+        el.style.setProperty('--drift-scale', (0.8 + Math.random() * 0.45).toFixed(2));
         updateRects();
       }
-      function setupGrassPatches() {
+      function setupSnowDrifts() {
         greenSections.forEach(function (sec) {
           sec.cachedHeight = sec.clientHeight;
-          var layer = sec.querySelector('.lawn-grass-layer');
+          var layer = sec.querySelector('.snow-drift-layer');
           if (!layer) {
             layer = document.createElement('div');
-            layer.className = 'lawn-grass-layer';
+      layer.className = 'snow-drift-layer';
             layer.setAttribute('aria-hidden', 'true');
             sec.appendChild(layer);
           }
-          // Spread patches through the full dark-green surface rather than only along its bottom edge.
+          // Spread drifts across the whole snowy surface.
           var positions = [0, 1, 2];
           positions.forEach(function (pct) {
             var el = document.createElement('div');
-            el.className = 'grass-patch';
-            el.innerHTML = grassSvgTemplate;
-            placeGrass(el, sec, pct);
+            el.className = 'snow-drift';
+            el.innerHTML = snowDriftTemplate;
+            placeSnowDrift(el, sec, pct);
             layer.appendChild(el);
-            grassPatches.push({ el: el, sec: sec, slot: pct, mowed: false, mowedAt: 0 });
+            snowDrifts.push({ el: el, sec: sec, slot: pct, cleared: false, clearedAt: 0 });
           });
         });
       }
-      setupGrassPatches();
+      setupSnowDrifts();
 
-      var mowerSprite = document.createElement('span');
-      mowerSprite.className = 'pet-mower';
-      mowerSprite.setAttribute('aria-hidden', 'true');
-      ['drive', 'roller', 'caster', 'front'].forEach(function (wheel) {
-        var el = document.createElement('span');
-        el.className = 'pet-wheel pet-wheel-' + wheel;
-        mowerSprite.appendChild(el);
-      });
-      if (wrap && !reduceMotion) wrap.querySelector('.pet-inner').appendChild(mowerSprite);
-
-      function stopGrassMowing(gp) {
-        if (!activeGrassMowing || (gp && gp !== activeGrassMowing)) return;
-        activeGrassMowing.el.classList.remove('mowing');
-        activeGrassMowing.el.style.removeProperty('--cut');
-        activeGrassMowing.el.style.removeProperty('--cut-right');
-        activeGrassMowing = null;
+      function stopSnowBlowing(gp) {
+        if (!activeSnowBlowing || (gp && gp !== activeSnowBlowing)) return;
+        activeSnowBlowing.el.classList.remove('blowing');
+        activeSnowBlowing.el.style.removeProperty('--cut');
+        activeSnowBlowing.el.style.removeProperty('--cut-right');
+        activeSnowBlowing = null;
       }
 
-      function startGrassMowing(gp) {
+      function startSnowBlowing(gp) {
         if (!gp) return;
-        stopGrassMowing();
-        activeGrassMowing = gp;
-        gp.el.classList.add('mowing');
+        stopSnowBlowing();
+        activeSnowBlowing = gp;
+        gp.el.classList.add('blowing');
       }
 
-      function readyGrassPatch(now) {
+      function readySnowDrift(now) {
         var t = now || performance.now();
-        for (var i = 0; i < grassPatches.length; i++) {
-          var gp = grassPatches[i];
-          if (gp.mowed) {
-            // Regrow grass patch after 18 seconds
-            if (t - gp.mowedAt > 18000) {
-              gp.mowed = false;
-              gp.el.classList.remove('mowed');
-              placeGrass(gp.el, gp.sec, gp.slot);
+        for (var i = 0; i < snowDrifts.length; i++) {
+          var gp = snowDrifts[i];
+          if (gp.cleared) {
+            if (t - gp.clearedAt > 18000) {
+              gp.cleared = false;
+              gp.el.classList.remove('cleared');
+              placeSnowDrift(gp.el, gp.sec, gp.slot);
             }
           } else if (visible(gp.r)) {
             return gp;
@@ -1653,6 +1655,7 @@
         if (rectsDirty) {
           minCatcherTop = Infinity;
           maxCatcherTopMax = -Infinity;
+          if (holidayTarget) holidayTarget.r = holidayTarget.el.getBoundingClientRect();
           for (var idx = 0; idx < catcherItems.length; idx++) {
             var ci = catcherItems[idx];
             var r = ci.el.getBoundingClientRect();
@@ -1669,17 +1672,17 @@
               if (ci.topMax > maxCatcherTopMax) maxCatcherTopMax = ci.topMax;
             }
           }
-          for (var gIdx = 0; gIdx < grassPatches.length; gIdx++) {
-            var gp = grassPatches[gIdx];
+          for (var gIdx = 0; gIdx < snowDrifts.length; gIdx++) {
+            var gp = snowDrifts[gIdx];
             var gr = gp.el.getBoundingClientRect();
             gp.r = gr.width > 0 && gr.bottom > 0 && gr.top < H ? gr : null;
           }
           rectsDirty = false;
         }
 
-        // Leaves
-        for (var i = 0; i < leaves.length; i++) {
-          var l = leaves[i], x, y;
+        // Falling snow
+        for (var i = 0; i < flakes.length; i++) {
+          var l = flakes[i], x, y;
           if (l.state === 'fall') {
             l.phase += dt * 1.4;
             l.y += l.vy * dt;
@@ -1689,7 +1692,7 @@
             if (l.sticky && y > 0) {
               var cx = x + l.halfSize, bottom = y + l.bottomOffset;
               // Performance optimization: bounding-box guard bypasses individual button checks
-              // when falling leaf is above the topmost or below the bottommost target button.
+              // when falling snow is above the topmost or below the bottommost target button.
               if (bottom >= minCatcherTop && bottom <= maxCatcherTopMax) {
                 for (var j = 0; j < catcherItems.length; j++) {
                   var ci = catcherItems[j], r = ci.r, pile = ci.pile;
@@ -1705,15 +1708,16 @@
                     l.lift = Math.floor(pile.length / 3) * 5 + rnd(0, 3);
                     l.rot = rnd(-50, 50);
                     pile.push(l);
+                    ci.el.classList.add('snowy');
                     break;
                   }
                 }
               }
             }
-            if (y > H + 40) resetLeaf(l, false);
+            if (y > H + 40) resetFlake(l, false);
           }
           if (l.state === 'land') {
-            // Optimization: Stationary landed leaves remain at fixed button offsets.
+            // Optimization: Stationary landed snow remain at fixed button offsets.
             // Bypass position recalculations when neither layout shifts (isRectsDirty)
             // nor initial landing (l.landedDirty) occurred.
             if (!isRectsDirty && !l.landedDirty) continue;
@@ -1738,7 +1742,7 @@
             var op = Math.max(l.opacity, 0);
             if (l.lastOpacity !== op) { l.el.style.opacity = op; l.lastOpacity = op; }
             x = l.x; y = l.y;
-            if (l.opacity <= 0 || y > H + 40 || x < -60 || x > W + 60) { resetLeaf(l, false); continue; }
+            if (l.opacity <= 0 || y > H + 40 || x < -60 || x > W + 60) { resetFlake(l, false); continue; }
           }
           // Using Math.round avoids expensive float-to-string toFixed() conversions inside the animation frame loop.
           // Comparing rounded numeric coordinates directly avoids unnecessary string concatenations in every frame.
@@ -1755,7 +1759,6 @@
           p.t += dt;
           p.stay = p.state === 'away' ? 0 : p.stay + dt;
           if (p.state === 'idle') {
-            p.riding = false;
             p.x = 4; p.y = hy; p.face = 1;
             p.cooldown -= dt;
             if (!reduceMotion && !document.hidden && now > nextBlink) {
@@ -1763,101 +1766,127 @@
               nextBlink = now + rnd(3200, 7200);
             }
             if (p.cooldown <= 0 && !reduceMotion) {
+              if (!holidayStarted && !document.hidden && holidayTarget && visible(holidayTarget.r)) {
+                holidayStarted = true;
+                p.target = holidayTarget; p.targetType = 'holiday'; p.state = 'notice'; p.t = 0;
+                wrap.classList.add('holiday-visit');
+                idleAt = now;
+              } else {
               // Performance optimization: Check p.bubbleVisible instead of querying bubble.classList.contains()
               if (p.stay > STAY_FOR && !document.hidden && !p.bubbleVisible) {
-                // He has been around a while: off the left edge he goes, and the leaves pile up.
+                // He steps away for a little while, then returns when snow piles up.
                 p.state = 'leave'; p.t = 0;
               } else {
                 // Performance optimization: evaluate target searches lazily.
-                // Skip searching for grass patches if a leaf pile target is already found,
+                // Prefer a control snow pile before searching for a deep drift,
                 // and avoid searching for either target when leaving stage.
                 var ready = readyPile(CLEAR_AT);
                 if (ready) {
-                  p.target = ready; p.targetType = 'leaf'; p.state = 'notice'; p.t = 0;
+                  p.target = ready; p.targetType = 'snow'; p.state = 'notice'; p.t = 0;
                   idleAt = now;
                 } else {
-                  var readyGrass = readyGrassPatch(now);
-                  if (readyGrass) {
-                    p.target = readyGrass; p.targetType = 'grass'; p.riding = true; p.state = 'notice'; p.t = 0;
+                  var readyDrift = readySnowDrift(now);
+                  if (readyDrift) {
+                    p.target = readyDrift; p.targetType = 'drift'; p.state = 'notice'; p.t = 0;
                     idleAt = now;
                   }
                 }
+              }
               }
             }
           } else if (p.state === 'leave') {
             if (moveToward(-PET_W - OFFSTAGE, hy, dt, WALK_SPEED)) { p.state = 'away'; p.t = 0; }
           } else if (p.state === 'away') {
-            // Off stage. He comes back when a pile or grass patch has built up
+            // Off stage. He returns for accumulated control snow or a visible drift.
             p.y = hy;
             var big = p.t > AWAY_MIN ? readyPile(AWAY_PILE) : null;
-            var bigGrass = (p.t > AWAY_MIN && !big) ? readyGrassPatch(now) : null;
+            var bigDrift = (p.t > AWAY_MIN && !big) ? readySnowDrift(now) : null;
             if (big) {
               var br = big.r, fromRight = br.left + br.width / 2 > W / 2;
               p.x = fromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(br).y;
-              p.target = big; p.targetType = 'leaf'; p.state = 'walk'; p.t = 0; idleAt = now;
-            } else if (bigGrass) {
-              var gr = bigGrass.r, gFromRight = gr.left + gr.width / 2 > W / 2;
+              p.target = big; p.targetType = 'snow'; p.state = 'walk'; p.t = 0; idleAt = now;
+            } else if (bigDrift) {
+              var gr = bigDrift.r, gFromRight = gr.left + gr.width / 2 > W / 2;
               p.x = gFromRight ? W + OFFSTAGE : -PET_W - OFFSTAGE; p.y = petGoal(gr).y;
-              p.target = bigGrass; p.targetType = 'grass'; p.riding = true; p.state = 'walk'; p.t = 0; idleAt = now;
+              p.target = bigDrift; p.targetType = 'drift'; p.state = 'walk'; p.t = 0; idleAt = now;
             } else if (p.t > AWAY_MAX) { p.state = 'home'; p.t = 0; }
           } else if (p.state === 'notice') {
             // A beat to spot the target, then he sets off.
             if (p.t > .15) { p.state = 'walk'; p.t = 0; }
           } else if (p.state === 'walk') {
             var tr = targetRect(p.target, p.targetType);
-            if (!visible(tr) || (p.targetType === 'grass' && p.target.mowed)) {
+            if (!visible(tr) || (p.targetType === 'drift' && p.target.cleared)) {
               p.state = 'home'; p.target = null; p.targetType = null;
             }
             else {
-              var g = p.targetType === 'grass' ? grassGoal(tr, 0) : petGoal(tr);
+              var g = p.targetType === 'holiday' ? holidayGoal(tr) : (p.targetType === 'drift' ? snowDriftGoal(tr, 0) : petGoal(tr));
               if (moveToward(g.x, g.y, dt, WALK_SPEED)) {
-                p.face = g.face; p.state = 'clear'; p.t = 0;
-                if (p.targetType === 'grass') {
-                  startGrassMowing(p.target);
-                  say(GRASS_SAYINGS[Math.floor(Math.random() * GRASS_SAYINGS.length)], 2200);
+                p.face = g.face; p.t = 0;
+                if (p.targetType === 'holiday') {
+                  p.state = 'decorate';
+                  p.target.el.classList.add('decorating');
+                  say('Adding lights to the trees!', 2600);
+                } else if (p.targetType === 'drift') {
+                  p.state = 'clear';
+                  startSnowBlowing(p.target);
+                  say(DRIFT_SAYINGS[Math.floor(Math.random() * DRIFT_SAYINGS.length)], 2200);
                 } else {
-                  say(LEAF_SAYINGS[Math.floor(Math.random() * LEAF_SAYINGS.length)], 2200);
+                  p.state = 'clear';
+                  say(SNOW_SAYINGS[Math.floor(Math.random() * SNOW_SAYINGS.length)], 2200);
                 }
               }
             }
           } else if (p.state === 'clear') {
             var cr = targetRect(p.target, p.targetType);
             if (!visible(cr)) {
-              if (p.targetType === 'grass') stopGrassMowing(p.target);
+              if (p.targetType === 'drift') stopSnowBlowing(p.target);
               p.state = 'home'; p.target = null; p.targetType = null;
             } else {
               var cg = petGoal(cr); p.x = cg.x; p.y = cg.y;
-              if (p.targetType === 'grass') {
-                // Drive the deck across the patch; grass disappears behind the blade.
+              if (p.targetType === 'drift') {
+                // Drive the snowblower through the drift.
                 var progress = Math.min(1, p.t / 2.4);
-                var mg = grassGoal(cr, progress);
+                var mg = snowDriftGoal(cr, progress);
                 p.face = mg.face; p.x = mg.x;
                 p.target.el.style.setProperty(p.face > 0 ? '--cut' : '--cut-right', (progress * 100) + '%');
               }
               // Timeline: 0-.1 finish step, .1-.26 pickup tool, .26-.37 level and kick, run until .85-1.15
-              if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 14) {
-                particle('✦', p.targetType === 'grass' ? 'grass-bit' : 'leaf-bit');
-              }
-              if (p.t > (p.targetType === 'grass' ? 2.4 : 0.85)) {
-                if (p.targetType === 'grass' && p.target && !p.target.mowed) {
-                  p.target.mowed = true;
-                  p.target.mowedAt = now;
-                  p.target.el.classList.add('mowed');
-                } else if (p.targetType === 'leaf' && p.target.pile.length) {
+              if (p.t > 0.45 && p.t < 1.25 && Math.random() < dt * 14) particle('❄', 'snow-bit');
+              if (p.targetType === 'snow' && p.target.el.matches('.btn') && p.t > 1.05 && p.t < 1.45 && Math.random() < dt * 10) particle('·', 'salt-bit');
+              if (p.t > (p.targetType === 'drift' ? 2.4 : 0.85)) {
+                if (p.targetType === 'drift' && p.target && !p.target.cleared) {
+                  p.target.cleared = true;
+                  p.target.clearedAt = now;
+                  p.target.el.classList.add('cleared');
+                } else if (p.targetType === 'snow' && p.target.pile.length) {
                   // Direct property read avoids Map.get lookup and avoids TypeError when p.target is a catcherItem
                   blowPile(p.target, p.face);
                 }
               }
-              if (p.t > (p.targetType === 'grass' ? 2.7 : 1.6)) {
-                if (p.targetType === 'grass') stopGrassMowing(p.target);
-                p.state = 'wait'; p.t = 0; say(p.targetType === 'grass' ? 'Nice and trim!' : 'All clean!', 1600);
+              if (p.t > (p.targetType === 'drift' ? 2.7 : 1.6)) {
+                if (p.targetType === 'drift') stopSnowBlowing(p.target);
+                p.state = 'wait'; p.t = 0; say(p.targetType === 'drift' ? 'Deep snow cleared!' : 'Salted and clear!', 1600);
               }
+            }
+          } else if (p.state === 'decorate') {
+            var hr = targetRect(p.target);
+            if (!visible(hr)) { p.state = 'home'; p.target = null; p.targetType = null; }
+            else {
+              var hg = holidayGoal(hr); p.x = hg.x; p.y = hg.y; p.face = hg.face;
+              if (p.t > .9) p.target.el.classList.add('ornamented');
+              if (p.t > 1.5 && !p.target.el.classList.contains('lights-on')) {
+                say('Plugging in the lights!', 2200);
+                p.target.el.classList.add('lights-on');
+                if (p.target.frame) p.target.frame.classList.add('lights-on');
+              }
+              if (p.t > .55 && p.t < 1.45 && Math.random() < dt * 5) particle('✦', 'holiday-bit');
+              if (p.t > 3.2) { p.state = 'home'; p.t = 0; p.target = null; p.targetType = null; }
             }
           } else if (p.state === 'wait') {
             var wr = targetRect(p.target, p.targetType);
             if (!visible(wr)) { p.state = 'home'; p.target = null; p.targetType = null; }
             else {
-              var wg = p.targetType === 'grass' ? grassGoal(wr, 1) : petGoal(wr); p.x = wg.x; p.y = wg.y;
+              var wg = p.targetType === 'drift' ? snowDriftGoal(wr, 1) : petGoal(wr); p.x = wg.x; p.y = wg.y;
               if (p.t > 1.4) { p.state = 'home'; p.target = null; p.targetType = null; }
             }
           } else if (p.state === 'drag') {
@@ -1888,10 +1917,11 @@
           } else if (p.state === 'home') {
             if (moveToward(4, hy, dt, HOME_SPEED)) {
               p.state = 'idle'; p.t = 0; p.cooldown = 5; p.face = 1; p.target = null; p.targetType = null;
+              wrap.classList.remove('holiday-visit');
               nextBlink = now + rnd(2600, 5200);
             }
           }
-          var walking = !p.riding && (p.state === 'walk' || p.state === 'home' || p.state === 'leave');
+          var walking = p.state === 'walk' || p.state === 'home' || p.state === 'leave';
           if (walking && !wasWalking) { p.stride = WALK.start / WALK.frames * 2 * WALK.step; p.hop = null; }
           if (walking !== wasWalking) walkEdgeAt = now;
           wasWalking = walking;
@@ -1937,14 +1967,12 @@
           // Cache element class states on state object `p` to avoid redundant DOM classList toggles every animation frame
           var isWalking = walking || Math.abs(p.lean) > .04;
           if (isWalking !== p.lastWalking) { wrap.classList.toggle('walking', isWalking); p.lastWalking = isWalking; }
-          var isWindup = p.state === 'clear' && p.targetType !== 'grass' && p.t < 0.26;
+          var isWindup = p.state === 'clear' && p.targetType !== 'drift' && p.t < 0.26;
           if (isWindup !== p.lastWindup) { wrap.classList.toggle('windup', isWindup); p.lastWindup = isWindup; }
           var isClearing = p.state === 'clear' && p.t >= 0.26;
           if (isClearing !== p.lastClearing) { wrap.classList.toggle('clearing', isClearing); p.lastClearing = isClearing; }
-          var isRiding = !!p.riding && !reduceMotion;
-          if (isRiding !== p.lastRiding) { wrap.classList.toggle('riding', isRiding); p.lastRiding = isRiding; }
-          var isMowing = p.state === 'clear' && p.targetType === 'grass';
-          if (isMowing !== p.lastMowing) { wrap.classList.toggle('mowing', isMowing); p.lastMowing = isMowing; }
+          var isSnowBlowing = p.state === 'clear' && p.targetType === 'drift';
+          if (isSnowBlowing !== p.lastSnowBlowing) { wrap.classList.toggle('blowing', isSnowBlowing); p.lastSnowBlowing = isSnowBlowing; }
           var isGrabbed = p.grab > .02;
           if (isGrabbed !== p.lastGrabbed) { wrap.classList.toggle('grabbed', isGrabbed); p.lastGrabbed = isGrabbed; }
           var isFaceLeft = p.face < 0;
@@ -1952,15 +1980,11 @@
           var isBubbleLeft = p.x > W / 2;
           if (isBubbleLeft !== p.lastBubbleLeft) { wrap.classList.toggle('bubble-left', isBubbleLeft); p.lastBubbleLeft = isBubbleLeft; }
           // Whole pixels keep the pixel art crisp; at walking speed the steps are too small to see.
-          // Track integer coordinates and set CSS variables only when coordinates change to avoid string concatenation.
+          // Track integer coordinates and write one direct transform only when position changes.
           var rx = Math.round(p.x), ry = Math.round(p.y);
-          if (rx !== p.lastRx) {
-            wrap.style.setProperty('--x', rx + 'px');
-            p.lastRx = rx;
-          }
-          if (ry !== p.lastRy) {
-            wrap.style.setProperty('--y', ry + 'px');
-            p.lastRy = ry;
+          if (rx !== p.lastRx || ry !== p.lastRy) {
+            wrap.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)';
+            p.lastRx = rx; p.lastRy = ry;
           }
           if (p.face !== shownFace && faceAt < 0) faceAt = now;
           if (faceAt >= 0 && now - faceAt >= FLIP_AT) { shownFace = p.face; faceAt = -1; }
@@ -1970,7 +1994,7 @@
             (p.state === 'idle' || p.state === 'clear' || p.state === 'wait');
           // Standing frame (boots side by side) for a beat after he stops. A move shorter than one
           // step is a single step: boots-together to boots-together (half a cycle) over the move.
-          if (settling) pose = walkSet + WALK.frames;
+          if (settling) pose = POSE.idle;
           else if (walking && p.hop) {
             var hopDone = p.hopD > 0 ? 1 - p.hopLeft / p.hopD : 1;
             pose = walkSet + WALK.start + Math.round(Math.max(0, Math.min(1, hopDone)) * WALK.frames / 2);
@@ -1981,6 +2005,11 @@
           }
           else if (p.state === 'drag' || p.state === 'toss') pose = POSE.wave;
           else if (p.state === 'notice') pose = POSE.notice;
+          else if (p.state === 'clear' && p.targetType === 'drift') {
+            pose = Math.floor(p.t * 4) % 2 ? POSE.plume : POSE.blower;
+          }
+          else if (p.state === 'clear' && p.targetType === 'snow' && p.target.el.matches('.btn') && p.t > .95) pose = POSE.salt;
+          else if (p.state === 'decorate') pose = p.t < 1.5 && Math.floor(p.t * 3) % 2 ? POSE.pickup : POSE.wave;
           else if (p.state === 'clear') {
             var ct = p.t;
             if (ct < .1) pose = POSE.idle;
@@ -1990,21 +2019,21 @@
             else if (ct < 1.15) pose = POSE.lower;
             else pose = POSE.level;
           }
-          else if (p.state === 'wait' && p.targetType !== 'grass' && p.t < .11) pose = POSE.level;
+          else if (p.state === 'wait' && p.targetType !== 'drift' && p.t < .11) pose = POSE.level;
           // Performance optimization: Check p.isReacting state flag instead of querying wrap.classList.contains() on every animation frame
           else if (p.isReacting) pose = POSE.wave;
           else if (p.state === 'idle' && now < blinkUntil && !reduceMotion) pose = POSE.blink;
-          if (shownFace < 0 && pose < WALK.first) pose += LEFT_POSES;
+
           if (pose !== displayedFrame) {
             sprite.style.backgroundPosition = (-pose * 192) + 'px 0';
             displayedFrame = pose;
           }
         }
-        if (leaves.length || wrap) requestAnimationFrame(frame);
+        if (flakes.length || wrap) requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
     })();
-    // ===== LEAVES + PET CHRIS: script end =====
+    // ===== WINTER SNOW + PET CHRIS: script end =====
   })();
 </script>
 <script src="js/leads.js" defer></script>
