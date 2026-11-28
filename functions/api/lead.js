@@ -11,6 +11,7 @@ const LIMITS = { name: 100, phone: 40, address: 200, service: 80, notes: 2000, l
 // In-memory sliding window rate limiter: max 10 requests per minute per IP address
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 10;
+const RESEND_TIMEOUT_MS = 10 * 1000;
 const ipRequestLogs = new Map();
 
 export function isRateLimited(ip, now = Date.now()) {
@@ -121,27 +122,38 @@ async function emailChris(env, lead) {
 
   const cleanSubjectService = (lead.service || 'lawn care').replace(CRLF_RAW_REGEX, ' ');
   const cleanSubjectName = (lead.name || '').replace(CRLF_RAW_REGEX, ' ');
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      from: (env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>').replace(CRLF_RAW_REGEX, ''),
-      to: (env.LEAD_TO || 'chris@cleengreenz.com')
-        .split(',')
-        .map((s) => s.trim().replace(CRLF_RAW_REGEX, ''))
-        .filter(Boolean),
-      subject: `Estimate request: ${cleanSubjectService} (${cleanSubjectName})`,
-      text,
-      html,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RESEND_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: (env.LEAD_FROM || 'Cleen Greenz website <leads@cleengreenz.com>').replace(CRLF_RAW_REGEX, ''),
+        to: (env.LEAD_TO || 'chris@cleengreenz.com')
+          .split(',')
+          .map((s) => s.trim().replace(CRLF_RAW_REGEX, ''))
+          .filter(Boolean),
+        subject: `Estimate request: ${cleanSubjectService} (${cleanSubjectName})`,
+        text,
+        html,
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) console.error('Resend failed', res.status, await res.text());
   return res.ok;
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
   // Rate Limiting: Prevent automated spam and DoS attacks by limiting requests per IP address
-  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  // Cloudflare supplies cf-connecting-ip. Do not trust x-forwarded-for from the
+  // public request, and do not put visitors without a platform identity into a
+  // shared "unknown" bucket.
+  const clientIp = request.headers.get('cf-connecting-ip')?.trim() || null;
   if (isRateLimited(clientIp)) {
     return json({ ok: false, error: 'rate_limited' }, 429, { 'retry-after': '60' });
   }

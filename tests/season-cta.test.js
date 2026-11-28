@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 test('Seasonal cards in #season grid are interactive estimate links', async (t) => {
   await t.test('CSS rules include focus-visible focus outline style for .season-card', () => {
     const htmlTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
-    assert.match(htmlTemplate, /\.season-card:focus-visible\s*\{\s*outline:\s*3px solid var\(--gold\);\s*outline-offset:\s*3px;\s*\}/);
+    assert.match(htmlTemplate, /\.season-card:focus-visible\s*\{\s*outline:\s*3px solid var\(--forest\);\s*outline-offset:\s*3px;\s*\}/);
   });
 
   await t.test('all .season-card elements are anchor links with valid href="#estimate" and data-service attributes', () => {
@@ -68,7 +68,6 @@ test('Seasonal cards in #season grid are interactive estimate links', async (t) 
     assert.notEqual(serviceSelect.value, 'Fall leaf cleanup');
 
     leafCard.click();
-
     // Give setTimeout in leads.js a cycle to focus #f-name
     await new Promise((resolve) => setTimeout(resolve, 100));
 

@@ -42,7 +42,7 @@ test('calculator validates address and area before making requests', () => {
 test('confirmation gate, safe property rendering, and grass job minimum', async () => {
   const data = fixture(); data.property.matchedAddress = '<img src=x onerror=alert(1)>'; data.property.warnings = ['<script>bad()</script>'];
   const e = setup(async () => ({ ok: true, json: async () => data }));
-  e.input('yard-address', '123 Main St, Niles MI'); e.submit(); await e.flush();
+  e.input('yard-address', '123 Main St, Niles MI'); e.change('yard-service', 'grass'); e.submit(); await e.flush();
   assert.equal(e.get('yard-confirm').getAttribute('aria-controls'), 'yard-price-result');
   assert.equal(e.get('yard-confirm').getAttribute('aria-expanded'), 'false');
   assert.equal(e.get('yard-price-review').hidden, false); assert.equal(e.get('yard-price-result').hidden, true);
