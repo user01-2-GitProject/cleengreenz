@@ -173,6 +173,8 @@
     .hero-actions .btn-ghost { font-size: 1.1rem; padding: .9em 1.5em; }
   }
   .mascot-frame { position: relative; }
+  .booking-pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 8px 16px; border-radius: 999px; background: var(--forest, #174b3b); color: #fff; font-weight: 600; text-decoration: none; box-shadow: 0 2px 8px rgba(23,75,59,.25); }
+  .booking-pill:hover { filter: brightness(1.1); }
   .mascot-frame .video-card {
     position: relative; border-radius: 28px; overflow: hidden; background: var(--cream-2);
     border: 8px solid var(--paper); box-shadow: var(--shadow); transform: rotate(1.5deg);
@@ -698,6 +700,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Same day every week</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>No contracts</li>
         </ul>
+        <a class="booking-pill" href="#estimate" data-service="Snow removal" data-lead-location="hero-pill">❄️ Now booking: snow removal</a>
       </div>
       <div class="mascot-frame">
         <div class="video-card" role="img" aria-label="Chris operating a snowblower between snow-covered evergreen trees">
